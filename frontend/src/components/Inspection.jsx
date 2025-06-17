@@ -10,8 +10,8 @@ const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
-    "skip_zrok_interstitial": "true", // only if required by your tunnel
-    ...(token && { Authorization: `Bearer ${token}` }), // adds only if token exists
+    "skip_zrok_interstitial": "true", 
+    ...(token && { Authorization: `Bearer ${token}` }),
   },
 });
 
@@ -76,6 +76,9 @@ const ConductForm = () => {
     inspection_remarks: "",
     inspection_checklist: [],
   });
+
+  const [formErrors, setFormErrors] = useState({});
+
   const [alert, setAlert] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -88,23 +91,30 @@ const ConductForm = () => {
         : [...f.inspection_checklist, item],
     }));
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setAlert(null);
-    setLoading(true);
-    try {
-      await api.post("/conduct-inspection", form);
-      setAlert({ ok: true, msg: "Inspection saved successfully!" });
-    } catch (err) {
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setAlert(null);
+  setLoading(true);
+  try {
+    await api.post("/conduct-inspection", form);
+    setAlert({ ok: true, msg: "Inspection saved successfully!" });
+    setFormErrors({});
+  } catch (err) {
+    const errors = err.response?.data?.data;
+    if (errors) {
+      setFormErrors(errors); 
+    } else {
       setAlert({
         ok: false,
-        msg: err.response?.data?.message || "Save failed. See console.",
+        msg: err.response?.data?.message || "Something went wrong.",
       });
-      console.error(err);
-    } finally {
-      setLoading(false);
     }
-  };
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <>
@@ -127,64 +137,89 @@ const ConductForm = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        {/* info grid */}
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-          <input required className="border p-2 rounded" placeholder="Boat Registration Number *"
-            value={form.boat_registration_number} onChange={field("boat_registration_number")} />
-          <input type="date" required className="border p-2 rounded"
-            value={form.inspection_date} onChange={field("inspection_date")} />
-          <input required className="border p-2 rounded" placeholder="Inspector Name *"
-            value={form.inspector_name} onChange={field("inspector_name")} />
-          <input className="border p-2 rounded md:col-span-3" placeholder="Inspector ID"
-            value={form.inspector_id} onChange={field("inspector_id")} />
-        </div>
+<form onSubmit={handleSubmit}>
+  {/* info grid */}
+  <div className="grid md:grid-cols-3 gap-4 mb-6">
+    <div>
+      <input className="border p-2 rounded w-full" placeholder="Boat Registration Number *"
+        value={form.boat_registration_number} onChange={field("boat_registration_number")} />
+      {formErrors.boat_registration_number && (
+        <p className="text-red-500 text-sm mt-1">{formErrors.boat_registration_number}</p>
+      )}
+    </div>
 
-        {/* checklist */}
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-          {checklistItems.map((item) => (
-            <label key={item} className="flex items-center space-x-2">
-              <input type="checkbox" className="form-checkbox"
-                checked={form.inspection_checklist.includes(item)}
-                onChange={() => toggle(item)} />
-              <span>{item}</span>
-            </label>
-          ))}
-        </div>
+    <div>
+      <input type="date" className="border p-2 rounded w-full"
+        value={form.inspection_date} onChange={field("inspection_date")} />
+      {formErrors.inspection_date && (
+        <p className="text-red-500 text-sm mt-1">{formErrors.inspection_date}</p>
+      )}
+    </div>
 
-        {/* selects */}
-        <div className="grid md:grid-cols-3 gap-6 mb-6">
-          {[
-            ["hull_condition","Hull Condition",["Excellent","Good","Fair","Poor"]],
-            ["engine_condition","Engine Condition",["Excellent","Good","Fair","Poor"]],
-            ["safety_equipment","Safety Equipment",["Complete","Partial","Inadequate"]],
-            ["overall_status","Overall Status",["Passed","Failed","Conditional Pass"]],
-          ].map(([key,label,opts]) => (
-            <div key={key}>
-              <label className="block text-sm font-medium mb-2">{label} *</label>
-              <select value={form[key]} onChange={field(key)}
-                className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-violet-500">
-                {opts.map((o)=> <option key={o}>{o}</option>)}
-              </select>
-            </div>
-          ))}
-        </div>
+    <div>
+      <input className="border p-2 rounded w-full" placeholder="Inspector Name *"
+        value={form.inspector_name} onChange={field("inspector_name")} />
+      {formErrors.inspector_name && (
+        <p className="text-red-500 text-sm mt-1">{formErrors.inspector_name}</p>
+      )}
+    </div>
 
-        {/* text areas */}
-        <Textarea label="Recommendation" placeholder="Any recommendations"
-          value={form.recommendations} onChange={field("recommendations")} />
-        <Textarea label="Inspection Remark" placeholder="Additional comments"
-          value={form.inspection_remarks} onChange={field("inspection_remarks")} />
+    <div className="md:col-span-3">
+      <input className="border p-2 rounded w-full" placeholder="Inspector ID"
+        value={form.inspector_id} onChange={field("inspector_id")} />
+    </div>
+  </div>
 
-        <div className="flex justify-center mt-6">
-          <button disabled={loading}
-            className={`bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded w-full md:w-auto ${
-              loading && "opacity-50 cursor-not-allowed"
-            }`}>
-            {loading ? "Saving…" : "Complete Inspection"}
-          </button>
-        </div>
-      </form>
+  {/* checklist */}
+  <div className="grid md:grid-cols-3 gap-4 mb-6">
+    {checklistItems.map((item) => (
+      <label key={item} className="flex items-center space-x-2">
+        <input type="checkbox" className="form-checkbox"
+          checked={form.inspection_checklist.includes(item)}
+          onChange={() => toggle(item)} />
+        <span>{item}</span>
+      </label>
+    ))}
+  </div>
+
+  {/* selects */}
+  <div className="grid md:grid-cols-3 gap-6 mb-6">
+    {[
+      ["hull_condition", "Hull Condition", ["Excellent", "Good", "Fair", "Poor"]],
+      ["engine_condition", "Engine Condition", ["Excellent", "Good", "Fair", "Poor"]],
+      ["safety_equipment", "Safety Equipment", ["Complete", "Partial", "Inadequate"]],
+      ["overall_status", "Overall Status", ["Passed", "Failed", "Conditional Pass"]],
+    ].map(([key, label, opts]) => (
+      <div key={key}>
+        <label className="block text-sm font-medium mb-2">{label} *</label>
+        <select
+          value={form[key]}
+          onChange={field(key)}
+          className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-violet-500"
+        >
+          {opts.map((o) => <option key={o}>{o}</option>)}
+        </select>
+        {formErrors[key] && (
+          <p className="text-red-500 text-sm mt-1">{formErrors[key]}</p>
+        )}
+      </div>
+    ))}
+  </div>
+
+  {/* text areas */}
+  <Textarea label="Recommendation" placeholder="Any recommendations"
+    value={form.recommendations} onChange={field("recommendations")} />
+  <Textarea label="Inspection Remark" placeholder="Additional comments"
+    value={form.inspection_remarks} onChange={field("inspection_remarks")} />
+
+  <div className="flex justify-center mt-6">
+    <button disabled={loading}
+      className={`bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded w-full md:w-auto ${loading && "opacity-50 cursor-not-allowed"}`}>
+      {loading ? "Saving…" : "Complete Inspection"}
+    </button>
+  </div>
+</form>
+
     </>
   );
 };
