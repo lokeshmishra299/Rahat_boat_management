@@ -1,0 +1,10 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.icon{
+    color: #5651e5;
+    cursor: pointer;
+}     
