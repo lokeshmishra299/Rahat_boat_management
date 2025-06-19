@@ -1,0 +1,105 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Helpers\ApiResponse;
+use App\Http\Controllers\Controller;
+use App\Models\District;
+use App\Models\RegisterBoat;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
+class BoatManagement extends Controller
+{
+    public function district_list(Request $request)
+    {
+        $districts = District::select('district_name')->get();
+
+        return ApiResponse::generateResponse('success', 'District list fetched successfully', $districts);
+    }
+
+    public function store(Request $request)
+    {
+        // dd($request->all());
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'registration_no'       => 'required|unique:register_boats',
+                'district'              => 'required',
+                'image'                 => 'required|image',
+                'boat_type'             => 'required',
+                'pilot_name'            => 'required',
+                'pilot_license_no'      => 'required',
+                'support_staff'         => 'required|integer',
+                'engine_details'        => 'required',
+                'passenger_capacity'    => 'required|integer',
+                'year_of_manufacture' => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
+                'assigned_ghat'         => 'required',
+                'registration_authority' => 'required',
+            ],
+            [
+                'registration_no.required' => 'Registration number is required.',
+                'registration_no.unique'   => 'This registration number already exists.',
+                'district.required'        => 'Please select a district.',
+                'image.required'           => 'Please upload a boat image.',
+                'image.image'              => 'The uploaded file must be an image.',
+                'boat_type.required'       => 'Please specify the boat type.',
+                'pilot_name.required'      => 'Pilot name is required.',
+                'pilot_license_no.required' => 'Pilot license number is required.',
+                'support_staff.required'   => 'Please specify number of support staff.',
+                'support_staff.integer'    => 'Support staff must be a valid number.',
+                'engine_details.required'  => 'Engine details are required.',
+                'passenger_capacity.required' => 'Please specify passenger capacity.',
+                'passenger_capacity.integer'  => 'Passenger capacity must be a number.',
+                // 'year_of_manufacture.required' => 'Year of manufacture is required.',
+                // 'year_of_manufacture.year'     => 'Invalid date format for year of manufacture.',
+                'assigned_ghat.required'       => 'Please enter assigned ghat.',
+                'registration_authority.required' => 'Registration authority is required.',
+            ]
+        );
+
+
+        if ($validator->fails()) {
+            return ApiResponse::generateResponse('error', 'Validation failed.', $validator->errors(), 422);
+        }
+
+        $imagePath = $request->file('image')->store('boats', 'public');
+
+        $boat = RegisterBoat::create([
+            'registration_no'        => $request->registration_no,
+            'district'               => $request->district,
+            'image'                  => $imagePath,
+            'boat_type'              => $request->boat_type,
+            'pilot_name'             => $request->pilot_name,
+            'pilot_license_no'       => $request->pilot_license_no,
+            'support_staff'          => $request->support_staff,
+            'engine_details'         => $request->engine_details,
+            'passenger_capacity'     => $request->passenger_capacity,
+            'year_of_manufacture'    => $request->year_of_manufacture,
+            'assigned_ghat'          => $request->assigned_ghat,
+            'registration_authority' => $request->registration_authority,
+            'remarks'                => $request->remarks,
+        ]);
+
+        return ApiResponse::generateResponse('success', 'Boat registered successfully.', $boat);
+    }
+
+    public function index()
+    {
+        $boats = RegisterBoat::all();
+
+        return ApiResponse::generateResponse('success', 'Boat list fetched successfully.', $boats);
+    }
+
+    public function edit(Request $request,$id){
+
+        // dd($id);
+        $boats=RegisterBoat::find($id);
+        // dd($boats);
+        if(!$boats){
+
+            return ApiResponse::generateResponse('error','Boat not found',[],404);
+        }
+
+    }
+}

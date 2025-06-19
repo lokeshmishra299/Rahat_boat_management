@@ -62,4 +62,11 @@ class LoginController extends Controller
     {
         return ApiResponse::generateResponse('success', 'User fetched successfully.', $request->user());
     }
+
+    public function logout(Request $request){
+
+        $request->user()->currentAccessToken()->delete();
+
+        return ApiResponse::generateResponse('success','Logout Successfully');
+    }
 }
