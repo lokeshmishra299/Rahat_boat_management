@@ -13,7 +13,7 @@ class RegisterBoat extends Model
 
      protected $fillable = [
         'registration_no',
-        'district',
+        'district_id',
         'image',
         'boat_type',
         'pilot_name',
@@ -22,7 +22,7 @@ class RegisterBoat extends Model
         'engine_details',
         'passenger_capacity',
         'year_of_manufacture',
-        'assigned_ghat',
+        'ghaat_id',
         'registration_authority',
         'remarks',
     ];

@@ -13,7 +13,9 @@ class BoatManagement extends Controller
 {
     public function district_list(Request $request)
     {
-        $districts = District::select('district_name')->get();
+        $districts = District::select('id', 'district_name')
+            ->orderBy('district_name', 'asc')
+            ->get();
 
         return ApiResponse::generateResponse('success', 'District list fetched successfully', $districts);
     }
@@ -25,7 +27,7 @@ class BoatManagement extends Controller
             $request->all(),
             [
                 'registration_no'       => 'required|unique:register_boats',
-                'district'              => 'required',
+                'district_id'           => 'required|exists:districts,id',
                 'image'                 => 'required|image',
                 'boat_type'             => 'required',
                 'pilot_name'            => 'required',
@@ -34,13 +36,14 @@ class BoatManagement extends Controller
                 'engine_details'        => 'required',
                 'passenger_capacity'    => 'required|integer',
                 'year_of_manufacture' => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
-                'assigned_ghat'         => 'required',
+                'ghaat_id'         => 'required',
                 'registration_authority' => 'required',
             ],
             [
                 'registration_no.required' => 'Registration number is required.',
                 'registration_no.unique'   => 'This registration number already exists.',
-                'district.required'        => 'Please select a district.',
+                'district_id.required' => 'Please select a district.',
+                'district_id.exists' => 'Selected district is invalid.',
                 'image.required'           => 'Please upload a boat image.',
                 'image.image'              => 'The uploaded file must be an image.',
                 'boat_type.required'       => 'Please specify the boat type.',
@@ -53,7 +56,7 @@ class BoatManagement extends Controller
                 'passenger_capacity.integer'  => 'Passenger capacity must be a number.',
                 // 'year_of_manufacture.required' => 'Year of manufacture is required.',
                 // 'year_of_manufacture.year'     => 'Invalid date format for year of manufacture.',
-                'assigned_ghat.required'       => 'Please enter assigned ghat.',
+                'ghaat_id.required'       => 'Please enter assigned ghat.',
                 'registration_authority.required' => 'Registration authority is required.',
             ]
         );
@@ -67,7 +70,7 @@ class BoatManagement extends Controller
 
         $boat = RegisterBoat::create([
             'registration_no'        => $request->registration_no,
-            'district'               => $request->district,
+            'district_id'            => $request->district_id,
             'image'                  => $imagePath,
             'boat_type'              => $request->boat_type,
             'pilot_name'             => $request->pilot_name,
@@ -76,7 +79,7 @@ class BoatManagement extends Controller
             'engine_details'         => $request->engine_details,
             'passenger_capacity'     => $request->passenger_capacity,
             'year_of_manufacture'    => $request->year_of_manufacture,
-            'assigned_ghat'          => $request->assigned_ghat,
+            'ghaat_id'          => $request->ghaat_id,
             'registration_authority' => $request->registration_authority,
             'remarks'                => $request->remarks,
         ]);
@@ -91,15 +94,15 @@ class BoatManagement extends Controller
         return ApiResponse::generateResponse('success', 'Boat list fetched successfully.', $boats);
     }
 
-    public function edit(Request $request,$id){
+    public function edit(Request $request, $id)
+    {
 
         // dd($id);
-        $boats=RegisterBoat::find($id);
+        $boats = RegisterBoat::find($id);
         // dd($boats);
-        if(!$boats){
+        if (!$boats) {
 
-            return ApiResponse::generateResponse('error','Boat not found',[],404);
+            return ApiResponse::generateResponse('error', 'Boat not found', [], 404);
         }
-
     }
 }
