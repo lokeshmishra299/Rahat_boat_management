@@ -1,15 +1,10 @@
 // src/pages/Boats.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import {
-  FaShip,
-  FaListAlt,
-  FaPlusCircle,
-  FaCamera
-} from "react-icons/fa";
+import { FaShip, FaListAlt, FaPlusCircle, FaCamera } from "react-icons/fa";
 
 /* ══════════════════ AXIOS CONFIG ══════════════════ */
-const BASE_URL = "http://localhost:8000/api";      // ← change if needed
+const BASE_URL = "http://localhost:8000/api";
 const token = localStorage.getItem("access_token");
 
 const api = axios.create({
@@ -22,10 +17,9 @@ const api = axios.create({
 
 /* ══════════════════ COMPONENT ══════════════════ */
 const Boats = () => {
-  /* view toggle */
   const [view, setView] = useState("register");
 
-  /* districts */
+  /* districts (matches Ghaat.jsx) */
   const [districts, setDistricts] = useState([]);
   const [loadingDistricts, setLoadingDistricts] = useState(true);
   const [districtError, setDistrictError] = useState("");
@@ -64,23 +58,19 @@ const Boats = () => {
   /* helpers */
   const inputClass =
     "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500";
-  const field = (k) => (e) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const field = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const fieldNum = (k) => (e) =>
     setForm((f) => ({
       ...f,
-      [k]:
-        e.target.value === ""
-          ? ""
-          : Math.max(0, parseInt(e.target.value, 10))
+      [k]: e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value, 10))
     }));
 
-  /* ── Load districts ── */
+  /* ── Load districts (exactly like Ghaat.jsx) ── */
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await api.get("/district-list");
-        setDistricts(Array.isArray(data) ? data : data.data || []);
+        const res = await api.get("/district-list");
+        setDistricts(Array.isArray(res.data.data) ? res.data.data : []);
       } catch {
         setDistrictError("Could not load districts.");
       } finally {
@@ -94,7 +84,7 @@ const Boats = () => {
     setLoadingBoats(true);
     setBoatsError("");
     try {
-      const { data } = await api.get("/boat-list" /* add token header if protected */);
+      const { data } = await api.get("/boat-list");
       setBoats(Array.isArray(data) ? data : data.data || []);
     } catch {
       setBoatsError("Could not fetch boats.");
@@ -130,14 +120,11 @@ const Boats = () => {
     if (photoFile) fd.append("image", photoFile);
 
     try {
-      const { data } = await axios.post(`${BASE_URL}/boats`, fd, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data"
-        }
+      const { data } = await api.post("/boats", fd, {
+        headers: { Authorization: `Bearer ${token}` }
       });
       setAlert({ ok: true, msg: data.message || "Boat registered successfully." });
-      await loadBoats();              // refresh list
+      await loadBoats();
       setForm(emptyForm);
       setPhotoName("");
       setPhotoFile(null);
@@ -260,10 +247,6 @@ const RegisterForm = ({
   handleSubmit
 }) => (
   <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border">
-    <h3 className="text-xl font-semibold mb-6 text-center">
-      Boat Registration Form
-    </h3>
-
     {alert && (
       <div
         className={`mb-6 text-center py-2 rounded ${
@@ -301,7 +284,7 @@ const RegisterForm = ({
         }}
       />
       <label htmlFor="boat-photo">
-        <span className="cursor-pointer	bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition inline-block">
+        <span className="cursor-pointer bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition inline-block">
           Choose Photo
         </span>
       </label>
@@ -311,10 +294,7 @@ const RegisterForm = ({
     </div>
 
     {/* form fields */}
-    <form
-      onSubmit={handleSubmit}
-      className="grid grid-cols-1 md:grid-cols-2 gap-6"
-    >
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <Input
         label="Registration Number *"
         name="regNumber"
@@ -324,7 +304,7 @@ const RegisterForm = ({
         placeholder="UP‑XXX‑000"
       />
 
-      {/* District */}
+      {/* District dropdown (identical to Ghaat.jsx) */}
       <div>
         <label className="text-sm font-medium mb-1">
           District <span className="text-red-500">*</span>
@@ -342,15 +322,11 @@ const RegisterForm = ({
           ) : (
             <>
               <option value="">Select District</option>
-              {districts.map((d, i) =>
-                typeof d === "string" ? (
-                  <option key={d}>{d}</option>
-                ) : (
-                  <option key={i} value={d.district_name}>
-                    {d.district_name}
-                  </option>
-                )
-              )}
+              {districts.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.district_name}
+                </option>
+              ))}
             </>
           )}
         </select>
