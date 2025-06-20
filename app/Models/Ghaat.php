@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ghaat extends Model
 {
-   use HasFactory;
+    use HasFactory;
 
-    protected $table='ghaats';
+    protected $table = 'ghaats';
 
     protected $fillable = [
         'photo_path',
@@ -17,7 +17,7 @@ class Ghaat extends Model
         'longitude',
         'ghaat_name',
         'district_id',
-        'river_id', 
+        'river_id',
         'boat_capacity',
         'road_accessibility',
         'contact_person',
@@ -28,20 +28,25 @@ class Ghaat extends Model
         'status'
     ];
 
-     public function river()
+    public function river()
     {
         return $this->belongsTo(River::class);
     }
 
-    public function river_record(){
+    public function river_record()
+    {
 
-        return $this->hasOne(River::class,'id','river_id');
+        return $this->hasOne(River::class, 'id', 'river_id');
     }
 
-       public function district_record(){
+    public function district_record()
+    {
 
-        return $this->hasOne(District::class,'id','district_id');
+        return $this->hasOne(District::class, 'id', 'district_id');
     }
 
-    // public function
+    public function registeredBoats()
+    {
+        return $this->hasMany(RegisterBoat::class, 'ghaat_id');
+    }
 }
