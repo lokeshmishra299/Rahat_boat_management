@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/edit-ghaat-details/{id}',[GhaatController::class,'edit_ghaat']);
 
     Route::get('/districts-ghat',[DistrictController::class,'index']);
+    Route::get('/district-dashboard',[DistrictController::class,'monitor_dashboard']);
     
 
 });
