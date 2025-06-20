@@ -1,6 +1,5 @@
 import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-
 import Header from "./Header";
 
 // icons
@@ -14,7 +13,7 @@ import {
 } from "react-icons/fa";
 import { FaClipboardCheck } from "react-icons/fa6";
 
-/* ---------------- reusable card ---------------- */
+/* ───── Reusable card for stats ───── */
 const StatCard = ({ icon, title, value, change }) => (
   <div className="bg-white p-5 rounded-lg shadow hover:shadow-md transition-all border border-gray-100 min-h-[160px] flex flex-col justify-between">
     <div>
@@ -31,10 +30,18 @@ const StatCard = ({ icon, title, value, change }) => (
 const Dashboard = () => {
   const { pathname } = useLocation();
 
-  /* helper for nav links */
-  const getLinkClass = (path, bg) =>
+  // helper to determine active route segment
+  const isActive = (segment) =>
+    segment === "."
+      ? pathname === "/dashboard" || pathname === "/dashboard/"
+      : pathname.startsWith(`/dashboard/${segment}`);
+
+  // build nav link class
+  const linkClass = (segment, bg) =>
     `px-4 py-1 rounded-full font-medium ${
-      pathname === path ? `text-white ${bg}` : "text-gray-600 hover:text-blue-600"
+      isActive(segment)
+        ? `text-white ${bg}`
+        : "text-gray-600 hover:text-blue-600"
     }`;
 
   return (
@@ -42,42 +49,42 @@ const Dashboard = () => {
       {/* header */}
       <Header />
 
-      {/* navigation bar */}
+      {/* navigation */}
       <div className="w-full sm:w-[97%] mx-auto flex justify-center items-center mt-5 px-2">
         <nav className="flex flex-wrap sm:space-x-8 justify-center gap-2 sm:gap-4 px-4 py-3 bg-white shadow-md rounded-full w-full">
-          <Link to="/" className={getLinkClass("/", "bg-blue-600")}>
+          <Link to="." className={linkClass(".", "bg-blue-600")}>
             <MdSpaceDashboard className="inline-block mr-2 text-xl" />
             Dashboard
           </Link>
-          <Link to="/boats" className={getLinkClass("/boats", "bg-green-500")}>
+          <Link to="boats" className={linkClass("boats", "bg-green-500")}>
             <FaShip className="inline-block mr-2 text-lg" />
             Boats
           </Link>
-          <Link to="/ghaats" className={getLinkClass("/ghaats", "bg-sky-500")}>
+          <Link to="ghaats" className={linkClass("ghaats", "bg-sky-500")}>
             <FaWater className="inline-block mr-2 text-lg" />
             Ghaats
           </Link>
-          <Link to="/districts" className={getLinkClass("/districts", "bg-red-500")}>
+          <Link to="districts" className={linkClass("districts", "bg-red-500")}>
             <FaMapMarkedAlt className="inline-block mr-2 text-lg" />
             Districts
           </Link>
-          <Link to="/life-jackets" className={getLinkClass("/life-jackets", "bg-orange-400")}>
+          <Link to="life-jackets" className={linkClass("life-jackets", "bg-orange-400")}>
             <FaShieldAlt className="inline-block mr-2 text-lg" />
-            Life Jackets
+            Life Jackets
           </Link>
-          <Link to="/inspection" className={getLinkClass("/inspection", "bg-purple-500")}>
+          <Link to="inspection" className={linkClass("inspection", "bg-purple-500")}>
             <FaClipboardCheck className="inline-block mr-2 text-lg" />
             Inspection
           </Link>
-          <Link to="/usermanagment" className={getLinkClass("/usermanagment", "bg-yellow-400")}>
+          <Link to="usermanagment" className={linkClass("usermanagment", "bg-yellow-400")}>
             <FaUsersCog className="inline-block mr-2 text-lg" />
-            User Management
+            User Management
           </Link>
         </nav>
       </div>
 
-      {/* overview only on "/" */}
-      {pathname === "/" ? (
+      {/* overview section only on /dashboard */}
+      {isActive(".") ? (
         <main className="p-6">
           {/* title */}
           <h2 className="flex items-center justify-center gap-2 sm:gap-4 text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-700 mb-4 text-center">
@@ -101,7 +108,7 @@ const Dashboard = () => {
           </h2>
 
           <p className="text-gray-500 mb-6 sm:text-xl text-center">
-            Real‑time monitoring and management of rescue operations across Uttar Pradesh
+            Real-time monitoring and management of rescue operations across Uttar Pradesh
           </p>
 
           {/* Stats Cards */}
@@ -112,7 +119,7 @@ const Dashboard = () => {
             <StatCard icon="🦺" title="Life Jackets" value="3,741" change="+127 from last month" />
           </div>
 
-          {/* Dashboard Details */}
+          {/* Recent Activity & Top Districts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
             {/* Recent Activity */}
             <div className="bg-white p-5 rounded-lg shadow border">
@@ -176,7 +183,7 @@ const Dashboard = () => {
               ))}
             </div>
 
-            {/* Top Districts */}
+            {/* Top Districts by Completion */}
             <div className="bg-white p-5 rounded-lg shadow border">
               <h3 className="text-xl font-bold text-purple-700 mb-1">Top Districts by Completion</h3>
               <p className="text-sm text-gray-500 mb-4">Data entry and registration progress</p>
@@ -230,7 +237,6 @@ const Dashboard = () => {
           </div>
         </main>
       ) : (
-        /* any nested page (boats, ghaats, etc.) renders here */
         <Outlet />
       )}
     </div>

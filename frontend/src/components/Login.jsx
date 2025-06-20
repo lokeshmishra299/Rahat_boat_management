@@ -4,103 +4,81 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaEnvelope, FaEye, FaEyeSlash, FaTimes } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Toaster, toast } from "react-hot-toast";       // ← toast
 
 /* ---------- Axios instance ---------- */
 const api = axios.create({
   baseURL:
     import.meta.env.VITE_API_BASE ??
-    "http://127.0.0.1:8000/api", // fallback for dev tunnel
+    "http://127.0.0.1:8000/api",          // fallback tunnel
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });
 
 const Login = () => {
-  /* ---- login form state ---- */
+  /* ——— login form state ——— */
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
-  const [errMsg, setErrMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /* ---- reset‑password modal state ---- */
+  /* ——— reset‑password modal ——— */
   const [showReset, setShowReset] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
-  const [resetMsg, setResetMsg] = useState("");
-  const [resetErr, setResetErr] = useState("");
 
   const navigate = useNavigate();
 
-  /* ---- auto‑redirect if already logged in ---- */
+  /* ——— auto‑redirect if already logged in ——— */
   useEffect(() => {
-    if (localStorage.getItem("access_token")) {
-      navigate("/", { replace: true });
-    }
+    if (localStorage.getItem("access_token")) navigate("/", { replace: true });
   }, [navigate]);
 
-  /* ---- login submit ---- */
+  /* ——— login submit ——— */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrMsg("");
     setLoading(true);
 
     try {
       const { data } = await api.post("login", { email, password, remember });
 
-      /* covers Sanctum, Passport, jwt-auth */
       const token =
         data?.access_token ?? data?.token ?? data?.data?.access_token ?? null;
 
       if (token) {
-        localStorage.setItem("access_token", token); // 👈 key matches router guard
+        localStorage.setItem("access_token", token);
+        toast.success("Login successful!");             // ✅ success toast
         navigate("/", { replace: true });
       } else {
-        setErrMsg("Unexpected response format – token missing.");
+        toast.error("Unexpected response – token missing.");
       }
     } catch (err) {
       console.error("Login error:", err);
-      if (err.response) {
-        setErrMsg(
-          `Error ${err.response.status}: ${
-            err.response.data?.message || "Login failed"
-          }`
-        );
-      } else {
-        setErrMsg("Network error – check console.");
-      }
+      toast.error("Please enter correct information."); // ❌ failure toast
     } finally {
       setLoading(false);
     }
   };
 
-  /* ---- forgot‑password submit ---- */
+  /* ——— forgot‑password submit ——— */
   const handleReset = async (e) => {
     e.preventDefault();
-    setResetErr("");
-    setResetMsg("");
     setResetLoading(true);
 
     try {
       await api.post("/forgot-password", { email: resetEmail });
-      setResetMsg(
-        "If this email exists in our system, a reset link has been sent. Check your inbox."
-      );
+      toast.success("If the email exists, a reset link has been sent.");
+      setShowReset(false);
     } catch (err) {
       console.error("Reset error:", err);
-      if (err.response) {
-        setResetErr(
-          err.response.data?.message || "Unable to send password reset email."
-        );
-      } else {
-        setResetErr("Network error – check console.");
-      }
+      toast.error("Unable to send reset link.");
     } finally {
       setResetLoading(false);
     }
   };
 
-  /* ---- animations ---- */
+  /* ——— animation configs ——— */
   const container = {
     hidden: { opacity: 0, scale: 0.9, y: 40 },
     visible: {
@@ -127,9 +105,11 @@ const Login = () => {
     },
   };
 
-  /* ---- JSX ---- */
+  /* ——— JSX ——— */
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-950 via-indigo-900 to-slate-900 relative overflow-hidden text-white">
+      <Toaster position="top-right" />                 {/* ← toaster */}
+
       {/* Blurs */}
       <motion.div
         className="absolute -top-32 left-1/2 -translate-x-1/2 h-[36rem] w-[36rem] bg-emerald-500/40 blur-[160px] rounded-full"
@@ -172,12 +152,6 @@ const Login = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          {errMsg && (
-            <div className="rounded-lg bg-red-600/20 text-red-200 px-4 py-2 text-sm">
-              {errMsg}
-            </div>
-          )}
-
           {/* Email */}
           <label className="block">
             <span className="block text-sm font-medium mb-1">Email</span>
@@ -233,8 +207,6 @@ const Login = () => {
               onClick={() => {
                 setShowReset(true);
                 setResetEmail("");
-                setResetMsg("");
-                setResetErr("");
               }}
               className="hover:underline text-emerald-300"
             >
@@ -292,17 +264,6 @@ const Login = () => {
                 Enter your registered email address and we'll send you a reset
                 link.
               </p>
-
-              {resetErr && (
-                <div className="rounded-lg bg-red-600/20 text-red-200 px-4 py-2 text-sm mb-3">
-                  {resetErr}
-                </div>
-              )}
-              {resetMsg && (
-                <div className="rounded-lg bg-emerald-600/20 text-emerald-200 px-4 py-2 text-sm mb-3">
-                  {resetMsg}
-                </div>
-              )}
 
               <form onSubmit={handleReset} className="space-y-4">
                 <label className="block">
