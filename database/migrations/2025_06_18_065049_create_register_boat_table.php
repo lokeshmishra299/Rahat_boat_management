@@ -14,7 +14,7 @@ return new class extends Migration
     Schema::create('register_boats', function (Blueprint $table) {
         $table->id();
         $table->string('registration_no', 20)->unique();
-        $table->foreignId('district_id')->constrained('district')->onDelete('cascade');
+        $table->foreignId('district_id')->constrained('districts')->onDelete('cascade');
         $table->string('image');
         $table->string('boat_type');
         $table->string('pilot_name');

@@ -14,4 +14,9 @@ class District extends Model
     {
         return $this->hasMany(User::class, 'district_id');
     }
+
+    public function lifeJackets()
+{
+    return $this->hasMany(LifeJacket::class);
+}
 }

@@ -15,7 +15,7 @@ class InspectionController extends Controller
     // dd($request->all());
     
     $validator = Validator::make($request->all(), [
-        'boat_registration_number' => 'required|string|max:255|unique:boat_inspections,boat_registration_number',
+        'boat_registration_number' => 'required|string',
         'inspection_date' => 'required|date',
         'inspector_name' => 'required|string|max:255',
         'inspector_id' => 'nullable|string|max:255',
@@ -52,17 +52,7 @@ class InspectionController extends Controller
 
     ]);
 
-    if ($validator->fails()) {
-        $errors = collect($validator->errors()->toArray())
-            ->map(fn($messages) => $messages[0]); 
-
-        return ApiResponse::generateResponse(
-            'error',
-            'Validation failed.',
-            $errors,
-            422
-        );
-    }
+   if()
 
     $inspection = BoatInspection::create([
         'boat_registration_number' => $request->boat_registration_number,

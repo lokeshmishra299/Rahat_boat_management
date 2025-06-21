@@ -49,4 +49,9 @@ class Ghaat extends Model
     {
         return $this->hasMany(RegisterBoat::class, 'ghaat_id');
     }
+
+    public function lifeJackets()
+{
+    return $this->hasMany(LifeJacket::class);
+}
 }

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('longitude', 10, 7)->nullable();
 
             $table->string('ghaat_name');
-            $table->foreignId('district_id')->constrained('district')->onDelete('cascade');
+            $table->foreignId('district_id')->constrained('districts')->onDelete('cascade');
 
             $table->foreignId('river_id')->constrained('rivers')->onDelete('cascade');
 

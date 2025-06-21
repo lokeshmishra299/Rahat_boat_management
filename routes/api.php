@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\BoatManagement;
 use App\Http\Controllers\Api\DistrictController;
 use App\Http\Controllers\Api\GhaatController;
 use App\Http\Controllers\Api\InspectionController;
+use App\Http\Controllers\Api\LifeJacketController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\RiverPortManagement;
 use Illuminate\Support\Facades\Route;
@@ -23,7 +24,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     Route::post('/boats', [BoatManagement::class, 'store']);  
-    Route::get('/boat-list', [BoatManagement::class, 'index']);   
+    Route::get('/boat-list', [BoatManagement::class, 'index']);  
+     
     Route::post('/edit-boat-details/{id}', [BoatManagement::class, 'edit']);   
 
     Route::post('/register-ghaat', [GhaatController::class, 'store']);
@@ -32,6 +34,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/districts-ghat',[DistrictController::class,'index']);
     Route::get('/district-dashboard',[DistrictController::class,'monitor_dashboard']);
+
+    Route::post('/life-jackets',[LifeJacketController::class,'store']);
+    Route::get('/life-jackets-tracking',[LifeJacketController::class,'distribuation_tracking']);
     
 
 });
