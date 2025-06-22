@@ -26,4 +26,20 @@ class RegisterBoat extends Model
         'registration_authority',
         'remarks',
     ];
+
+    public function district()
+{
+    return $this->belongsTo(District::class, 'district_id');
+}
+
+public function ghaat()
+{
+    return $this->belongsTo(Ghaat::class, 'ghaat_id');
+}
+
+public function inspections()
+{
+    return $this->hasMany(BoatInspection::class, 'register_boat_id');
+}
+
 }

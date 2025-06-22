@@ -132,6 +132,23 @@ class GhaatController extends Controller
         );
     }
 
+
+public function view_list_individual(Request $request, $id)
+{
+    $ghaat = Ghaat::with(['district_record:id,district_name', 'river_record:id,name'])
+        ->where('id', $id)
+        ->first();
+
+    if (!$ghaat) {
+        return ApiResponse::generateResponse('error', 'Ghaat not found.', [], 404);
+    }
+
+    return ApiResponse::generateResponse('success', 'Ghaat fetched successfully.', $ghaat);
+}
+
+
+
+
     public function edit_ghaat(Request $request, $id)
     {
         $ghaat = Ghaat::find($id);
