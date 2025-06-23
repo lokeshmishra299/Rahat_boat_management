@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\BoatInspection;
+use App\Models\RegisterBoat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
+
 
 class InspectionController extends Controller
 {
@@ -115,6 +118,37 @@ public function view_inspection_by_id($id)
         'success',
         'Inspection record fetched successfully.',
         $inspection
+    );
+}
+
+public function upcoming_inspections()
+{
+    $today = Carbon::now();
+    $upcoming = [];
+
+    $inspections = BoatInspection::with('boat.district')->get();
+
+    foreach ($inspections as $inspection) {
+        $lastInspectionDate = Carbon::parse($inspection->inspection_date);
+
+        $nextDueDate = $lastInspectionDate->copy()->addYear();
+
+        $daysLeft = (int)$today->diffInDays($nextDueDate, false);
+
+        if ($daysLeft >= 0 && $daysLeft <= 30) {
+            $upcoming[] = [
+                'registration_no' => $inspection->boat->registration_no ?? 'N/A',
+                'district'        => $inspection->boat->district->district_name ?? 'N/A',
+                'due_date'        => $nextDueDate->format('Y-m-d'),
+                'days_left'       => $daysLeft,
+            ];
+        }
+    }
+
+    return ApiResponse::generateResponse(
+        'success',
+        'Upcoming inspections fetched successfully.',
+        $upcoming
     );
 }
 

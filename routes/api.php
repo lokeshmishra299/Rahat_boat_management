@@ -47,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/conduct-inspection',[InspectionController::class,'conduct_inspection']);
     Route::get('/conduct-inspection-records',[InspectionController::class,'view_inspection']);
     Route::get('/boat-inspection/{id}',[InspectionController::class,'view_inspection_by_id']);
+    Route::get('/upcoming-inspections', [InspectionController::class, 'upcoming_inspections']);
+
 
 
     //Dashboard

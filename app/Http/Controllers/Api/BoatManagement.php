@@ -123,7 +123,7 @@ public function view_list(Request $request, $id)
         $request->all(),
         [
             'district_id'           => 'required|exists:districts,id',
-            'image'                 => 'required|image',
+            'image'                 => 'nullable|image',
             'boat_type'             => 'required',
             'pilot_name'            => 'required',
             'pilot_license_no'      => 'required',
