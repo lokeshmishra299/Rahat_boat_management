@@ -1,36 +1,42 @@
+// src/App.jsx
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 
 import Dashboard from "./components/Dashboard";
-
 import Boats from "./components/Boats";
 import Ghaat from "./components/Ghaat";
 import District from "./components/District";
 import LifeJacket from "./components/LifeJacket";
 import Inspection from "./components/Inspection";
 import Usermanagment from "./components/Usermanagment";
-
 import Login from "./components/Login";
+import BoatDetail from "./pages/BoatDetail";
+import GhaatDetail from "./pages/GhaatDetail";
 
 const App = () => (
   <Routes>
-    {/* 🔑 Default route now renders Login instead of Dashboard */}
+    {/* public routes */}
+    <Route path="/" element={<Login />} />
     <Route path="/login" element={<Login />} />
 
-    {/* 📂 Auth‑protected area begins at /dashboard */}
+    {/* protected dashboard area */}
     <Route path="/dashboard" element={<Dashboard />}>
       <Route index element={<></>} />
+      <Route path="boats/boatdetails/:id" element={<BoatDetail />} />
       <Route path="boats" element={<Boats />} />
+    
+{/* id added */}
       <Route path="ghaats" element={<Ghaat />} />
+      <Route path="ghaats/ghaatdetails/:id" element={<GhaatDetail />
+    }
+/>
+
+
       <Route path="districts" element={<District />} />
       <Route path="life-jackets" element={<LifeJacket />} />
       <Route path="inspection" element={<Inspection />} />
       <Route path="usermanagment" element={<Usermanagment />} />
     </Route>
-    <Route path="/" element={<Login />} />
-
-
-  
   </Routes>
 );
 

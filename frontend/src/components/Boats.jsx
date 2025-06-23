@@ -1,5 +1,6 @@
 // src/pages/Boats.jsx
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaShip, FaListAlt, FaPlusCircle, FaCamera } from "react-icons/fa";
 
@@ -11,27 +12,31 @@ const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` })
-  }
+    ...(token && { Authorization: `Bearer ${token}` }),
+  },
 });
 
 /* ══════════════════ COMPONENT ══════════════════ */
 const Boats = () => {
+  const navigate = useNavigate();
+
   const [view, setView] = useState("register");
 
-  /* districts (matches Ghaat.jsx) */
+  /* districts */
   const [districts, setDistricts] = useState([]);
   const [loadingDistricts, setLoadingDistricts] = useState(true);
   const [districtError, setDistrictError] = useState("");
+
+
+  const [ghaats, setGhaats] = useState([]);
+  const [loadingGhaats, setLoadingGhaats] = useState(true);
+  const [ghaatError, setGhaatError] = useState("");
+
 
   /* boat list */
   const [boats, setBoats] = useState([]);
   const [loadingBoats, setLoadingBoats] = useState(true);
   const [boatsError, setBoatsError] = useState("");
-
-  /* modal */
-  const [showModal, setShowModal] = useState(false);
-  const [selectedBoat, setSelectedBoat] = useState(null);
 
   /* form */
   const emptyForm = {
@@ -46,7 +51,7 @@ const Boats = () => {
     year: "",
     ghat: "",
     authority: "",
-    additionalInfo: ""
+    additionalInfo: "",
   };
   const [form, setForm] = useState(emptyForm);
   const [photoName, setPhotoName] = useState("");
@@ -62,10 +67,13 @@ const Boats = () => {
   const fieldNum = (k) => (e) =>
     setForm((f) => ({
       ...f,
-      [k]: e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value, 10))
+      [k]:
+        e.target.value === ""
+          ? ""
+          : Math.max(0, parseInt(e.target.value, 10)),
     }));
 
-  /* ── Load districts (exactly like Ghaat.jsx) ── */
+  /* ── Load districts ── */
   useEffect(() => {
     (async () => {
       try {
@@ -78,6 +86,21 @@ const Boats = () => {
       }
     })();
   }, []);
+
+  /* ── Load ghaats ── */
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get("/ghaat-list");
+        setGhaats(Array.isArray(res.data.data) ? res.data.data : []);
+      } catch (err) {
+        setGhaatError("Could not load ghaat list.");
+      } finally {
+        setLoadingGhaats(false);
+      }
+    })();
+  }, []);
+
 
   /* ── Load boats ── */
   const loadBoats = useCallback(async () => {
@@ -106,7 +129,7 @@ const Boats = () => {
 
     const fd = new FormData();
     fd.append("registration_no", form.regNumber);
-    fd.append("district", form.district);
+    fd.append("district_id", form.district);
     fd.append("boat_type", form.type);
     fd.append("pilot_name", form.pilotName);
     fd.append("pilot_license_no", form.license);
@@ -114,16 +137,26 @@ const Boats = () => {
     fd.append("engine_details", form.engine);
     fd.append("passenger_capacity", form.capacity);
     fd.append("year_of_manufacture", form.year);
-    fd.append("assigned_ghat", form.ghat);
+    fd.append("ghaat_id", form.ghat);
     fd.append("registration_authority", form.authority);
     fd.append("remarks", form.additionalInfo);
     if (photoFile) fd.append("image", photoFile);
 
+    for (let [key, value] of fd.entries()) {
+      console.log(`${key}:`, value);
+    }
+
     try {
-      const { data } = await api.post("/boats", fd, {
-        headers: { Authorization: `Bearer ${token}` }
+      const { data } = await axios.post(`${BASE_URL}/boats`, fd, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      setAlert({ ok: true, msg: data.message || "Boat registered successfully." });
+
+      setAlert({
+        ok: true,
+        msg: data.message || "Boat registered successfully.",
+      });
       await loadBoats();
       setForm(emptyForm);
       setPhotoName("");
@@ -134,7 +167,7 @@ const Boats = () => {
       if (v?.data && typeof v.data === "object") setErrors(v.data);
       setAlert({
         ok: false,
-        msg: v?.message || "Registration failed. Please review the form."
+        msg: v?.message || "Registration failed. Please review the form.",
       });
     } finally {
       setSaving(false);
@@ -157,31 +190,29 @@ const Boats = () => {
             loadingDistricts,
             districtError,
             districts,
+            loadingGhaats,
+            ghaatError,
+            ghaats,
             photoName,
             setPhotoName,
             setPhotoFile,
             errors,
             alert,
             saving,
-            handleSubmit
+            handleSubmit,
           }}
         />
       ) : (
+        // ─── Boats.jsx (navigate वाला कॉल) ───
         <DirectoryTable
           boats={boats}
           loading={loadingBoats}
           error={boatsError}
-          onView={(b) => {
-            setSelectedBoat(b);
-            setShowModal(true);
-          }}
+          onView={(b) =>
+            navigate(`/dashboard/boats/boatdetails/${b.id}`, { state: b })
+          }
         />
-      )}
 
-      {showModal && selectedBoat && (
-        <Modal onClose={() => setShowModal(false)}>
-          <BoatDetails boat={selectedBoat} />
-        </Modal>
       )}
     </div>
   );
@@ -198,7 +229,7 @@ const Header = () => (
     </h2>
     <p className="text-gray-600 mt-2 max-w-xl mx-auto">
       Register and track rescue boats with comprehensive documentation and
-      real‑time monitoring
+      real-time monitoring
     </p>
   </div>
 );
@@ -208,20 +239,19 @@ const Tabs = ({ view, setView }) => (
   <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10">
     {[
       ["register", <FaPlusCircle key="plus" />, "Register New Boat"],
-      ["directory", <FaListAlt key="list" />, "Boat Directory"]
+      ["directory", <FaListAlt key="list" />, "Boat Directory"],
     ].map(([id, icon, label]) => (
       <button
         key={id}
         onClick={() => setView(id)}
-        className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
-          view === id
-            ? id === "register"
-              ? "bg-green-600 text-white"
-              : "bg-sky-600 text-white"
-            : id === "register"
+        className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === id
+          ? id === "register"
+            ? "bg-green-600 text-white"
+            : "bg-sky-600 text-white"
+          : id === "register"
             ? "bg-white text-green-700 hover:bg-green-50 shadow"
             : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
-        }`}
+          }`}
       >
         {icon} {label}
       </button>
@@ -238,20 +268,25 @@ const RegisterForm = ({
   loadingDistricts,
   districtError,
   districts,
+  loadingGhaats,
+  ghaatError,
+  ghaats,
+
   photoName,
   setPhotoName,
   setPhotoFile,
   errors,
   alert,
   saving,
-  handleSubmit
+  handleSubmit,
 }) => (
   <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border">
     {alert && (
       <div
-        className={`mb-6 text-center py-2 rounded ${
-          alert.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-        }`}
+        className={`mb-6 text-center py-2 rounded ${alert.ok
+          ? "bg-green-100 text-green-700"
+          : "bg-red-100 text-red-700"
+          }`}
       >
         {alert.msg}
       </div>
@@ -265,7 +300,7 @@ const RegisterForm = ({
         </div>
       </div>
       <p className="text-green-800 font-semibold mb-1">
-        Upload Boat Photo (geo‑tag)
+        Upload Boat Photo (geo-tag)
       </p>
       <p className="text-gray-600 text-sm mb-4">
         Capture or upload a photo where the registration number is visible and
@@ -277,12 +312,15 @@ const RegisterForm = ({
         accept="image/*"
         className="hidden"
         onChange={(e) => {
-          if (e.target.files[0]) {
-            setPhotoName(e.target.files[0].name);
-            setPhotoFile(e.target.files[0]);
+          const file = e.target.files[0];
+          if (file) {
+            console.log("Selected file", file); // 👈 Add here
+            setPhotoName(file.name);
+            setPhotoFile(file);
           }
         }}
       />
+
       <label htmlFor="boat-photo">
         <span className="cursor-pointer bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition inline-block">
           Choose Photo
@@ -294,17 +332,20 @@ const RegisterForm = ({
     </div>
 
     {/* form fields */}
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <form
+      onSubmit={handleSubmit}
+      className="grid grid-cols-1 md:grid-cols-2 gap-6"
+    >
       <Input
         label="Registration Number *"
         name="regNumber"
         value={form.regNumber}
         onChange={field("regNumber")}
         error={errors.registration_no}
-        placeholder="UP‑XXX‑000"
+        placeholder="UP-XXX-000"
       />
 
-      {/* District dropdown (identical to Ghaat.jsx) */}
+      {/* District dropdown */}
       <div>
         <label className="text-sm font-medium mb-1">
           District <span className="text-red-500">*</span>
@@ -376,7 +417,7 @@ const RegisterForm = ({
         value={form.engine}
         onChange={field("engine")}
         error={errors.engine_details}
-        placeholder="e.g., 40 HP Yamaha"
+        placeholder="e.g., 40 HP Yamaha"
       />
 
       <Input
@@ -401,13 +442,47 @@ const RegisterForm = ({
         placeholder="YYYY"
       />
 
-      <Input
-        label="Assigned Ghat *"
-        name="ghat"
-        value={form.ghat}
-        onChange={field("ghat")}
-        error={errors.assigned_ghat}
-      />
+
+      <div>
+        <label className="text-sm font-medium mb-1">
+          Ghat <span className="text-red-500">*</span>
+        </label>
+        <select
+          name="ghat"
+          value={form.ghat}
+          onChange={field("ghat")}
+          className={inputClass}
+          disabled={!form.district} // prevent selection until district is selected
+        >
+          {!form.district ? (
+            <option>Please select a district first</option>
+          ) : loadingGhaats ? (
+            <option>Loading…</option>
+          ) : ghaatError ? (
+            <option>{ghaatError}</option>
+          ) : (
+            <>
+              <option value="">Select Ghat</option>
+              {ghaats
+                .filter((g) => g.district_id == form.district) // key line
+                .map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.ghaat_name}
+                  </option>
+                ))}
+            </>
+          )}
+        </select>
+        {errors.ghat && (
+          <p className="text-red-500 text-sm mt-1">{errors.ghat}</p>
+        )}
+      </div>
+
+
+
+
+
+
 
       <Select
         label="Registration Authority *"
@@ -416,9 +491,9 @@ const RegisterForm = ({
         onChange={field("authority")}
         options={[
           "District Collector",
-          "Sub‑Divisional Magistrate",
+          "Sub-Divisional Magistrate",
           "Circle Officer",
-          "Block Development Officer"
+          "Block Development Officer",
         ]}
         error={errors.registration_authority}
       />
@@ -444,9 +519,8 @@ const RegisterForm = ({
         <button
           type="submit"
           disabled={saving}
-          className={`bg-green-600 hover:bg-green-700 text-white font-semibold px-10 py-2 rounded-full transition ${
-            saving && "opacity-50 cursor-not-allowed"
-          }`}
+          className={`bg-green-600 hover:bg-green-700 text-white font-semibold px-10 py-2 rounded-full transition ${saving && "opacity-50 cursor-not-allowed"
+            }`}
         >
           {saving ? "Saving…" : "Register Boat"}
         </button>
@@ -462,7 +536,7 @@ const DirectoryTable = ({ boats, loading, error, onView }) => (
       Registered Boats
     </h3>
     <p className="text-gray-600 text-center mb-6">
-      Complete fleet directory with real‑time status and operational details
+      Complete fleet directory with real-time status and operational details
     </p>
 
     {loading ? (
@@ -476,7 +550,7 @@ const DirectoryTable = ({ boats, loading, error, onView }) => (
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left font-semibold text-gray-700">
-              <th className="px-4 py-3">Reg. No.</th>
+              <th className="px-4 py-3">Reg. No.</th>
               <th className="px-4 py-3">Pilot</th>
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">District</th>
@@ -487,21 +561,29 @@ const DirectoryTable = ({ boats, loading, error, onView }) => (
           </thead>
           <tbody className="divide-y divide-gray-100">
             {boats.map((b) => (
-              <tr key={b.regNumber || b.registration_no} className="hover:bg-gray-50">
+              <tr
+                key={b.regNumber || b.registration_no}
+                className="hover:bg-gray-50"
+              >
                 <td className="px-4 py-2 font-semibold">
                   {b.regNumber || b.registration_no}
                 </td>
                 <td className="px-4 py-2">{b.pilotName || b.pilot_name}</td>
                 <td className="px-4 py-2">{b.type || b.boat_type}</td>
-                <td className="px-4 py-2">{b.district}</td>
-                <td className="px-4 py-2">{b.ghat || b.assigned_ghat}</td>
+                <td className="px-4 py-2">
+                  {b.district?.district_name || "—"}
+                </td>
+                <td className="px-4 py-2">
+                  {b.ghaat?.ghaat_name || "—"}
+                </td>
+
+
                 <td className="px-4 py-2">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      (b.status || "Active") === "Active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${(b.status || "Active") === "Active"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-yellow-100 text-yellow-800"
+                      }`}
                   >
                     {b.status || "Active"}
                   </span>
@@ -523,41 +605,7 @@ const DirectoryTable = ({ boats, loading, error, onView }) => (
   </div>
 );
 
-/* ═════════ Modal ═════════ */
-const Modal = ({ children, onClose }) => (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
-      <button
-        onClick={onClose}
-        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl"
-      >
-        &times;
-      </button>
-      {children}
-    </div>
-  </div>
-);
-
-/* ═════════ Boat Details inside modal ═════════ */
-const BoatDetails = ({ boat }) => (
-  <div>
-    <h3 className="text-xl font-bold mb-4 text-center">Boat Details</h3>
-    <ul className="space-y-1 text-sm max-h-96 overflow-auto pr-2">
-      {Object.entries(boat).map(([key, value]) => (
-        <li key={key} className="flex justify-between border-b py-1">
-          <span className="font-medium capitalize mr-4 whitespace-nowrap">
-            {key.replace(/_/g, " ")}
-          </span>
-          <span className="text-gray-700 text-right break-all flex-1">
-            {String(value)}
-          </span>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
-
-/* ═════════ small inputs (re‑usable) ═════════ */
+/* ═════════ small inputs (re-usable) ═════════ */
 const Input = ({ label, error, ...rest }) => (
   <div>
     <label className="text-sm font-medium mb-1">{label}</label>
