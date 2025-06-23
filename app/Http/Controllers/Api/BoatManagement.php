@@ -87,12 +87,13 @@ class BoatManagement extends Controller
         return ApiResponse::generateResponse('success', 'Boat registered successfully.', $boat);
     }
 
-    public function index()
-    {
-        $boats = RegisterBoat::all();
+public function index()
+{
+    $boats = RegisterBoat::with(['district', 'ghaat'])->get();
 
-        return ApiResponse::generateResponse('success', 'Boat list fetched successfully.', $boats);
-    }
+    return ApiResponse::generateResponse('success', 'Boat list fetched successfully.', $boats);
+}
+
 
 
 public function view_list(Request $request, $id)
