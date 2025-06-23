@@ -22,13 +22,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'role_id',
-        'designation',
-        'status',
-        'district_id'
+        'name', 'email', 'district_id', 'designation', 'role', 'password',
     ];
 
     /**
@@ -56,7 +50,7 @@ class User extends Authenticatable
 
     public function district()
     {
-        return $this->belongsTo(District::class, 'district_id');
+        return $this->belongsTo(District::class);
     }
     
 public function roles()

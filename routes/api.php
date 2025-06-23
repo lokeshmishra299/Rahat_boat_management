@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\InspectionController;
 use App\Http\Controllers\Api\LifeJacketController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\RiverPortManagement;
+use App\Http\Controllers\Api\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [LoginController::class, 'login']);
@@ -51,6 +52,9 @@ Route::middleware('auth:sanctum')->group(function () {
     //Dashboard
 
     Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
+
+    Route::post('/users', [UserManagementController::class, 'store']);
+
 
 
 
