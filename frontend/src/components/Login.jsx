@@ -49,7 +49,7 @@ const Login = () => {
       if (token) {
         localStorage.setItem("access_token", token);
         toast.success("Login successful!");             // ✅ success toast
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
       } else {
         toast.error("Unexpected response – token missing.");
       }
