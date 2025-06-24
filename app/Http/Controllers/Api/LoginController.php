@@ -66,7 +66,7 @@ class LoginController extends Controller
     $user = User::where('email', $request->email)->first();
 
     if (! $user) {
-        return ApiResponse::generateResponse('error', 'Email not found.', null, 404);
+        return ApiResponse::generateResponse('error', 'Please Enter Correct Email ID.', null, 404);
     }
 
     return ApiResponse::generateResponse('success', 'Email found. Proceed to send OTP.');
@@ -117,12 +117,12 @@ public function resetPassword(Request $request)
         'otp' => 'required',
         'password' => 'required|confirmed|min:8',
     ], [
-        'email.required' => 'Email is required.',
+        'email.required' => 'Email is mandatory.',
         'email.email' => 'Enter a valid email.',
         'otp.required' => 'OTP is required.',
-        'password.required' => 'Password is required.',
+        'password.required' => 'Enter correct password.',
         'password.confirmed' => 'Password and Confirm Password do not match.',
-        'password.min' => 'Password must be at least 8 characters.',
+        'password.min' => 'Password must contain at least 8 characters.',
     ]);
 
     $validator->after(function ($validator) use ($request) {

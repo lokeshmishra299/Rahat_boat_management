@@ -38,6 +38,8 @@ class BoatManagement extends Controller
                 'year_of_manufacture' => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
                 'ghaat_id'         => 'required',
                 'registration_authority' => 'required',
+                'location' => 'nullable|string',
+
             ],
             [
                 'registration_no.required' => 'Registration number is required.',
@@ -72,6 +74,10 @@ class BoatManagement extends Controller
             'registration_no'        => $request->registration_no,
             'district_id'            => $request->district_id,
             'image'                  => $imagePath,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'pincode' => $request->pincode,
+            'location' => $request->location,
             'boat_type'              => $request->boat_type,
             'pilot_name'             => $request->pilot_name,
             'pilot_license_no'       => $request->pilot_license_no,
@@ -87,81 +93,88 @@ class BoatManagement extends Controller
         return ApiResponse::generateResponse('success', 'Boat registered successfully.', $boat);
     }
 
-public function index()
-{
-    $boats = RegisterBoat::with(['district', 'ghaat'])->get();
+    public function index()
+    {
+        $boats = RegisterBoat::with(['district', 'ghaat'])->get();
 
-    return ApiResponse::generateResponse('success', 'Boat list fetched successfully.', $boats);
-}
-
-
-
-public function view_list(Request $request, $id)
-{
-    $boat = RegisterBoat::with(['district:id,district_name', 'ghaat:id,ghaat_name'])
-        ->where('id', $id)
-        ->first();
-
-    if (!$boat) {
-        return ApiResponse::generateResponse('error', 'Boat not found.', [], 404);
+        return ApiResponse::generateResponse('success', 'Boat list fetched successfully.', $boats);
     }
 
-    return ApiResponse::generateResponse('success', 'Boat data fetched successfully.', $boat);
-}
+
+
+    public function view_list(Request $request, $id)
+    {
+        $boat = RegisterBoat::with(['district:id,district_name', 'ghaat:id,ghaat_name'])
+            ->where('id', $id)
+            ->first();
+
+        if (!$boat) {
+            return ApiResponse::generateResponse('error', 'Boat not found.', [], 404);
+        }
+
+        return ApiResponse::generateResponse('success', 'Boat data fetched successfully.', $boat);
+    }
 
 
 
     public function edit(Request $request, $id)
-{
-    $boat = RegisterBoat::find($id);
+    {
+        $boat = RegisterBoat::find($id);
 
-    if (!$boat) {
-        return ApiResponse::generateResponse('error', 'Boat not found', [], 404);
+        if (!$boat) {
+            return ApiResponse::generateResponse('error', 'Boat not found', [], 404);
+        }
+
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'district_id'           => 'required|exists:districts,id',
+                'image'                 => 'nullable|image',
+                'boat_type'             => 'required',
+                'pilot_name'            => 'required',
+                'pilot_license_no'      => 'required',
+                'support_staff'         => 'required|integer',
+                'engine_details'        => 'required',
+                'passenger_capacity'    => 'required|integer',
+                'year_of_manufacture'   => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
+                'ghaat_id'              => 'required',
+                'registration_authority' => 'required',
+                'location' => 'nullable|string',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
+                'pincode' => 'nullable|string|max:10',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return ApiResponse::generateResponse('error', 'Validation failed.', $validator->errors(), 422);
+        }
+
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('boats', 'public');
+            $boat->image = $imagePath;
+        }
+
+        $boat->fill($request->only([
+            'district_id',
+            'boat_type',
+            'pilot_name',
+            'latitude',
+            'longitude',
+            'pincode',
+            'location',
+            'pilot_license_no',
+            'support_staff',
+            'engine_details',
+            'passenger_capacity',
+            'year_of_manufacture',
+            'ghaat_id',
+            'registration_authority',
+            'remarks'
+        ]));
+
+        $boat->save();
+
+        return ApiResponse::generateResponse('success', 'Boat details updated successfully.', $boat);
     }
-
-    $validator = Validator::make(
-        $request->all(),
-        [
-            'district_id'           => 'required|exists:districts,id',
-            'image'                 => 'nullable|image',
-            'boat_type'             => 'required',
-            'pilot_name'            => 'required',
-            'pilot_license_no'      => 'required',
-            'support_staff'         => 'required|integer',
-            'engine_details'        => 'required',
-            'passenger_capacity'    => 'required|integer',
-            'year_of_manufacture'   => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
-            'ghaat_id'              => 'required',
-            'registration_authority'=> 'required',
-        ]
-    );
-
-    if ($validator->fails()) {
-        return ApiResponse::generateResponse('error', 'Validation failed.', $validator->errors(), 422);
-    }
-
-    if ($request->hasFile('image')) {
-        $imagePath = $request->file('image')->store('boats', 'public');
-        $boat->image = $imagePath;
-    }
-
-    $boat->fill($request->only([
-        'district_id',
-        'boat_type',
-        'pilot_name',
-        'pilot_license_no',
-        'support_staff',
-        'engine_details',
-        'passenger_capacity',
-        'year_of_manufacture',
-        'ghaat_id',
-        'registration_authority',
-        'remarks'
-    ]));
-
-    $boat->save();
-
-    return ApiResponse::generateResponse('success', 'Boat details updated successfully.', $boat);
-}
-
 }

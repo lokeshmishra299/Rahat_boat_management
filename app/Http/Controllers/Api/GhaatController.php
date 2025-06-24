@@ -124,7 +124,7 @@ class GhaatController extends Controller
 
         $ghats = Ghaat::with('river_record', 'district_record')
             ->withCount('registeredBoats')
-            ->orderBy('id','desc')
+            ->orderBy('id', 'desc')
             ->get();
 
 
@@ -164,6 +164,7 @@ class GhaatController extends Controller
         }
 
         $request->validate([
+            'photo_path' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
             'ghaat_name' => 'required|string',
             'district_id' => 'required|string',
             'river_id' => 'required|exists:rivers,id',
@@ -174,7 +175,10 @@ class GhaatController extends Controller
             'nearest_hospital' => 'required|string',
             'available_facilities' => 'required|string',
             'additional_info' => 'nullable|string',
-            'photo_path' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
+            'location' => 'nullable|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'pincode' => 'nullable|string|max:10',
         ], [
             'ghaat_name.required' => 'Ghaat name is required.',
             'district_id.required' => 'Please select a district.',
@@ -193,8 +197,6 @@ class GhaatController extends Controller
         ]);
 
         $photoPath = $ghaat->photo_path;
-        $latitude = $ghaat->latitude;
-        $longitude = $ghaat->longitude;
 
         if ($request->hasFile('photo_path')) {
             if ($ghaat->photo_path && Storage::disk('public')->exists($ghaat->photo_path)) {
@@ -203,19 +205,14 @@ class GhaatController extends Controller
 
             $image = $request->file('photo_path');
             $photoPath = $image->store('photos', 'public');
-
-            $exif = @exif_read_data($image->getRealPath());
-
-            if ($exif && isset($exif['GPSLatitude'], $exif['GPSLongitude'])) {
-                $latitude = $this->getGps($exif['GPSLatitude'], $exif['GPSLatitudeRef']);
-                $longitude = $this->getGps($exif['GPSLongitude'], $exif['GPSLongitudeRef']);
-            }
         }
 
         $ghaat->update([
             'photo_path' => $photoPath,
-            'latitude' => $latitude,
-            'longitude' => $longitude,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'pincode' => $request->pincode,
+            'location' => $request->location,
             'ghaat_name' => $request->ghaat_name,
             'district_id' => $request->district_id,
             'river_id' => $request->river_id,
