@@ -15,6 +15,8 @@ Route::post('/login', [LoginController::class, 'login']);
 
 Route::post('/forgot-password-check', [LoginController::class, 'forgotPasswordCheck']);
 Route::post('/send-otp', [LoginController::class, 'sendOtp']);
+Route::post('/reset-password', [LoginController::class, 'resetPassword']);
+
 
 
 

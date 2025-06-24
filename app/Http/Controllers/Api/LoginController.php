@@ -90,6 +90,60 @@ public function sendOtp(Request $request)
 }
 
 
+
+
+public function resetPassword(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email',
+        'otp' => 'required',
+        'password' => 'required|confirmed|min:8',
+    ], [
+        'email.required' => 'Email is required.',
+        'email.email' => 'Enter a valid email.',
+        'otp.required' => 'OTP is required.',
+        'password.required' => 'Password is required.',
+        'password.confirmed' => 'Password and Confirm Password do not match.',
+        'password.min' => 'Password must be at least 8 characters.',
+    ]);
+
+    $validator->after(function ($validator) use ($request) {
+        $password = $request->password;
+
+        if (!preg_match('/[A-Z]/', $password)) {
+            $validator->errors()->add('password', 'Password must contain at least one uppercase letter.');
+        }
+        if (!preg_match('/[0-9]/', $password)) {
+            $validator->errors()->add('password', 'Password must contain at least one number.');
+        }
+        if (!preg_match('/[^a-zA-Z0-9]/', $password)) {
+            $validator->errors()->add('password', 'Password must contain at least one special character.');
+        }
+    });
+
+    if ($validator->fails()) {
+        return ApiResponse::generateResponse('error', 'Validation failed.', $validator->errors()->toArray(), 422);
+    }
+
+    $user = User::where('email', $request->email)->first();
+    if (! $user) {
+        return ApiResponse::generateResponse('error', 'Email not found.', null, 404);
+    }
+
+    if ($user->otp !== $request->otp) {
+        return ApiResponse::generateResponse('error', 'Invalid OTP.', null, 403);
+    }
+
+    $user->password = Hash::make($request->password);
+    $user->otp = null;
+    $user->save();
+
+    return ApiResponse::generateResponse('success', 'Password reset successful.');
+}
+
+
+
+
     public function user(Request $request)
     {
         return ApiResponse::generateResponse('success', 'User fetched successfully.', $request->user());
