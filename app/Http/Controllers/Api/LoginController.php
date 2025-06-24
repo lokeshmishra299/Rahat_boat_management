@@ -58,6 +58,38 @@ class LoginController extends Controller
         }
     }
 
+
+    public function forgotPasswordCheck(Request $request)
+{
+    $request->validate(['email' => 'required|email']);
+
+    $user = User::where('email', $request->email)->first();
+
+    if (! $user) {
+        return ApiResponse::generateResponse('error', 'Email not found.', null, 404);
+    }
+
+    return ApiResponse::generateResponse('success', 'Email found. Proceed to send OTP.');
+}
+
+
+public function sendOtp(Request $request)
+{
+    $request->validate(['email' => 'required|email']);
+
+    $user = User::where('email', $request->email)->first();
+
+    if (! $user) {
+        return ApiResponse::generateResponse('error', 'Email not found.', null, 404);
+    }
+
+    $user->otp = '12345'; 
+    $user->save();
+
+    return ApiResponse::generateResponse('success', 'OTP sent successfully.');
+}
+
+
     public function user(Request $request)
     {
         return ApiResponse::generateResponse('success', 'User fetched successfully.', $request->user());

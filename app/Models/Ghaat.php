@@ -15,6 +15,8 @@ class Ghaat extends Model
         'photo_path',
         'latitude',
         'longitude',
+        'location',
+        'pincode',
         'ghaat_name',
         'district_id',
         'river_id',

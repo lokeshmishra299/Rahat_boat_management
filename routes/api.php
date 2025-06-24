@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [LoginController::class, 'login']);
 
+Route::post('/forgot-password-check', [LoginController::class, 'forgotPasswordCheck']);
+Route::post('/send-otp', [LoginController::class, 'sendOtp']);
+
+
+
 Route::middleware('auth:sanctum')->group(function () {
     
     Route::get('/user-profile', [LoginController::class, 'user']);

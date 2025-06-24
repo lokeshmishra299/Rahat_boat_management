@@ -39,6 +39,7 @@ class GhaatController extends Controller
             'nearest_hospital' => 'required|string',
             'available_facilities' => 'required|string',
             'additional_info' => 'nullable|string',
+            'location' => 'nullable|string',
         ], [
             'photo_path.required' => 'Please upload a photo.',
             'photo_path.image' => 'Uploaded file must be an image.',
@@ -62,20 +63,22 @@ class GhaatController extends Controller
         $image = $request->file('photo_path');
         $photoPath = $image->store('photos', 'public');
 
-        $exif = @exif_read_data($image->getRealPath());
+        // $exif = @exif_read_data($image->getRealPath());
 
-        $latitude = null;
-        $longitude = null;
+        // $latitude = null;
+        // $longitude = null;
 
-        if ($exif && isset($exif['GPSLatitude'], $exif['GPSLongitude'])) {
-            $latitude = $this->getGps($exif['GPSLatitude'], $exif['GPSLatitudeRef']);
-            $longitude = $this->getGps($exif['GPSLongitude'], $exif['GPSLongitudeRef']);
-        }
+        // if ($exif && isset($exif['GPSLatitude'], $exif['GPSLongitude'])) {
+        //     $latitude = $this->getGps($exif['GPSLatitude'], $exif['GPSLatitudeRef']);
+        //     $longitude = $this->getGps($exif['GPSLongitude'], $exif['GPSLongitudeRef']);
+        // }
 
         $ghaat = Ghaat::create([
             'photo_path' => $photoPath,
-            'latitude' => $latitude,
-            'longitude' => $longitude,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'pincode' => $request->pincode,
+            'location' => $request->location,
             'ghaat_name' => $request->ghaat_name,
             'district_id' => $request->district_id,
             'river_id' => $request->river_id,
@@ -96,6 +99,7 @@ class GhaatController extends Controller
         );
     }
 
+    /*
     private function getGps($exifCoord, $hemi)
     {
         $degrees = $this->gps2Num($exifCoord[0]);
@@ -112,13 +116,15 @@ class GhaatController extends Controller
         $parts = explode('/', $coordPart);
         if (count($parts) == 1) return floatval($parts[0]);
         return floatval($parts[0]) / floatval($parts[1]);
-    }
+    } 
+    */
 
     public function index()
     {
 
         $ghats = Ghaat::with('river_record', 'district_record')
             ->withCount('registeredBoats')
+            ->orderBy('id','desc')
             ->get();
 
 
@@ -133,18 +139,18 @@ class GhaatController extends Controller
     }
 
 
-public function view_list_individual(Request $request, $id)
-{
-    $ghaat = Ghaat::with(['district_record:id,district_name', 'river_record:id,name'])
-        ->where('id', $id)
-        ->first();
+    public function view_list_individual(Request $request, $id)
+    {
+        $ghaat = Ghaat::with(['district_record:id,district_name', 'river_record:id,name'])
+            ->where('id', $id)
+            ->first();
 
-    if (!$ghaat) {
-        return ApiResponse::generateResponse('error', 'Ghaat not found.', [], 404);
+        if (!$ghaat) {
+            return ApiResponse::generateResponse('error', 'Ghaat not found.', [], 404);
+        }
+
+        return ApiResponse::generateResponse('success', 'Ghaat fetched successfully.', $ghaat);
     }
-
-    return ApiResponse::generateResponse('success', 'Ghaat fetched successfully.', $ghaat);
-}
 
 
 
@@ -157,36 +163,36 @@ public function view_list_individual(Request $request, $id)
             return ApiResponse::generateResponse('error', 'Ghaat not found', [], 404);
         }
 
-            $request->validate([
-        'ghaat_name' => 'required|string',
-        'district_id' => 'required|string',
-        'river_id' => 'required|exists:rivers,id',
-        'boat_capacity' => 'required|integer',
-        'road_accessibility' => 'required|string',
-        'contact_person' => 'required|string',
-        'contact_number' => 'required|string',
-        'nearest_hospital' => 'required|string',
-        'available_facilities' => 'required|string',
-        'additional_info' => 'nullable|string',
-        'photo_path' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
-    ], [
-        'ghaat_name.required' => 'Ghaat name is required.',
-        'district_id.required' => 'Please select a district.',
-        'river_id.required' => 'Please select a river.',
-        'river_id.exists' => 'Selected river is invalid.',
-        'boat_capacity.required' => 'Boat capacity is required.',
-        'boat_capacity.integer' => 'Boat capacity must be a number.',
-        'road_accessibility.required' => 'Please specify road accessibility.',
-        'contact_person.required' => 'Contact person name is required.',
-        'contact_number.required' => 'Contact number is required.',
-        'nearest_hospital.required' => 'Please provide nearest hospital details.',
-        'available_facilities.required' => 'Mention at least one facility.',
-        'photo_path.image' => 'Uploaded file must be an image.',
-        'photo_path.mimes' => 'Photo must be in JPEG or PNG format.',
-        'photo_path.max' => 'Photo should not exceed 5MB in size.',
-    ]);
+        $request->validate([
+            'ghaat_name' => 'required|string',
+            'district_id' => 'required|string',
+            'river_id' => 'required|exists:rivers,id',
+            'boat_capacity' => 'required|integer',
+            'road_accessibility' => 'required|string',
+            'contact_person' => 'required|string',
+            'contact_number' => 'required|string',
+            'nearest_hospital' => 'required|string',
+            'available_facilities' => 'required|string',
+            'additional_info' => 'nullable|string',
+            'photo_path' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
+        ], [
+            'ghaat_name.required' => 'Ghaat name is required.',
+            'district_id.required' => 'Please select a district.',
+            'river_id.required' => 'Please select a river.',
+            'river_id.exists' => 'Selected river is invalid.',
+            'boat_capacity.required' => 'Boat capacity is required.',
+            'boat_capacity.integer' => 'Boat capacity must be a number.',
+            'road_accessibility.required' => 'Please specify road accessibility.',
+            'contact_person.required' => 'Contact person name is required.',
+            'contact_number.required' => 'Contact number is required.',
+            'nearest_hospital.required' => 'Please provide nearest hospital details.',
+            'available_facilities.required' => 'Mention at least one facility.',
+            'photo_path.image' => 'Uploaded file must be an image.',
+            'photo_path.mimes' => 'Photo must be in JPEG or PNG format.',
+            'photo_path.max' => 'Photo should not exceed 5MB in size.',
+        ]);
 
-        $photoPath = $ghaat->photo_path; 
+        $photoPath = $ghaat->photo_path;
         $latitude = $ghaat->latitude;
         $longitude = $ghaat->longitude;
 
