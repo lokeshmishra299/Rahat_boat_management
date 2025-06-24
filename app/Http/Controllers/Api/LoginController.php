@@ -90,6 +90,24 @@ public function sendOtp(Request $request)
 }
 
 
+public function verifyOtp(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'otp' => 'required',
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+
+    if (! $user || $user->otp !== $request->otp) {
+        return ApiResponse::generateResponse('error', 'Invalid OTP.', null, 403);
+    }
+
+    return ApiResponse::generateResponse('success', 'OTP verified successfully.');
+}
+
+
+
 
 
 public function resetPassword(Request $request)
