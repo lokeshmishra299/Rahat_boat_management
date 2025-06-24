@@ -1,6 +1,8 @@
 // src/components/DistrictDashboard.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
+
 
 /* ——— STATUS‑tag colours ——— */
 const STATUS_COLORS = {
@@ -119,12 +121,15 @@ export default function DistrictDashboard() {
       value: counts.total_registered_boats || "‑‑",
       subtitle: "Across all districts",
       dot: "bg-emerald-500",
+      url: "/dashboard/boats",
     },
     {
       label: "Total Ghaats",
       value: counts.total_ghaats || "‑‑",
       subtitle: "River ports operational",
       dot: "bg-purple-500",
+      url: "/dashboard/ghaats",
+
     },
     {
       label: "Avg Completion",
@@ -142,18 +147,28 @@ export default function DistrictDashboard() {
     <div className="space-y-8 p-6 bg-gray-50 min-h-screen">
       {/* —— Metric cards —— */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((m) => (
-          <div key={m.label} className="bg-white rounded-xl shadow p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs uppercase font-medium text-gray-500">{m.label}</p>
-                <p className="text-3xl font-extrabold text-gray-900">{m.value}</p>
+        {metrics.map((m) => {
+          const CardContent = (
+            <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs uppercase font-medium text-gray-500">{m.label}</p>
+                  <p className="text-3xl font-extrabold text-gray-900">{m.value}</p>
+                </div>
+                <span className={`h-3 w-3 rounded-full ${m.dot}`} />
               </div>
-              <span className={`h-3 w-3 rounded-full ${m.dot}`} />
+              <p className="text-xs text-gray-400 mt-1">{m.subtitle}</p>
             </div>
-            <p className="text-xs text-gray-400 mt-1">{m.subtitle}</p>
-          </div>
-        ))}
+          );
+
+          return m.url ? (
+            <Link to={m.url} key={m.label} className="block">
+              {CardContent}
+            </Link>
+          ) : (
+            <div key={m.label}>{CardContent}</div>
+          );
+        })}
       </div>
 
       {/* —— Dashboard table —— */}
@@ -229,9 +244,8 @@ export default function DistrictDashboard() {
                     <td className="py-3 pr-4 whitespace-nowrap">{r.lastUpdate}</td>
                     <td className="py-3 pr-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${
-                          STATUS_COLORS[r.status]
-                        }`}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${STATUS_COLORS[r.status]
+                          }`}
                       >
                         {r.status}
                       </span>
@@ -257,7 +271,7 @@ export default function DistrictDashboard() {
       {/* —— Overview cards —— */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 shadow-md mb-10">
         {/* top performers */}
-        <div className="bg-white rounded-xl shadow p-6">
+        {/* <div className="bg-white rounded-xl shadow p-6">
           <h3 className="text-lg font-semibold mb-1">Top Performing Districts</h3>
           <p className="text-sm text-gray-500 mb-4">Highest completion rates (static sample)</p>
           <div className="space-y-3">
@@ -276,10 +290,9 @@ export default function DistrictDashboard() {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
 
-        {/* needs attention */}
-        <div className="bg-white rounded-xl shadow p-6">
+        {/* <div className="bg-white rounded-xl shadow p-6">
           <h3 className="text-lg font-semibold mb-1">Needs Attention</h3>
           <p className="text-sm text-gray-500 mb-4">Lowest completion rates (static sample)</p>
           <div className="space-y-3">
@@ -298,7 +311,7 @@ export default function DistrictDashboard() {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

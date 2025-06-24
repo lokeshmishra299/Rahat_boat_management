@@ -12,12 +12,19 @@ import Usermanagment from "./components/Usermanagment";
 import Login from "./components/Login";
 import BoatDetail from "./pages/BoatDetail";
 import GhaatDetail from "./pages/GhaatDetail";
+import ForgotPassword from "./pages/ForgotPassword";
+import SendOtp from "./pages/SendOtp";
+import ResetPassword from "./pages/ResetPassword";
 
 const App = () => (
   <Routes>
     {/* public routes */}
     <Route path="/" element={<Login />} />
     <Route path="/login" element={<Login />} />
+  <Route path="/forgot-password" element={<ForgotPassword />} />
+   <Route path="/send-otp" element={<SendOtp />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
 
     {/* protected dashboard area */}
     <Route path="/dashboard" element={<Dashboard />}>
@@ -27,11 +34,11 @@ const App = () => (
     
 {/* id added */}
       <Route path="ghaats" element={<Ghaat />} />
-      <Route path="ghaats/ghaatdetails/:id" element={<GhaatDetail />
-    }
+      <Route path="ghaats/ghaatdetails/:id" element={<GhaatDetail />}
 />
 
-
+{/* forget pass */}
+  {/* <Route path="forgot-password" element={<ForgotPassword />} /> */}
       <Route path="districts" element={<District />} />
       <Route path="life-jackets" element={<LifeJacket />} />
       <Route path="inspection" element={<Inspection />} />

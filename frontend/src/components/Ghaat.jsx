@@ -1,24 +1,23 @@
 // src/components/Ghaat.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaWater, FaPlusCircle, FaListAlt, FaCamera } from "react-icons/fa";
+import Webcam from "react-webcam";
+import { Toaster, toast } from 'react-hot-toast';
 
-/* ------------ API CONFIG ------------ */
 const BASE_URL = "http://localhost:8000/api";
-const token    = localStorage.getItem("access_token");
+const token = localStorage.getItem("access_token");
 
 const api = axios.create({
-  baseURL : BASE_URL,
-  headers : {
-    "Content-Type" : "application/json",
+  baseURL: BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
   },
 });
 
-/* ------------ CONST ------------ */
-const inputClass =
-  "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition";
+const inputClass = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition";
 const statusMap = {
   "0": "Operational",
   "1": "Not Operational",
@@ -26,140 +25,229 @@ const statusMap = {
   "3": "Closed",
 };
 
-/* ==================================== */
 export default function Ghaat() {
+  const [loading, setLoading] = useState(false);
   const [view, setView] = useState("register");
-  const navigate        = useNavigate();
+  const navigate = useNavigate();
 
-  /* ---------- local state ---------- */
-  const [photoFile, photoFileSet] = useState(null);
-  const [photoName, photoNameSet] = useState("");
-  const [coords, coordsSet]       = useState({ lat: "", lon: "" });
+  // Webcam and geolocation states
+  const webcamRef = useRef(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoName, setPhotoName] = useState("");
+  const [coords, setCoords] = useState({ lat: "", lon: "" });
+  const [pincode, setPincode] = useState("");
+  const [locationName, setLocationName] = useState("");
 
-  const [rivers,    riversSet]    = useState([]);
-  const [districts, districtsSet] = useState([]);
-  const [ghaats,    ghaatsSet]    = useState([]);
+  // Data states
+  const [rivers, setRivers] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [ghaats, setGhaats] = useState([]);
 
-  const [formData, formSet] = useState({
-    ghatName           : "",
-    district           : "",
-    riverName          : "",
-    boatCapacity       : "",
-    roadAccessibility  : "",
+  // Form state
+  const [formData, setFormData] = useState({
+    ghatName: "",
+    district: "",
+    riverName: "",
+    boatCapacity: "",
+    roadAccessibility: "",
     availableFacilities: "",
-    contactPerson      : "",
-    contactNumber      : "",
-    nearestHospital    : "",
-    additionalInfo     : "",
+    contactNumber: "",
+    contactPerson: "",
+    nearestHospital: "",
+    additionalInfo: "",
   });
-  const [errors, errorsSet] = useState({});
+  const [errors, setErrors] = useState({});
 
-  /* ---------- fetch dropdown data ---------- */
+  // Webcam capture function
+  const captureFromWebcam = () => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    if (!imageSrc) return;
+
+    const byteString = atob(imageSrc.split(",")[1]);
+    const mimeString = imageSrc.split(",")[0].split(":")[1].split(";")[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const file = new File([blob], "captured.jpg", { type: mimeString });
+
+    setPhotoFile(file);
+    setPhotoName("captured.jpg");
+    setShowCamera(false);
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lon = pos.coords.longitude.toFixed(6);
+      setCoords({ lat, lon });
+
+      const pin = await getPincode(lat, lon);
+      setPincode(pin);
+
+      if (pin) {
+        const loc = await getLocationFromPincode(pin);
+        setLocationName(loc);
+      }
+    });
+  };
+
+  // Helper functions for geolocation
+  async function getPincode(lat, lon) {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+      const data = await res.json();
+      return data.address.postcode || "";
+    } catch {
+      return "";
+    }
+  }
+
+  async function getLocationFromPincode(pincode) {
+    try {
+      const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const data = await res.json();
+      if (data[0].Status === "Success" && data[0].PostOffice?.length > 0) {
+        return `${data[0].PostOffice[0].Name}, ${data[0].PostOffice[0].District}`;
+      }
+      return "N/A";
+    } catch {
+      return "N/A";
+    }
+  }
+
+  // Load initial data
   useEffect(() => {
     (async () => {
       try {
         const { data } = await api.get("/river-list");
-        riversSet(Array.isArray(data.data) ? data.data : []);
-      } catch { riversSet([]); }
+        setRivers(Array.isArray(data.data) ? data.data : []);
+      } catch {
+        setRivers([]);
+      }
 
       try {
         const { data } = await api.get("/district-list");
-        districtsSet(Array.isArray(data.data) ? data.data : []);
-      } catch { districtsSet([]); }
+        setDistricts(Array.isArray(data.data) ? data.data : []);
+      } catch {
+        setDistricts([]);
+      }
     })();
   }, []);
 
-  /* ---------- fetch directory ---------- */
+  // Fetch ghaat list
   const fetchGhaatList = useCallback(async () => {
     try {
       const { data } = await api.get("/ghaat-list");
       const list = Array.isArray(data.data)
-        ? data.data.map(d => ({
-            id           : d.id,
-            name         : d.ghaat_name,
-            district     : d.district_record?.district_name || d.district_id,
-            river        : d.river_record?.name           || d.river_id,
-            boatsAssigned: `${d.registered_boats_count}/${d.boat_capacity}`,
-            capacity     : d.boat_capacity,
-            status       : statusMap[d.status] ?? "Operational",
-            raw          : d,
-          }))
+        ? data.data.map((d) => ({
+          id: d.id,
+          name: d.ghaat_name,
+          district: d.district_record?.district_name || d.district_id,
+          river: d.river_record?.name || d.river_id,
+          boatsAssigned: `${d.registered_boats_count}/${d.boat_capacity}`,
+          capacity: d.boat_capacity,
+          status: statusMap[d.status] ?? "Operational",
+          raw: d,
+        }))
         : [];
-      ghaatsSet(list);
-    } catch { ghaatsSet([]); }
+      setGhaats(list);
+    } catch {
+      setGhaats([]);
+    }
   }, []);
 
-  /* ---------- helpers ---------- */
-  const handleChange  = e =>
-    formSet(f => ({ ...f, [e.target.name]: e.target.value }));
+  // Form handlers
+  const handleChange = (e) => setFormData((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleNumeric = key => e =>
-    formSet(f => ({ ...f, [key]: e.target.value.replace(/\D/g,"").slice(0,10) }));
+  const handleNumeric = (key) => (e) =>
+    setFormData((f) => ({
+      ...f,
+      [key]: e.target.value.replace(/\D/g, "").slice(0, 10),
+    }));
 
-  const askLocation = () =>
-    navigator.geolocation &&
-    navigator.geolocation.getCurrentPosition(pos =>
-      coordsSet({
-        lat: pos.coords.latitude .toFixed(6),
-        lon: pos.coords.longitude.toFixed(6),
-      })
-    );
-
-  /* ---------- submit ---------- */
-  const handleSubmit = async e => {
+  // Form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    errorsSet({});
-    /* simple validation */
-    const required = ["ghatName","district","riverName","boatCapacity",
-                      "roadAccessibility","availableFacilities"];
-    const miss = {};
-    required.forEach(k => !formData[k] && (miss[k] = "Required"));
-    if (formData.contactNumber && formData.contactNumber.length > 10)
-      miss.contactNumber = "Max 10 digits";
-    if (Object.keys(miss).length) return errorsSet(miss);
+    setLoading(true);
+    setErrors({});
 
     const fd = new FormData();
     Object.entries({
-      ghaat_name          : formData.ghatName,
-      district_id         : formData.district,
-      river_id            : formData.riverName,
-      boat_capacity       : formData.boatCapacity,
-      road_accessibility  : formData.roadAccessibility,
+      ghaat_name: formData.ghatName,
+      district_id: formData.district,
+      river_id: formData.riverName,
+      boat_capacity: formData.boatCapacity,
+      road_accessibility: formData.roadAccessibility,
       available_facilities: formData.availableFacilities,
-      contact_person      : formData.contactPerson,
-      contact_number      : formData.contactNumber,
-      nearest_hospital    : formData.nearestHospital,
-      additional_info     : formData.additionalInfo,
-      latitude            : coords.lat,
-      longitude           : coords.lon,
-    }).forEach(([k,v]) => fd.append(k,v));
+      contact_person: formData.contactPerson,
+      contact_number: formData.contactNumber,
+      nearest_hospital: formData.nearestHospital,
+      additional_info: formData.additionalInfo,
+      latitude: coords.lat,
+      longitude: coords.lon,
+      location: locationName,
+      pincode: pincode,
+    }).forEach(([k, v]) => fd.append(k, v));
     if (photoFile) fd.append("photo_path", photoFile);
 
     try {
       await api.post("/register-ghaat", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      alert("Ghaat registered!");
-      /* reset + refresh */
-      formSet({
-        ghatName:"",district:"",riverName:"",boatCapacity:"",roadAccessibility:"",
-        availableFacilities:"",contactPerson:"",contactNumber:"",
-        nearestHospital:"",additionalInfo:"",
+      toast.success("Ghaat registered successfully!");
+      setFormData({
+        ghatName: "",
+        district: "",
+        riverName: "",
+        boatCapacity: "",
+        roadAccessibility: "",
+        availableFacilities: "",
+        contactNumber: "",
+        contactPerson: "",
+        nearestHospital: "",
+        additionalInfo: "",
       });
-      photoFileSet(null); photoNameSet(""); coordsSet({ lat:"", lon:"" });
+      setPhotoFile(null);
+      setPhotoName("");
+      setCoords({ lat: "", lon: "" });
+      setPincode("");
       setView("directory");
       fetchGhaatList();
     } catch (err) {
       const v = err.response?.data;
-      if (v?.data && typeof v.data === "object") errorsSet(v.data);
-      else alert("Registration failed");
+      if (v?.errors && typeof v.errors === "object") {
+        const mapBackendToFrontend = {
+          ghaat_name: "ghatName",
+          district_id: "district",
+          river_id: "riverName",
+          boat_capacity: "boatCapacity",
+          road_accessibility: "roadAccessibility",
+          available_facilities: "availableFacilities",
+          contact_person: "contactPerson",
+          contact_number: "contactNumber",
+          nearest_hospital: "nearestHospital",
+          additional_info: "additionalInfo",
+          photo_path: "photoPath",
+        };
+
+        const mappedErrors = {};
+        for (const [k, vList] of Object.entries(v.errors)) {
+          const frontendKey = mapBackendToFrontend[k] || k;
+          mappedErrors[frontendKey] = vList[0];
+        }
+        setErrors(mappedErrors);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  /* =============== JSX =============== */
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50 to-white px-4 sm:px-12 py-10">
-      {/* ---------- Header ---------- */}
+      <Toaster position="top-right" reverseOrder={false} />
+
       <div className="text-center mb-10">
         <div className="inline-flex items-center justify-center bg-indigo-100 rounded-full p-3 shadow">
           <FaWater className="text-indigo-600 text-2xl" />
@@ -172,7 +260,7 @@ export default function Ghaat() {
         </p>
       </div>
 
-      {/* ---------- Tabs ---------- */}
+      {/* Tabs */}
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10">
         <button
           onClick={() => setView("register")}
@@ -185,7 +273,10 @@ export default function Ghaat() {
           <FaPlusCircle /> Register New Ghaat
         </button>
         <button
-          onClick={() => { setView("directory"); fetchGhaatList(); }}
+          onClick={() => {
+            setView("directory");
+            fetchGhaatList();
+          }}
           className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
             view === "directory"
               ? "bg-sky-600 text-white"
@@ -196,121 +287,228 @@ export default function Ghaat() {
         </button>
       </div>
 
-      {/* ============ REGISTER FORM ============ */}
+      {/* Register View */}
       {view === "register" && (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border grid grid-cols-1 md:grid-cols-3 gap-6"
-        >
-          {/* --- Photo / GPS Block --- */}
-          <div className="md:col-span-3">
-            <div className="bg-indigo-50 border border-dashed border-indigo-300 rounded-lg p-6 text-center">
-              <FaCamera className="text-indigo-500 text-2xl mb-2 mx-auto" />
-              <p className="text-indigo-800 font-semibold mb-1">
-                Upload Ghaat Geotagged Photo
-              </p>
-              <p className="text-gray-600 text-sm">
-                Capture or upload a photo with <strong>GPS coordinates</strong>.
-              </p>
+        <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border">
+          {/* Photo Upload Section */}
+          <div className="bg-indigo-50 border border-dashed border-indigo-300 rounded-lg p-6 text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <div className="bg-white rounded-full p-3 shadow inline-flex">
+                <FaCamera className="text-indigo-500 text-xl" />
+              </div>
             </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-5 mt-4 w-full">
-              {/* Choose Photo */}
-              <label htmlFor="ghaat-photo" className="w-full sm:w-auto">
-                <span className="block text-center cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full font-medium">
-                  Choose Photo
-                </span>
-              </label>
-
-              {/* Open Camera */}
-              <span
-                className="block w-full sm:w-auto text-center cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full font-medium"
-                onClick={() => {
-                  askLocation();
-                  document.getElementById("ghaat-camera").click();
-                }}
+            <p className="text-indigo-800 font-semibold mb-1">
+              Upload Ghaat Photo (Geo-Tag)
+            </p>
+            <p className="text-gray-600 text-sm mb-4">
+              Capture or upload a photo with GPS coordinates
+            </p>
+            
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <button
+                onClick={() => setShowCamera(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full font-medium transition"
               >
-                Open Camera
-              </span>
+                <FaCamera className="inline mr-2" /> Capture Photo
+              </button>
+              
+              <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition inline-block text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setPhotoName(file.name);
+                      setPhotoFile(file);
+                    }
+                  }}
+                />
+                Choose Photo
+              </label>
             </div>
 
             {photoName && (
-              <p className="text-sm text-indigo-700 mt-2 text-center">
-                Selected: {photoName}
-              </p>
+              <p className="text-sm text-indigo-700 mt-2">Selected: {photoName}</p>
             )}
-
-            <input
-              id="ghaat-photo"
-              type="file"
-              accept="image/jpeg, image/png"
-              className="hidden"
-              onChange={e => {
-                const f = e.target.files[0];
-                if (f && /image\/(jpeg|png)/.test(f.type)) {
-                  photoFileSet(f); photoNameSet(f.name); askLocation();
-                } else alert("Only JPEG/PNG allowed");
-              }}
-            />
-            <input
-              id="ghaat-camera"
-              type="file"
-              accept="image/jpeg, image/png"
-              capture="camera"
-              className="hidden"
-              onChange={e => {
-                const f = e.target.files[0];
-                if (f && /image\/(jpeg|png)/.test(f.type)) {
-                  photoFileSet(f); photoNameSet(f.name);
-                } else alert("Only JPEG/PNG allowed");
-              }}
-            />
           </div>
 
-          {/* ----------- Text Inputs ----------- */}
-          <Input label="Ghaat Name *"        name="ghatName"         value={formData.ghatName}         onChange={handleChange}        err={errors.ghatName} />
-          <Select label="District *"         name="district"         value={formData.district}         onChange={handleChange}        err={errors.district}        options={districts.map(d=>({value:d.id,label:d.district_name}))} />
-          <Select label="River *"            name="riverName"        value={formData.riverName}        onChange={handleChange}        err={errors.riverName}       options={rivers   .map(r=>({value:r.id,label:r.name}))} />
-          <Input label="Boat Capacity *"     name="boatCapacity"     value={formData.boatCapacity}     onChange={handleNumeric("boatCapacity")} err={errors.boatCapacity}     type="number" inputMode="numeric" />
-          <Input label="Road Accessibility *"name="roadAccessibility"value={formData.roadAccessibility}onChange={handleChange}        err={errors.roadAccessibility}/>
-          <Input label="Available Facilities *" name="availableFacilities" value={formData.availableFacilities} onChange={handleChange} err={errors.availableFacilities}/>
-          <Input label="Contact Person"      name="contactPerson"    value={formData.contactPerson}    onChange={handleChange}        err={errors.contactPerson}/>
-          <Input label="Contact Number"      name="contactNumber"    value={formData.contactNumber}    onChange={handleNumeric("contactNumber")} err={errors.contactNumber} inputMode="numeric" />
-          <Input label="Nearest Hospital"    name="nearestHospital"  value={formData.nearestHospital}  onChange={handleChange}        err={errors.nearestHospital}  className="md:col-span-2"/>
-          
-          {/* Additional Info textarea */}
-          <div className="md:col-span-3">
-            <label className="block text-sm font-medium mb-1">
-              Additional Info
-            </label>
-            <textarea
-              name="additionalInfo"
-              rows={3}
-              value={formData.additionalInfo}
+          {/* Camera Modal */}
+          {showCamera && (
+            <div className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 p-4">
+              <Webcam
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                className="rounded-lg shadow-lg max-w-full w-96"
+                videoConstraints={{ facingMode: "environment" }}
+              />
+              <button
+                onClick={captureFromWebcam}
+                className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
+              >
+                Capture
+              </button>
+              <button
+                onClick={() => setShowCamera(false)}
+                className="mt-2 text-sm text-white underline"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {/* Location Info */}
+          {(coords.lat || coords.lon) && (
+            <div className="mb-6 p-3 bg-blue-50 rounded-lg text-center">
+              <p className="font-medium text-blue-800">
+                Location: {coords.lat}, {coords.lon} | Pincode: {pincode} | {locationName}
+              </p>
+            </div>
+          )}
+
+          {/* Photo Preview */}
+          {photoFile && (
+            <div className="mb-6 text-center">
+              <img
+                src={URL.createObjectURL(photoFile)}
+                alt="Preview"
+                className="rounded shadow max-w-xs mx-auto"
+              />
+            </div>
+          )}
+
+          {/* Ghaat Registration Form */}
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Input
+              label="Ghaat Name *"
+              name="ghatName"
+              value={formData.ghatName}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^[a-zA-Z\s.-]*$/.test(val)) {
+                  handleChange(e);
+                }
+              }}
+              err={errors.ghatName}
+              placeholder="Enter Ghaat Name"
+            />
+
+            <Select
+              label="District *"
+              name="district"
+              value={formData.district}
               onChange={handleChange}
-              placeholder="Any other details"
-              className={inputClass}
+              err={errors.district}
+              options={districts.map((d) => ({
+                value: d.id,
+                label: d.district_name,
+              }))}
             />
-            {errors.additionalInfo && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.additionalInfo}
-              </p>
-            )}
-          </div>
 
-          {/* Submit */}
-          <div className="md:col-span-3 text-center mt-4">
-            <button
-              type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-2 rounded-full"
-            >
-              Register Ghaat
-            </button>
-          </div>
-        </form>
+            <Select
+              label="River *"
+              name="riverName"
+              value={formData.riverName}
+              onChange={handleChange}
+              err={errors.riverName}
+              options={rivers.map((r) => ({ value: r.id, label: r.name }))}
+            />
+
+            <Input
+              label="Boat Capacity *"
+              name="boatCapacity"
+              value={formData.boatCapacity}
+              onChange={handleNumeric("boatCapacity")}
+              err={errors.boatCapacity}
+              type="number"
+              inputMode="numeric"
+              placeholder="Enter Boat Capacity"
+            />
+
+            <Input
+              label="Road Accessibility *"
+              name="roadAccessibility"
+              value={formData.roadAccessibility}
+              onChange={handleChange}
+              err={errors.roadAccessibility}
+              placeholder="Enter Road Accessibility"
+            />
+
+            <Input
+              label="Available Facilities *"
+              name="availableFacilities"
+              value={formData.availableFacilities}
+              onChange={handleChange}
+              err={errors.availableFacilities}
+              placeholder="Enter Available Facilities"
+            />
+
+            <Input
+              label="Contact Number *"
+              name="contactNumber"
+              value={formData.contactNumber}
+              onChange={handleNumeric("contactNumber")}
+              err={errors.contactNumber}
+              inputMode="numeric"
+              placeholder="Enter Contact Number"
+            />
+
+            <Input
+              label="Contact Person"
+              name="contactPerson"
+              value={formData.contactPerson}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^[a-zA-Z\s]*$/.test(val)) {
+                  handleChange(e);
+                }
+              }}
+              err={errors.contactPerson}
+              placeholder="Enter Contact Person"
+            />
+
+            <Input
+              label="Nearest Hospital"
+              name="nearestHospital"
+              value={formData.nearestHospital}
+              onChange={handleChange}
+              err={errors.nearestHospital}
+              className="md:col-span-2"
+              placeholder="Enter Nearest Hospital"
+            />
+
+            <div className="md:col-span-3">
+              <label className="block text-sm font-medium mb-1">Additional Info</label>
+              <textarea
+                name="additionalInfo"
+                rows={3}
+                value={formData.additionalInfo}
+                onChange={handleChange}
+                placeholder="Enter Any Other Details"
+                className={inputClass}
+              />
+              {errors.additionalInfo && (
+                <p className="text-red-500 text-sm mt-1">{errors.additionalInfo}</p>
+              )}
+            </div>
+
+            <div className="md:col-span-3 text-center mt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-2 rounded-full ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                {loading ? "Saving..." : "Register Ghaat"}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
-      {/* ============ DIRECTORY ============ */}
+      {/* Directory View */}
       {view === "directory" && (
         <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border">
           <h3 className="text-2xl font-bold text-center text-blue-800 mb-4">
@@ -324,24 +522,26 @@ export default function Ghaat() {
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-100 text-gray-700">
                   <tr>
-                    <th className="px-6 py-3 font-semibold">Ghaat Name</th>
-                    <th className="px-6 py-3 font-semibold">District</th>
-                    <th className="px-6 py-3 font-semibold">River</th>
-                    <th className="px-6 py-3 font-semibold">Boats Assigned</th>
-                    <th className="px-6 py-3 font-semibold">Capacity</th>
-                    <th className="px-6 py-3 font-semibold">Status</th>
-                    <th className="px-6 py-3 font-semibold">Actions</th>
+                    <th className="px-6 py-3 font-semibold text-left">#</th>
+                    <th className="px-6 py-3 font-semibold text-left">Ghaat Name</th>
+                    <th className="px-6 py-3 font-semibold text-left">District</th>
+                    <th className="px-6 py-3 font-semibold text-left">River</th>
+                    <th className="px-6 py-3 font-semibold text-left">Boats Assigned</th>
+                    <th className="px-6 py-3 font-semibold text-left">Capacity</th>
+                    <th className="px-6 py-3 font-semibold text-left">Status</th>
+                    <th className="px-6 py-3 font-semibold text-left">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {ghaats.map(g => (
-                    <tr key={g.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">{g.name}</td>
+                  {ghaats.map((g, idx) => (
+                    <tr key={g.id} className="hover:bg-gray-50 transition duration-150">
+                      <td className="px-6 py-4">{idx + 1}</td>
+                      <td className="px-6 py-4 font-semibold text-indigo-700">{g.name}</td>
                       <td className="px-6 py-4">{g.district}</td>
                       <td className="px-6 py-4">{g.river}</td>
-                      <td className="px-6 py-4">{g.boatsAssigned}</td>
-                      <td className="px-6 py-4">{g.capacity}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-center">{g.boatsAssigned}</td>
+                      <td className="px-6 py-4 text-center">{g.capacity}</td>
+                      <td className="px-6 py-4 text-center">
                         <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
                           {g.status}
                         </span>
@@ -370,26 +570,53 @@ export default function Ghaat() {
   );
 }
 
-/* ---------- Tiny reusable input/select ---------- */
-const Input = ({ label, err, className="", ...rest }) => (
-  <div className={className}>
-    <label className="block text-sm font-medium mb-1">{label}</label>
-    <input {...rest} className={inputClass} />
-    {err && <p className="text-red-500 text-sm mt-1">{err}</p>}
-  </div>
-);
+/* ------------ Reusable Inputs ------------ */
+function Input({ label, name, value, onChange, err, type = "text", inputMode, placeholder, className }) {
+  return (
+    <div className={`flex flex-col ${className || ""}`}>
+      <label className="block text-sm font-medium mb-1" htmlFor={name}>
+        {label}
+      </label>
+      <input
+        className={`border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ${
+          err ? "border-red-500" : "border-gray-300"
+        }`}
+        id={name}
+        name={name}
+        value={value}
+        onChange={onChange}
+        type={type}
+        inputMode={inputMode}
+        placeholder={placeholder}
+      />
+      {err && <p className="text-red-500 text-sm mt-1">{err}</p>}
+    </div>
+  );
+}
 
-const Select = ({ label, options, err, ...rest }) => (
-  <div>
-    <label className="block text-sm font-medium mb-1">{label}</label>
-    <select {...rest} className={inputClass}>
-      <option value="">Select</option>
-      {options.map(o =>
-        typeof o === "string"
-          ? <option key={o}>{o}</option>
-          : <option key={o.value} value={o.value}>{o.label}</option>
-      )}
-    </select>
-    {err && <p className="text-red-500 text-sm mt-1">{err}</p>}
-  </div>
-);
+function Select({ label, name, value, onChange, err, options }) {
+  return (
+    <div className="flex flex-col">
+      <label className="block text-sm font-medium mb-1" htmlFor={name}>
+        {label}
+      </label>
+      <select
+        id={name}
+        name={name}
+        className={`border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ${
+          err ? "border-red-500" : "border-gray-300"
+        }`}
+        value={value}
+        onChange={onChange}
+      >
+        <option value="">-- Select --</option>
+        {options.map((opt) => (
+          <option key={opt.value || opt} value={opt.value || opt}>
+            {opt.label || opt}
+          </option>
+        ))}
+      </select>
+      {err && <p className="text-red-500 text-sm mt-1">{err}</p>}
+    </div>
+  );
+}

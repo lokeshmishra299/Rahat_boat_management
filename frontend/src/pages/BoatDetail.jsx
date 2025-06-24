@@ -1,8 +1,9 @@
 // src/pages/BoatDetail.jsx
-import React, { useEffect, useState } from "react";
-import { useParams, useLocation, useNavigate } from "react-router-dom"; // ⬅️ navigate added
+import React, { useEffect, useState, useRef } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaCamera } from "react-icons/fa";
+import Webcam from "react-webcam";
 
 /* ---------- API ---------- */
 const api = axios.create({
@@ -15,7 +16,8 @@ const api = axios.create({
 export default function BoatDetail() {
   const { id } = useParams();
   const { state } = useLocation();
-  const navigate = useNavigate();          // ⬅️ init
+  const navigate = useNavigate();
+  const webcamRef = useRef(null);
 
   const [boat, setBoat] = useState(state || null);
   const [draft, setDraft] = useState(state || {});
@@ -25,9 +27,12 @@ export default function BoatDetail() {
   const [error, setError] = useState("");
   const [errors, setErrors] = useState({});
 
-
   const [imgDraft, setImgDraft] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [coords, setCoords] = useState({ lat: "", lon: "" });
+  const [pincode, setPincode] = useState("");
+  const [locationName, setLocationName] = useState("");
 
   /* ─── fetch on hard-refresh ─── */
   useEffect(() => {
@@ -57,11 +62,62 @@ export default function BoatDetail() {
     });
   }, []);
 
+  // Webcam capture function
+  const captureFromWebcam = () => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    if (!imageSrc) return;
 
+    const byteString = atob(imageSrc.split(",")[1]);
+    const mimeString = imageSrc.split(",")[0].split(":")[1].split(";")[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const file = new File([blob], "captured.jpg", { type: mimeString });
 
-  if (loading) return <p className="p-6">Loading…</p>;
-  if (error) return <p className="p-6 text-red-500">{error}</p>;
-  if (!boat) return null;
+    setImgDraft(file);
+    setShowCamera(false);
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lon = pos.coords.longitude.toFixed(6);
+      setCoords({ lat, lon });
+
+      const pin = await getPincode(lat, lon);
+      setPincode(pin);
+
+      if (pin) {
+        const loc = await getLocationFromPincode(pin);
+        setLocationName(loc);
+      }
+    });
+  };
+
+  // Helper functions for geolocation
+  async function getPincode(lat, lon) {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+      const data = await res.json();
+      return data.address.postcode || "";
+    } catch {
+      return "";
+    }
+  }
+
+  async function getLocationFromPincode(pincode) {
+    try {
+      const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const data = await res.json();
+      if (data[0].Status === "Success" && data[0].PostOffice?.length > 0) {
+        return `${data[0].PostOffice[0].Name}, ${data[0].PostOffice[0].District}`;
+      }
+      return "N/A";
+    } catch {
+      return "N/A";
+    }
+  }
 
   /* ─── save (text fields + optional image) ─── */
   const handleSaveAll = () => {
@@ -69,9 +125,14 @@ export default function BoatDetail() {
 
     const fd = new FormData();
     Object.entries(draft).forEach(([k, v]) => fd.append(k, v ?? ""));
-
     if (imgDraft) fd.set("image", imgDraft);
     else fd.delete("image");
+
+    // Add location data if available
+    if (coords.lat) fd.append("latitude", coords.lat);
+    if (coords.lon) fd.append("longitude", coords.lon);
+    if (pincode) fd.append("pincode", pincode);
+    if (locationName) fd.append("location", locationName);
 
     api
       .post(`/edit-boat-details/${boat.id}`, fd, {
@@ -81,19 +142,17 @@ export default function BoatDetail() {
         if (r.data?.status === "success") {
           setBoat(r.data.data);
           setDraft(r.data.data);
-          navigate("/dashboard/boats");   // ⬅️ redirect on success
+          navigate("/dashboard/boats");
         }
       })
       .catch((err) => {
-
         if (err.response?.data?.status === "error" && err.response?.data?.data) {
           setErrors(err.response.data.data);
         } else {
           alert("Could not save image");
         }
       })
-
-
+      .finally(() => setSaving(false));
   };
 
   /* ─── editable helper ─── */
@@ -120,7 +179,6 @@ export default function BoatDetail() {
     );
   };
 
-
   /* ─── static field helper ─── */
   const Info = ({ label, value }) => (
     <div className="space-y-1">
@@ -131,9 +189,36 @@ export default function BoatDetail() {
     </div>
   );
 
-  /* ───────────────────────── UI ───────────────────────── */
+  if (loading) return <p className="p-6">Loading…</p>;
+  if (error) return <p className="p-6 text-red-500">{error}</p>;
+  if (!boat) return null;
+
   return (
     <div className="max-w-5xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md border space-y-10">
+      {/* Camera Modal */}
+      {showCamera && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 p-4">
+          <Webcam
+            ref={webcamRef}
+            screenshotFormat="image/jpeg"
+            className="rounded-lg shadow-lg max-w-full w-96"
+            videoConstraints={{ facingMode: "environment" }}
+          />
+          <button
+            onClick={captureFromWebcam}
+            className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
+          >
+            Capture
+          </button>
+          <button
+            onClick={() => setShowCamera(false)}
+            className="mt-2 text-sm text-white underline"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="border-b pb-4">
         <h1 className="text-3xl font-bold text-blue-700 mb-1">
@@ -141,11 +226,19 @@ export default function BoatDetail() {
         </h1>
       </div>
 
+      {/* Location Info */}
+      {(coords.lat || coords.lon) && (
+        <div className="p-3 bg-blue-50 rounded-lg text-center">
+          <p className="font-medium text-blue-800">
+            Location: {coords.lat}, {coords.lon} | Pincode: {pincode} | {locationName}
+          </p>
+        </div>
+      )}
+
       {/* Editable Grid */}
       <div>
         <h2 className="text-xl font-semibold mb-4">General Information</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-
           {/* Boat Type Dropdown */}
           <div className="space-y-1">
             <p className="text-xs text-gray-500 uppercase tracking-wide">Boat Type</p>
@@ -186,7 +279,6 @@ export default function BoatDetail() {
             {errors.district_id && (
               <p className="text-sm text-red-500">{errors.district_id[0]}</p>
             )}
-
           </div>
 
           {/* Ghat Dropdown */}
@@ -209,7 +301,6 @@ export default function BoatDetail() {
             {errors.ghaat_id && (
               <p className="text-sm text-red-500">{errors.ghaat_id[0]}</p>
             )}
-
           </div>
 
           {/* Text Inputs */}
@@ -220,11 +311,8 @@ export default function BoatDetail() {
           <Editable label="Passenger Capacity" field="passenger_capacity" error={errors.passenger_capacity} />
           <Editable label="Year of Manufacture" field="year_of_manufacture" error={errors.year_of_manufacture} />
           <Editable label="Registration Authority" field="registration_authority" error={errors.registration_authority} />
-
         </div>
       </div>
-
-
 
       {/* remarks */}
       <div>
@@ -250,13 +338,19 @@ export default function BoatDetail() {
                 className="w-full h-64 object-cover"
               />
             </div>
-
-            <button
-              onClick={() => setImgDraft(null)}
-              className="mt-3 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
-            >
-              Cancel
-            </button>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => setImgDraft(null)}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
+              >
+                Cancel
+              </button>
+              {coords.lat && (
+                <div className="bg-blue-50 px-3 py-2 rounded text-sm text-blue-800">
+                  Location captured
+                </div>
+              )}
+            </div>
           </>
         ) : (
           <>
@@ -278,20 +372,24 @@ export default function BoatDetail() {
               )}
             </div>
 
-            <button
-              onClick={() => document.getElementById("imgInput").click()}
-              className="mt-2 inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
-            >
-              <FaCamera /> Edit
-            </button>
-
-            <input
-              id="imgInput"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => e.target.files[0] && setImgDraft(e.target.files[0])}
-            />
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => setShowCamera(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-medium transition"
+              >
+                <FaCamera /> Capture Photo
+              </button>
+              
+              <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition">
+                <FaCamera /> Upload Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files[0] && setImgDraft(e.target.files[0])}
+                />
+              </label>
+            </div>
           </>
         )}
       </div>

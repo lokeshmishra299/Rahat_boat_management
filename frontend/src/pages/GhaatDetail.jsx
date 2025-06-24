@@ -1,11 +1,11 @@
-// src/pages/GhaatDetail.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaCamera } from "react-icons/fa";
+import ReactWebcam from "react-webcam";
+import { Toaster, toast } from 'react-hot-toast';
 
 
-/* ---------- API ---------- */
 const api = axios.create({
   baseURL: "http://localhost:8000/api",
   headers: localStorage.getItem("access_token")
@@ -13,208 +13,426 @@ const api = axios.create({
     : {},
 });
 
-/* pretty label */
-const prettify = (k) =>
-  k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+const toTitleCase = (str) => {
+  return str.replace(/\w\S*/g, (txt) =>
+    txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+  );
+};
 
 export default function GhaatDetail() {
   const { id } = useParams();
   const { state } = useLocation();
+  const navigate = useNavigate();
 
-  /* --- state --- */
-  const [ghaat, setGhaat]   = useState(state || null);
-  const [draft, setDraft]   = useState(state || null);
-  const [loading, setLoad]  = useState(!state);
-  const [error, setError]   = useState("");
+  const [ghaat, setGhaat] = useState(state || null);
+  const [draft, setDraft] = useState(state || null);
+  const [loading, setLoading] = useState(!state);
+  const [districts, setDistricts] = useState([]);
+  const [rivers, setRivers] = useState([]);
+
+  const [error, setError] = useState("");
   const [errors, setErrors] = useState({});
-
   const [editing, setEditing] = useState(null);
-  const [temp, setTemp]       = useState("");
-
+  const [temp, setTemp] = useState("");
   const [imgDraft, setImgDraft] = useState(null);
-  const [saving, setSaving]     = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  /* --- fetch if hard-refresh --- */
+
+  const [coords, setCoords] = useState({ lat: "", lon: "" });
+  const [pincode, setPincode] = useState("");
+  const [locationName, setLocationName] = useState("");
+
+  const [showCamera, setShowCamera] = useState(false);
+  const webcamRef = useRef(null);
+
+  const getPincode = async (lat, lon) => {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+      const data = await res.json();
+      return data.address.postcode || "";
+    } catch {
+      return "";
+    }
+  };
+
+  const getLocationFromPincode = async (pin) => {
+    try {
+      const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+      const data = await res.json();
+      if (data[0].Status === "Success" && data[0].PostOffice?.length > 0) {
+        const postOffice = data[0].PostOffice[0];
+        return `${postOffice.Name}, ${postOffice.District}`;
+      }
+    } catch {
+      return "";
+    }
+    return "";
+  };
+
+  const captureFromWebcam = () => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    if (!imageSrc) return;
+
+    const byteString = atob(imageSrc.split(",")[1]);
+    const mimeString = imageSrc.split(",")[0].split(":")[1].split(";")[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const file = new File([blob], "captured.jpg", { type: mimeString });
+    setImgDraft(file);
+    setShowCamera(false);
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lon = pos.coords.longitude.toFixed(6);
+      setCoords({ lat, lon });
+
+      const pin = await getPincode(lat, lon);
+      setPincode(pin);
+      let loc = "";
+
+      if (pin) {
+        loc = await getLocationFromPincode(pin);
+        setLocationName(loc);
+      }
+      setDraft((prev) => ({
+        ...prev,
+        latitude: lat,
+        longitude: lon,
+        pincode: pin,
+        location: loc,
+      }));
+
+    });
+  };
+
   useEffect(() => {
     if (state) return;
     api
       .get(`/ghaat-list/${id}`)
-      .then((r) =>
-        r.data?.status === "success"
-          ? (setGhaat(r.data.data), setDraft(r.data.data))
-          : setError("Ghaat not found.")
-      )
+      .then((r) => {
+        if (r.data?.status === "success") {
+          setGhaat(r.data.data);
+          setDraft(r.data.data);
+        } else {
+          setError("Ghaat not found.");
+        }
+      })
       .catch(() => setError("Could not load ghat details."))
-      .finally(() => setLoad(false));
+      .finally(() => setLoading(false));
   }, [id, state]);
 
+
+
+  useEffect(() => {
+    api.get("/district-list")
+      .then(res => {
+        if (res.data?.status === "success") setDistricts(res.data.data);
+      })
+      .catch(() => console.error("Failed to load districts"));
+
+    api.get("/river-list")
+      .then(res => {
+        if (res.data?.status === "success") setRivers(res.data.data);
+      })
+      .catch(() => console.error("Failed to load rivers"));
+  }, []);
+
+  useEffect(() => {
+    if (draft?.latitude && draft?.longitude) {
+      setCoords({ lat: draft.latitude, lon: draft.longitude });
+      getPincode(draft.latitude, draft.longitude).then((pin) => {
+        setPincode(pin);
+        if (pin) {
+          getLocationFromPincode(pin).then(setLocationName);
+        }
+      });
+    }
+  }, [draft?.latitude, draft?.longitude]);
+
   if (loading) return <p className="p-6">Loading…</p>;
-  if (error)   return <p className="p-6 text-red-500">{error}</p>;
-  if (!draft)  return null;
+  if (error) return <p className="p-6 text-red-500">{error}</p>;
+  if (!draft) return null;
 
-  /* ---- edit helpers ---- */
-  const startEdit = (k) => { setEditing(k); setTemp(draft[k] ?? ""); };
-  const commit    = (k) => { setDraft({ ...draft, [k]: temp }); setEditing(null); };
+  const startEdit = (k) => {
+    setEditing(k);
+    setTemp(draft[k] ?? "");
 
-  /* ---- image preview ---- */
-  const saveImage = () => {
-    if (!imgDraft) return;
-    const url = URL.createObjectURL(imgDraft);
-    setDraft({ ...draft, photo_path: url });
-    setImgDraft(null);
-  };
-
-const navigate = useNavigate();
-
-
-const handleSaveAll = () => {
-  setSaving(true);
-  setErrors({});
-
-  const formData = new FormData();
-
-  formData.append("ghaat_name", draft.ghaat_name || "");
-  formData.append("latitude", draft.latitude || "");
-  formData.append("longitude", draft.longitude || "");
-  formData.append("district_id", String(draft.district_id || ""));
-  formData.append("river_id", String(draft.river_id || ""));
-  formData.append("boat_capacity", draft.boat_capacity || "");
-  formData.append("road_accessibility", draft.road_accessibility || "");
-  formData.append("contact_person", draft.contact_person || "");
-  formData.append("contact_number", draft.contact_number || "");
-  formData.append("nearest_hospital", draft.nearest_hospital || "");
-  formData.append("available_facilities", draft.available_facilities || "");
-  formData.append("additional_info", draft.additional_info || "");
-  formData.append("status", draft.status || "0");
-
-  if (imgDraft) {
-    formData.append("photo_path", imgDraft);
-  }
-
-  api
-    .post(`/edit-ghaat-details/${ghaat.id}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    })
-    .then((r) => {
-      if (r.data?.status === "success") {
-        setGhaat(r.data.data);
-        navigate("/dashboard/ghaats");
-      } else if (r.data?.errors) {
-        setErrors(r.data.errors);
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-      alert("Could not save changes");
-    })
-    .finally(() => {
-      setSaving(false);
-    });
+  setErrors((prev) => {
+    const newErrors = { ...prev };
+    delete newErrors[k];
+    return newErrors;
+  });
 };
 
+  const commit = (k) => {
+    setDraft({ ...draft, [k]: temp });
+    setEditing(null);
+  };
 
-  /* ---- cell ---- */
-  const Cell = ({ k, v }) => (
-    <div className="space-y-1">
-      <p className="text-xs uppercase text-gray-500 font-semibold">{prettify(k)}</p>
-      {editing === k ? (
-        <>
-          <input
-            value={temp}
-            onChange={(e) => setTemp(e.target.value)}
-            onBlur={() => commit(k)}
-            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commit(k))}
-            className="w-full bg-white border border-indigo-400 rounded px-3 py-2 text-sm"
-            autoFocus
-          />
-          {errors[k] && <p className="text-xs text-red-500">{errors[k][0]}</p>}
-        </>
-      ) : (
-        <div
-          onClick={() => startEdit(k)}
-          className="bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-800 border cursor-pointer"
-        >
-          {String(v) || "—"}
+  const handleSaveAll = () => {
+    setSaving(true);
+    setErrors({});
+
+    const formData = new FormData();
+    [
+      ["ghaat_name", draft.ghaat_name],
+      ["latitude", draft.latitude],
+      ["longitude", draft.longitude],
+      ["pincode", draft.pincode],
+      ["location", draft.location],
+      ["district_id", draft.district_id],
+      ["river_id", draft.river_id],
+      ["boat_capacity", draft.boat_capacity],
+      ["road_accessibility", draft.road_accessibility],
+      ["contact_person", draft.contact_person],
+      ["contact_number", draft.contact_number],
+      ["nearest_hospital", draft.nearest_hospital],
+      ["available_facilities", draft.available_facilities],
+      ["additional_info", draft.additional_info],
+      ["status", draft.status || "0"],
+    ].forEach(([k, v]) => formData.append(k, v || ""));
+
+    if (imgDraft) formData.append("photo_path", imgDraft);
+
+    api
+      .post(`/edit-ghaat-details/${ghaat.id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => {
+          console.log("API Response:", r.data);
+
+        if (r.data?.status === "success") {
+          setGhaat(r.data.data);
+                toast.success("Ghaat details updated successfully!");
+          navigate("/dashboard/ghaats");
+        } else if (r.data?.errors) {
+              console.log("Validation errors:", r.data.errors);
+
+          setErrors(r.data.errors);
+        }
+      }).catch((err) => {
+  console.log("API error:", err.response?.data);
+  if (err.response?.data?.errors) setErrors(err.response.data.errors);
+})
+      .finally(() => setSaving(false));
+  };
+
+  const EditableCell = ({ k, label, value, districts, rivers, editing, temp, setTemp, startEdit, commit, errors }) => {
+    const isReadOnly = ["location", "pincode", "registered_boats_count"].includes(k);
+    const isNumberOnly = k === "boat_capacity" || k === "contact_number";
+    const isStringOnly = k === "contact_person";
+
+    // District dropdown
+    if (k === "district_id") {
+      return (
+        <div>
+          <p className="text-xs uppercase text-gray-500 font-semibold mb-1">{label}</p>
+          {editing === k ? (
+            <>
+              <select
+                value={temp}
+                onChange={(e) => setTemp(e.target.value)}
+                onBlur={() => commit(k)}
+                className="w-full bg-white border border-indigo-400 rounded px-3 py-2 text-sm"
+                autoFocus
+              >
+                <option value="">Select District</option>
+                {districts.map(d => (
+                  <option key={d.id} value={d.id}>{d.district_name}</option>
+                ))}
+              </select>
+              {errors[k] && <p className="text-xs text-red-500">{errors[k][0]}</p>}
+            </>
+          ) : (
+            <div
+              onClick={() => startEdit(k)}
+              className="bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-800 border cursor-pointer"
+            >
+              {districts.find(d => d.id === value)?.district_name || "—"}
+            </div>
+          )}
         </div>
-      )}
-    </div>
-  );
+      );
+    }
 
-  /* hide from grid */
-  const HIDE = [
-    "id", "latitude", "longitude",       // removed fields
-    "photo_path", "created_at", "updated_at",
-    "district_record", "river_record",
-  ];
+    // River dropdown
+    if (k === "river_id") {
+      return (
+        <div>
+          <p className="text-xs uppercase text-gray-500 font-semibold mb-1">{label}</p>
+          {editing === k ? (
+            <>
+              <select
+                value={temp}
+                onChange={(e) => setTemp(e.target.value)}
+                onBlur={() => commit(k)}
+                className="w-full bg-white border border-indigo-400 rounded px-3 py-2 text-sm"
+                autoFocus
+              >
+                <option value="">Select River</option>
+                {rivers.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+              {errors[k] && <p className="text-xs text-red-500">{errors[k][0]}</p>}
+            </>
+          ) : (
+            <div
+              onClick={() => startEdit(k)}
+              className="bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-800 border cursor-pointer"
+            >
+              {rivers.find(r => r.id === value)?.name || "—"}
+            </div>
+          )}
+        </div>
+      );
+    }
 
-  /* ---- UI ---- */
+// Existing input for other fields
+return (
+  <div>
+    <p className="text-xs uppercase text-gray-500 font-semibold mb-1">{label}</p>
+    {editing === k && !isReadOnly ? (
+      <input
+        type={isNumberOnly ? "number" : "text"}
+        value={temp}
+        onChange={(e) => {
+          const val = e.target.value;
+          if (isNumberOnly) {
+            if (val === "" || /^[0-9\b]+$/.test(val)) {
+              setTemp(val);
+            }
+          } else if (isStringOnly) {
+            if (val === "" || /^[a-zA-Z\s\b]+$/.test(val)) {
+              setTemp(val);
+            }
+          } else if (k === "ghaat_name") {
+    if (val === "" || /^[a-zA-Z\s]+$/.test(val)) {
+      setTemp(val);
+    }
+  }else {
+            setTemp(val);
+          }
+        }}
+        onBlur={() => commit(k)}
+        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commit(k))}
+        className={`w-full bg-white rounded px-3 py-2 text-sm border ${
+          errors[k] ? "border-red-500" : "border-indigo-400"
+        }`}
+        autoFocus
+      />
+    ) : (
+<div
+  onClick={() => !isReadOnly && startEdit(k)}
+  className={`bg-gray-100 rounded-md px-3 py-2 text-sm border ${
+    isReadOnly ? "cursor-default" : "cursor-pointer"
+  } ${!value ? "text-gray-400 " : "text-gray-800"}`}
+  style={{ minHeight: "2.5rem" }}
+>
+  {value || `Enter ${toTitleCase(label)}`}
+</div>
+
+
+    )}
+    {/* Error message always shown if exists */}
+    {errors[k] && <p className="text-xs text-red-500 mt-1">{errors[k][0]}</p>}
+  </div>
+);
+
+  };
+
   return (
     <div className="max-w-5xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md border space-y-10">
-      {/* header */}
       <div className="border-b pb-4">
         <h1 className="text-3xl font-bold text-indigo-700 mb-1">
-          🏞️ Ghaat Details – {draft.ghat_name || `#${draft.id}`}
+          🏜️ Ghaat Details – {draft.ghaat_name}
         </h1>
         <p className="text-sm text-gray-500">Unique ID: {draft.id}</p>
       </div>
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+  <EditableCell k="ghaat_name" label="Ghaat Name" value={draft.ghaat_name} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="location" label="Location" value={draft.location} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="pincode" label="Pincode" value={draft.pincode} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="boat_capacity" label="Boat Capacity" value={draft.boat_capacity} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="road_accessibility" label="Road Accessibility" value={draft.road_accessibility} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="contact_person" label="Contact Person" value={draft.contact_person} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="contact_number" label="Contact Number" value={draft.contact_number} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="nearest_hospital" label="Nearest Hospital" value={draft.nearest_hospital} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="available_facilities" label="Available Facilities" value={draft.available_facilities} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="additional_info" label="Additional Info" value={draft.additional_info} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="registered_boats_count" label="Registered Boats" value={draft.registered_boats_count} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="district_id" label="District" value={draft.district_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="river_id" label="River" value={draft.river_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+</div>
 
-      {/* grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {Object.entries(draft).map(([k, v]) =>
-          HIDE.includes(k) ? null : <Cell key={k} k={k} v={v} />
-        )}
-        <Cell k="district_name" v={draft.district_record?.district_name} />
-        <Cell k="river_name"    v={draft.river_record?.name} />
-      </div>
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-gray-700 mb-3">Ghaat Photo</h2>
 
-      {/* photo */}
-      <div>
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">Ghaat Photo</h2>
-        {imgDraft ? (
-          <>
-            <div className="w-full sm:w-[320px] h-10 border rounded-md overflow-hidden shadow mb-3">
-              <img src={URL.createObjectURL(imgDraft)} alt="Preview" className="w-full h-10 object-cover" />
-            </div>
-            {/* <button onClick={saveImage} className="px-4 py-2 bg-indigo-600 text-white rounded">Save Image</button> */}
-            <button onClick={() => setImgDraft(null)} className="ml-3 px-4 py-2 bg-gray-300 rounded">Cancel</button>
-          </>
-        ) : (
-          <>
-            {draft.photo_path ? (
-              <>
-                <div onClick={() => document.getElementById("photoInput").click()} className="w-full sm:w-[320px] h-64 border rounded-md overflow-hidden shadow cursor-pointer">
-                  <img src={draft.photo_path.startsWith("blob:") ? draft.photo_path : `http://localhost:8000/storage/${draft.photo_path}`} alt="Ghaat" className="w-full h-full object-cover" />
-                </div>
-                <button onClick={() => document.getElementById("photoInput").click()} className="mt-2 inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                  <FaCamera className="text-base" /> Edit
-                </button>
-              </>
-            ) : (
-              <div className="flex flex-col items-start gap-2">
-                <p onClick={() => document.getElementById("photoInput").click()} className="italic text-gray-400 cursor-pointer">
-                  No image available
-                </p>
-                <button onClick={() => document.getElementById("photoInput").click()} className="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                  <FaCamera className="text-base" /> Add Image
-                </button>
-              </div>
-            )}
-            <input
-              id="photoInput"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => e.target.files[0] && setImgDraft(e.target.files[0])}
+        {showCamera && (
+          <div className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 p-4">
+            <ReactWebcam
+              ref={webcamRef}
+              screenshotFormat="image/jpeg"
+              className="rounded-lg shadow-lg max-w-full w-96"
+              videoConstraints={{ facingMode: "environment" }}
             />
-          </>
+            <button
+              onClick={captureFromWebcam}
+              className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
+            >
+              Capture
+            </button>
+            <button
+              onClick={() => setShowCamera(false)}
+              className="mt-2 text-sm text-white underline"
+            >
+              Cancel
+            </button>
+          </div>
         )}
+
+        {imgDraft ? (
+          <img
+            src={URL.createObjectURL(imgDraft)}
+            alt="Preview"
+            className="w-full sm:w-[320px] h-64 object-cover rounded shadow border mb-3"
+          />
+        ) : draft.photo_path ? (
+          <img
+            src={`http://localhost:8000/storage/${draft.photo_path}`}
+            alt="Ghaat"
+            className="w-full sm:w-[320px] h-64 object-cover rounded shadow border mb-3"
+          />
+        ) : (
+          <p className="italic text-gray-400 mb-2">No image available</p>
+        )}
+
+        <button
+          onClick={() => setShowCamera(true)}
+          className="mt-2 inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+        >
+          <FaCamera className="text-base" /> Open Camera
+        </button>
+
+        <div className="mt-3 text-sm text-gray-600">
+          <p>Latitude: <span className="font-medium">{coords.lat}</span></p>
+          <p>Longitude: <span className="font-medium">{coords.lon}</span></p>
+          <p>Pincode: <span className="font-medium">{pincode}</span></p>
+          <p>Location: <span className="font-medium">{locationName}</span></p>
+        </div>
       </div>
 
-      {/* save */}
       <div className="pt-4 border-t flex justify-center">
-        <button onClick={handleSaveAll} disabled={saving} className="px-6 py-3 bg-indigo-600 text-white rounded font-medium disabled:opacity-50">
+        <button
+          onClick={handleSaveAll}
+          disabled={saving}
+          className="px-6 py-3 bg-indigo-600 text-white rounded font-medium disabled:opacity-50"
+        >
           {saving ? "Saving…" : "Save Changes"}
         </button>
       </div>

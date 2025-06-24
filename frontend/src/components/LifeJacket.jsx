@@ -13,7 +13,6 @@ const api = axios.create({
   },
 });
 
-/* ───────────────────────────────────────────────────────── */
 export default function LifeJacket() {
   const [tab, setTab] = useState("record");
   const [reload, setReload] = useState(false);
