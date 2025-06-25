@@ -33,4 +33,9 @@ class BoatInspection extends Model
     {
         return $this->belongsTo(RegisterBoat::class, 'register_boat_id');
     }
+
+    public function getInspectionDateAttribute($value)
+{
+    return \Carbon\Carbon::parse($value)->format('Y-m-d');
+}
 }

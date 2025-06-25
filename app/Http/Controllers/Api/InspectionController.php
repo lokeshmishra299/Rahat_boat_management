@@ -93,6 +93,29 @@ class InspectionController extends Controller
     );
 }
 
+
+
+public function getBoatIdByRegistration(Request $request)
+{
+    $request->validate([
+        'registration_no' => 'required|string'
+    ]);
+
+    $boat = RegisterBoat::where('registration_no', $request->registration_no)->first();
+
+    if (!$boat) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Boat not found',
+        ], 404);
+    }
+
+    return response()->json([
+        'status' => 'success',
+        'data' => ['id' => $boat->id],
+    ]);
+}
+
 public function view_inspection(){
 
     $inspection=BoatInspection::with('boat.district')->get();
@@ -103,7 +126,7 @@ public function view_inspection(){
 
 public function view_inspection_by_id($id)
 {
-    $inspection = BoatInspection::with('boat.district')->find($id);
+    $inspection = BoatInspection::with('boat.ghaat','boat.district')->find($id);
 
     if (!$inspection) {
         return ApiResponse::generateResponse(
