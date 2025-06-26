@@ -13,16 +13,19 @@ class UserManagementController extends Controller
     public function store(Request $request)
 {
     $validator = Validator::make($request->all(), [
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email',
-        'district_id' => 'required|exists:districts,id',
-        'designation' => 'nullable|string|max:255',
-        'role' => 'required|string|in:admin,user',
-        'password' => 'required|string|min:6|confirmed',
+        'name'           => 'required|string|max:255',
+        'email'          => 'required|email|unique:users,email',
+        'district_id'    => 'required|exists:districts,id',
+        'designation_id' => 'required|exists:designations,id',
+        'role_id'        => 'required|exists:roles,id',
+        'password'       => 'required|string|min:6|confirmed',
     ], [
         'district_id.required' => 'District is required.',
-        'district_id.exists' => 'Selected district does not exist.',
-        'password.confirmed' => 'Passwords do not match.',
+        'district_id.exists'   => 'Selected district does not exist.',
+
+        'designation_id.required' => 'Designation is required.',
+        'district_id.exists'   => 'Selected designation does not exist.',
+        'password.confirmed'   => 'Passwords do not match.',
     ]);
 
     if ($validator->fails()) {

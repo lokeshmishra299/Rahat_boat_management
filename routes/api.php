@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\InspectionController;
 use App\Http\Controllers\Api\LifeJacketController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\RiverPortManagement;
+use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -66,6 +67,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
 
     Route::post('/users', [UserManagementController::class, 'store']);
+
+    Route::post('/roles', [RoleController::class, 'store_roles']);
+    Route::get('/roles', [RoleController::class, 'view_roles']);
+    Route::put('/roles/{id}', [RoleController::class, 'update']);
+    Route::delete('/roles/{id}', [RoleController::class, 'destroy']);
+
+    Route::get('/designation',[RoleController::class,'designation']);
+
+    // Route::post('/resister-user',[])
+
+
 
 
 
