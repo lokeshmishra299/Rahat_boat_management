@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaShip, FaListAlt, FaPlusCircle, FaCamera } from "react-icons/fa";
+import { FaShip, FaEdit, FaEye, FaListAlt, FaPlusCircle, FaCamera } from "react-icons/fa";
 import Webcam from "react-webcam";
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -20,7 +20,7 @@ const api = axios.create({
 const Boats = () => {
   const navigate = useNavigate();
   const [view, setView] = useState("register");
-  
+
   // Webcam and geolocation states
   const webcamRef = useRef(null);
   const [showCamera, setShowCamera] = useState(false);
@@ -65,8 +65,20 @@ const Boats = () => {
   const [errors, setErrors] = useState({});
 
   const inputClass = "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500";
-  const field = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const fieldNum = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value, 10)) }));
+
+  const field = (k) => (e) => {
+    const value = e.target.value;
+
+    if (k === "pilotName" && /[^a-zA-Z\s]/.test(value)) return;
+
+    setForm((f) => ({ ...f, [k]: value }));
+  };
+
+  const fieldNum = (k) => (e) =>
+    setForm((f) => ({
+      ...f,
+      [k]: e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value, 10)),
+    }));
 
   // Webcam capture function
   const captureFromWebcam = () => {
@@ -238,11 +250,10 @@ const Boats = () => {
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10">
         <button
           onClick={() => setView("register")}
-          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
-            view === "register"
-              ? "bg-green-600 text-white"
-              : "bg-white text-green-700 hover:bg-green-50 shadow"
-          }`}
+          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "register"
+            ? "bg-green-600 text-white"
+            : "bg-white text-green-700 hover:bg-green-50 shadow"
+            }`}
         >
           <FaPlusCircle /> Register New Boat
         </button>
@@ -251,11 +262,10 @@ const Boats = () => {
             setView("directory");
             loadBoats();
           }}
-          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
-            view === "directory"
-              ? "bg-sky-600 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
-          }`}
+          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "directory"
+            ? "bg-sky-600 text-white"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
+            }`}
         >
           <FaListAlt /> Boat Directory
         </button>
@@ -300,7 +310,7 @@ const Boats = () => {
             <p className="text-gray-600 text-sm mb-4">
               Capture or upload a photo with GPS coordinates
             </p>
-            
+
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <button
                 onClick={() => setShowCamera(true)}
@@ -308,7 +318,7 @@ const Boats = () => {
               >
                 <FaCamera className="inline mr-2" /> Capture Photo
               </button>
-              
+
               <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition inline-block text-center">
                 <input
                   type="file"
@@ -368,6 +378,7 @@ const Boats = () => {
                 name="district"
                 value={form.district}
                 onChange={field("district")}
+                error={errors.district_id}
                 className={inputClass}
               >
                 {loadingDistricts ? (
@@ -385,8 +396,8 @@ const Boats = () => {
                   </>
                 )}
               </select>
-              {errors.district && (
-                <p className="text-red-500 text-sm mt-1">{errors.district}</p>
+              {errors.district_id && (
+                <p className="text-red-500 text-sm mt-1">{errors.district_id}</p>
               )}
             </div>
 
@@ -409,7 +420,7 @@ const Boats = () => {
             />
 
             <Input
-              label="Pilot License Number"
+              label="Pilot License Number *"
               name="license"
               value={form.license}
               onChange={field("license")}
@@ -433,12 +444,12 @@ const Boats = () => {
               name="engine"
               value={form.engine}
               onChange={field("engine")}
-              error={errors.engine_details}
+              // error={errors.engine_details}
               placeholder="Enter Engine Details"
             />
 
             <Input
-              label="Passenger Capacity"
+              label="Passenger Capacity *"
               name="capacity"
               type="number"
               min="0"
@@ -488,8 +499,8 @@ const Boats = () => {
                   </>
                 )}
               </select>
-              {errors.ghat && (
-                <p className="text-red-500 text-sm mt-1">{errors.ghat}</p>
+              {errors.ghaat_id && (
+                <p className="text-red-500 text-sm mt-1">{errors.ghaat_id}</p>
               )}
             </div>
 
@@ -526,9 +537,8 @@ const Boats = () => {
               <button
                 type="submit"
                 disabled={saving}
-                className={`bg-green-600 hover:bg-green-700 text-white font-semibold px-10 py-2 rounded-full transition ${
-                  saving ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className={`bg-green-600 hover:bg-green-700 text-white font-semibold px-10 py-2 rounded-full transition ${saving ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
               >
                 {saving ? "Saving..." : "Register Boat"}
               </button>
@@ -552,7 +562,7 @@ const Boats = () => {
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                   <tr className="text-left font-semibold text-gray-700">
-                    <th className="px-4 py-3">#</th>
+                    <th className="px-4 py-3">Sr.No</th>
                     <th className="px-4 py-3">Reg. No.</th>
                     <th className="px-4 py-3">Pilot</th>
                     <th className="px-4 py-3">Type</th>
@@ -575,27 +585,42 @@ const Boats = () => {
                       </td>
                       <td className="px-4 py-2">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            boat.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${boat.status === "Active"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                            }`}
                         >
                           {boat.status || "Active"}
                         </span>
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-2 flex gap-3">
+                        {/* View button */}
+                        <button
+                          onClick={() =>
+                            navigate(`/dashboard/boats/boatdetailsone/${boat.id}`, {
+                              state: { ...boat, readOnly: true },
+                            })
+                          }
+                          className="text-sky-600 hover:text-sky-800"
+                          title="View"
+                        >
+                          <FaEye className="text-lg" />
+                        </button>
+
+                        {/* Edit button */}
                         <button
                           onClick={() =>
                             navigate(`/dashboard/boats/boatdetails/${boat.id}`, {
                               state: boat,
                             })
                           }
-                          className="text-sky-600 hover:underline"
+                          className="text-green-600 hover:text-green-800"
+                          title="Edit"
                         >
-                          View Details
+                          <FaEdit className="text-lg" />
                         </button>
                       </td>
+
                     </tr>
                   ))}
                 </tbody>

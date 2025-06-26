@@ -101,7 +101,7 @@ const Header = () => {
             onClick={() => setOpenMenu((p) => !p)}
             className="border px-4 py-1 rounded-md hover:bg-gray-100 transition text-sm font-medium"
           >
-            Settings
+            Admin
           </button>
 
           {/* Dropdown */}

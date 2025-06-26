@@ -5,6 +5,8 @@ import axios from "axios";
 import { FaWater, FaPlusCircle, FaListAlt, FaCamera } from "react-icons/fa";
 import Webcam from "react-webcam";
 import { Toaster, toast } from 'react-hot-toast';
+import { FaEye, FaEdit } from "react-icons/fa";
+
 
 const BASE_URL = "http://localhost:8000/api";
 const token = localStorage.getItem("access_token");
@@ -264,11 +266,10 @@ export default function Ghaat() {
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10">
         <button
           onClick={() => setView("register")}
-          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
-            view === "register"
+          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "register"
               ? "bg-indigo-600 text-white"
               : "bg-white text-indigo-700 hover:bg-indigo-50 shadow"
-          }`}
+            }`}
         >
           <FaPlusCircle /> Register New Ghaat
         </button>
@@ -277,11 +278,10 @@ export default function Ghaat() {
             setView("directory");
             fetchGhaatList();
           }}
-          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
-            view === "directory"
+          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "directory"
               ? "bg-sky-600 text-white"
               : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
-          }`}
+            }`}
         >
           <FaListAlt /> Ghaat Directory
         </button>
@@ -303,7 +303,7 @@ export default function Ghaat() {
             <p className="text-gray-600 text-sm mb-4">
               Capture or upload a photo with GPS coordinates
             </p>
-            
+
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <button
                 onClick={() => setShowCamera(true)}
@@ -311,7 +311,7 @@ export default function Ghaat() {
               >
                 <FaCamera className="inline mr-2" /> Capture Photo
               </button>
-              
+
               <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition inline-block text-center">
                 <input
                   type="file"
@@ -464,7 +464,7 @@ export default function Ghaat() {
                   handleChange(e);
                 }
               }}
-              err={errors.contactPerson}
+              // err={errors.contactPerson}
               placeholder="Enter Contact Person"
             />
 
@@ -473,7 +473,7 @@ export default function Ghaat() {
               name="nearestHospital"
               value={formData.nearestHospital}
               onChange={handleChange}
-              err={errors.nearestHospital}
+              // err={errors.nearestHospital}
               className="md:col-span-2"
               placeholder="Enter Nearest Hospital"
             />
@@ -497,9 +497,8 @@ export default function Ghaat() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-2 rounded-full ${
-                  loading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-2 rounded-full ${loading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
               >
                 {loading ? "Saving..." : "Register Ghaat"}
               </button>
@@ -522,42 +521,57 @@ export default function Ghaat() {
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-100 text-gray-700">
                   <tr>
-                    <th className="px-6 py-3 font-semibold text-left">#</th>
-                    <th className="px-6 py-3 font-semibold text-left">Ghaat Name</th>
-                    <th className="px-6 py-3 font-semibold text-left">District</th>
-                    <th className="px-6 py-3 font-semibold text-left">River</th>
-                    <th className="px-6 py-3 font-semibold text-left">Boats Assigned</th>
-                    <th className="px-6 py-3 font-semibold text-left">Capacity</th>
-                    <th className="px-6 py-3 font-semibold text-left">Status</th>
-                    <th className="px-6 py-3 font-semibold text-left">Actions</th>
+                    <th className="px-6 py-3 font-semibold text-center">Sr.No</th>
+                    <th className="px-6 py-3 font-semibold text-center">Ghaat Name</th>
+                    <th className="px-6 py-3 font-semibold text-center">District</th>
+                    <th className="px-6 py-3 font-semibold text-center">River</th>
+                    <th className="px-6 py-3 font-semibold text-center">Boats Assigned</th>
+                    <th className="px-6 py-3 font-semibold text-center">Capacity</th>
+                    <th className="px-6 py-3 font-semibold text-center">Status</th>
+                    <th className="px-6 py-3 font-semibold text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {ghaats.map((g, idx) => (
                     <tr key={g.id} className="hover:bg-gray-50 transition duration-150">
-                      <td className="px-6 py-4">{idx + 1}</td>
-                      <td className="px-6 py-4 font-semibold text-indigo-700">{g.name}</td>
-                      <td className="px-6 py-4">{g.district}</td>
-                      <td className="px-6 py-4">{g.river}</td>
+                      <td className="px-6 py-4 text-center">{idx + 1}</td>
+                      <td className="px-6 py-4 font-semibold text-center">{g.name}</td>
+                      <td className="px-6 py-4 text-center">{g.district}</td>
+                      <td className="px-6 py-4 text-center">{g.river}</td>
                       <td className="px-6 py-4 text-center">{g.boatsAssigned}</td>
                       <td className="px-6 py-4 text-center">{g.capacity}</td>
                       <td className="px-6 py-4 text-center">
-                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-green-700 text-center">
                           {g.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() =>
-                            navigate(`/dashboard/ghaats/ghaatdetails/${g.id}`, {
-                              state: g.raw,
-                            })
-                          }
-                          className="text-indigo-600 hover:underline"
-                        >
-                          View Details
-                        </button>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex gap-4 justify-center">
+                          {/* VIEW */}
+                          <button
+                            onClick={() =>
+                              navigate(`/dashboard/ghaats/ghaatdetailsview/${g.id}`, {
+                                state: { ...g.raw, readOnly: true },
+                              })
+                            }
+                            className="flex items-center gap-1  text-indigo-600 hover:underline"
+                          >
+                            <FaEye />
+                          </button>
+
+                          {/* EDIT */}
+                          <button
+                            onClick={() =>
+                              navigate(`/dashboard/ghaats/ghaatdetails/${g.id}`, { state: g.raw })
+                            }
+                            className="flex items-center gap-1 text-emerald-600 hover:underline"
+                          >
+                            <FaEdit />
+                          </button>
+                        </div>
                       </td>
+
+
                     </tr>
                   ))}
                 </tbody>
@@ -578,9 +592,7 @@ function Input({ label, name, value, onChange, err, type = "text", inputMode, pl
         {label}
       </label>
       <input
-        className={`border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ${
-          err ? "border-red-500" : "border-gray-300"
-        }`}
+        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
         id={name}
         name={name}
         value={value}
@@ -603,9 +615,8 @@ function Select({ label, name, value, onChange, err, options }) {
       <select
         id={name}
         name={name}
-        className={`border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ${
-          err ? "border-red-500" : "border-gray-300"
-        }`}
+        className={`border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ${err ? "border-red-500" : "border-gray-300"
+          }`}
         value={value}
         onChange={onChange}
       >

@@ -155,29 +155,58 @@ export default function BoatDetail() {
       .finally(() => setSaving(false));
   };
 
-  /* ─── editable helper ─── */
-  const Editable = ({ label, field, error }) => {
-    const [val, setVal] = useState(draft[field] ?? "");
+const Editable = ({ label, field, error }) => {
+  const isNumberOnly = ["support_staff", "passenger_capacity", "year_of_manufacture"].includes(field);
+  const isSelect = field === "registration_authority";
+  const isTextOnly = field === "pilot_name";
 
-    useEffect(() => setVal(draft[field] ?? ""), [draft, field]);
+  const handleChange = (e) => {
+    let value = e.target.value;
 
-    const commit = () => setDraft((p) => ({ ...p, [field]: val }));
+    if (isTextOnly && /[^a-zA-Z\s]/.test(value)) return; // only letters and spaces
 
-    return (
-      <div className="space-y-1">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
-        <input
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commit())}
-          className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm"
-          autoComplete="off"
-        />
-        {error && <p className="text-sm text-red-500">{error[0]}</p>}
-      </div>
-    );
+    setDraft((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
+
+  return (
+    <div>
+      <label className="text-sm font-medium mb-1 block">{label}</label>
+
+      {isSelect ? (
+        <select
+          name={field}
+          value={draft[field] || ""}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          <option value="">Select</option>
+          {[
+            "District Collector",
+            "Sub-Divisional Magistrate",
+            "Circle Officer",
+            "Block Development Officer",
+          ].map((option) => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type={isNumberOnly ? "number" : "text"}
+          name={field}
+          value={draft[field] || ""}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+      )}
+
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    </div>
+  );
+};
+
 
   /* ─── static field helper ─── */
   const Info = ({ label, value }) => (

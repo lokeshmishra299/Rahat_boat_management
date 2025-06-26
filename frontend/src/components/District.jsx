@@ -207,63 +207,58 @@ export default function DistrictDashboard() {
         {/* table */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="border-b text-gray-500">
+            <thead className="bg-gray-100 text-xs text-gray-600 uppercase">
               <tr>
-                {["District", "Boats", "Ghaats", "Completion", "Last Update", "Status", "Actions"].map((h) => (
-                  <th key={h} className="py-3 pr-4 font-medium">
-                    {h}
-                  </th>
-                ))}
+                <th className="text-left px-4 py-3">District</th>
+                <th className="text-center px-4 py-3">Boats</th>
+                <th className="text-center px-4 py-3">Ghaats</th>
+                <th className="text-center px-4 py-3">Completion</th>
+                <th className="text-center px-4 py-3">Last Update</th>
+                <th className="text-center px-4 py-3">Status</th>
+                <th className="text-center px-4 py-3">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {loading && (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center">
-                    Loading…
-                  </td>
-                </tr>
-              )}
 
-              {!loading &&
-                filteredRows.map((r) => (
-                  <tr key={r.district} className="border-b last:border-0">
-                    <td className="py-3 pr-4 font-medium text-gray-800">{r.district}</td>
-                    <td className="py-3 pr-4">{r.boats}</td>
-                    <td className="py-3 pr-4">{r.ghaats}</td>
-                    <td className="py-3 pr-4 w-48">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-gray-700 min-w-[2.5rem]">
-                          {r.completion}%
-                        </span>
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                          <div className="bg-gray-800 h-2 rounded-full" style={{ width: `${r.completion}%` }} />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4 whitespace-nowrap">{r.lastUpdate}</td>
-                    <td className="py-3 pr-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${STATUS_COLORS[r.status]
-                          }`}
-                      >
-                        {r.status}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <button className="text-blue-600 hover:underline font-medium">View Details</button>
-                    </td>
-                  </tr>
-                ))}
+<tbody className="text-sm text-gray-800">
+  {loading && (
+    <tr>
+      <td colSpan={7} className="text-center py-6">Loading…</td>
+    </tr>
+  )}
 
-              {!loading && filteredRows.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-gray-500">
-                    No districts match your criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
+  {!loading &&
+    filteredRows.map((r) => (
+      <tr key={r.district} className="border-t">
+        <td className="px-4 py-3 text-left font-medium">{r.district}</td>
+        <td className="px-4 py-3 text-center">{r.boats}</td>
+        <td className="px-4 py-3 text-center">{r.ghaats}</td>
+        <td className="px-4 py-3 text-center">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-xs font-semibold">{r.completion}%</span>
+            <div className="flex-1 bg-gray-200 rounded-full h-2 w-24">
+              <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${r.completion}%` }} />
+            </div>
+          </div>
+        </td>
+        <td className="px-4 py-3 text-center whitespace-nowrap">{r.lastUpdate}</td>
+        <td className="px-4 py-3 text-center">
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[r.status]}`}>
+            {r.status}
+          </span>
+        </td>
+        <td className="px-4 py-3 text-center">
+          <button className="text-blue-600 hover:underline font-medium">View Details</button>
+        </td>
+      </tr>
+    ))}
+
+  {!loading && filteredRows.length === 0 && (
+    <tr>
+      <td colSpan={7} className="text-center py-6 text-gray-500">No matching districts found.</td>
+    </tr>
+  )}
+</tbody>
+
           </table>
         </div>
       </div>

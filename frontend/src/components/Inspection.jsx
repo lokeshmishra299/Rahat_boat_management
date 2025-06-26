@@ -64,7 +64,7 @@ const checklistItems = [
 
 const ConductForm = () => {
   const [form, setForm] = useState({
-    boat_registration_number: "",
+    register_boat_id: "",
     inspection_date: "",
     inspector_name: "",
     inspector_id: "",
@@ -95,14 +95,46 @@ const handleSubmit = async (e) => {
   e.preventDefault();
   setAlert(null);
   setLoading(true);
+  setFormErrors({});
+
   try {
-    await api.post("/conduct-inspection", form);
+    // Step 1: Lookup ID by registration number
+    const lookupRes = await api.post("/boat-id-lookup", {
+      registration_no: form.register_boat_id,
+    });
+
+    const boatId = lookupRes.data?.data?.id;
+
+    if (!boatId) {
+      setAlert({ ok: false, msg: "Boat ID not found for given registration number." });
+      setLoading(false);
+      return;
+    }
+
+    // Step 2: Prepare payload with actual boat ID
+    const payload = {
+      ...form,
+      register_boat_id: boatId, // ✅ use ID, not registration no
+    };
+
+    // Step 3: Submit inspection
+    await api.post("/conduct-inspection", payload);
+
     setAlert({ ok: true, msg: "Inspection saved successfully!" });
     setFormErrors({});
+    setForm((f) => ({
+      ...f,
+      inspection_date: "",
+      inspector_name: "",
+      inspector_id: "",
+      recommendations: "",
+      inspection_remarks: "",
+      inspection_checklist: [],
+    }));
   } catch (err) {
     const errors = err.response?.data?.data;
     if (errors) {
-      setFormErrors(errors); 
+      setFormErrors(errors);
     } else {
       setAlert({
         ok: false,
@@ -142,9 +174,9 @@ const handleSubmit = async (e) => {
   <div className="grid md:grid-cols-3 gap-4 mb-6">
     <div>
       <input className="border p-2 rounded w-full" placeholder="Boat Registration Number *"
-        value={form.boat_registration_number} onChange={field("boat_registration_number")} />
-      {formErrors.boat_registration_number && (
-        <p className="text-red-500 text-sm mt-1">{formErrors.boat_registration_number}</p>
+        value={form.register_boat_id} onChange={field("register_boat_id")} />
+      {formErrors.register_boat_id && (
+        <p className="text-red-500 text-sm mt-1">{formErrors.register_boat_id}</p>
       )}
     </div>
 
