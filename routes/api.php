@@ -18,6 +18,7 @@ Route::post('/forgot-password-check', [LoginController::class, 'forgotPasswordCh
 Route::post('/send-otp', [LoginController::class, 'sendOtp']);
 Route::post('/verify-otp', [LoginController::class, 'verifyOtp']);
 Route::post('/reset-password', [LoginController::class, 'resetPassword']);
+    Route::get('/analytics',[InspectionController::class,'analytics']);
 
 
 
@@ -59,7 +60,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/conduct-inspection-records',[InspectionController::class,'view_inspection']);
     Route::get('/boat-inspection/{id}',[InspectionController::class,'view_inspection_by_id']);
     Route::get('/upcoming-inspections', [InspectionController::class, 'upcoming_inspections']);
-    Route::get('/analytics',[InspectionController::class,'analytics']);
 
 
 
