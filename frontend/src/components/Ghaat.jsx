@@ -1,11 +1,15 @@
 // src/components/Ghaat.jsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import {useSearchParams} from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaWater, FaPlusCircle, FaListAlt, FaCamera } from "react-icons/fa";
 import Webcam from "react-webcam";
 import { Toaster, toast } from 'react-hot-toast';
 import { FaEye, FaEdit } from "react-icons/fa";
+import { FaDownload } from "react-icons/fa";
+
+
 
 
 const BASE_URL = "http://localhost:8000/api";
@@ -246,6 +250,18 @@ export default function Ghaat() {
     }
   };
 
+  //  const [view, setView] = useState("register");
+  const [searchParams] = useSearchParams();
+  
+ useEffect(() => {
+  const tab = searchParams.get("tab");
+  if (tab === "directory") {
+    setView("directory");
+    // fetchGhaatList(); // ✅ Correct function
+  }
+}, [searchParams]);
+
+ 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50 to-white px-4 sm:px-12 py-10">
       <Toaster position="top-right" reverseOrder={false} />
@@ -509,76 +525,118 @@ export default function Ghaat() {
 
       {/* Directory View */}
       {view === "directory" && (
-        <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border">
-          <h3 className="text-2xl font-bold text-center text-blue-800 mb-4">
-            Registered Ghaats
-          </h3>
+      <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border">
+  <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <h3 className="text-xl sm:text-2xl font-bold text-blue-800 text-center sm:text-left">
+      Registered Ghaats
+    </h3>
+    <button 
+      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-md transition-colors w-full sm:w-auto justify-center sm:justify-end"
+      onClick={() => {
+        // Prepare CSV headers
+        const headers = [
+          "Sr.No",
+          "Ghaat Name",
+          "District",
+          "River",
+          "Boats Assigned",
+          "Capacity",
+          "Status"
+        ];
 
-          {ghaats.length === 0 ? (
-            <p className="text-center text-gray-500">No ghaats registered yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-100 text-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 font-semibold text-center">Sr.No</th>
-                    <th className="px-6 py-3 font-semibold text-center">Ghaat Name</th>
-                    <th className="px-6 py-3 font-semibold text-center">District</th>
-                    <th className="px-6 py-3 font-semibold text-center">River</th>
-                    <th className="px-6 py-3 font-semibold text-center">Boats Assigned</th>
-                    <th className="px-6 py-3 font-semibold text-center">Capacity</th>
-                    <th className="px-6 py-3 font-semibold text-center">Status</th>
-                    <th className="px-6 py-3 font-semibold text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {ghaats.map((g, idx) => (
-                    <tr key={g.id} className="hover:bg-gray-50 transition duration-150">
-                      <td className="px-6 py-4 text-center">{idx + 1}</td>
-                      <td className="px-6 py-4 font-semibold text-center">{g.name}</td>
-                      <td className="px-6 py-4 text-center">{g.district}</td>
-                      <td className="px-6 py-4 text-center">{g.river}</td>
-                      <td className="px-6 py-4 text-center">{g.boatsAssigned}</td>
-                      <td className="px-6 py-4 text-center">{g.capacity}</td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-green-700 text-center">
-                          {g.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex gap-4 justify-center">
-                          {/* VIEW */}
-                          <button
-                            onClick={() =>
-                              navigate(`/dashboard/ghaats/ghaatdetailsview/${g.id}`, {
-                                state: { ...g.raw, readOnly: true },
-                              })
-                            }
-                            className="flex items-center gap-1  text-indigo-600 hover:underline"
-                          >
-                            <FaEye />
-                          </button>
+        // Prepare CSV rows
+        const rows = ghaats.map((g, idx) => [
+          idx + 1,
+          `"${g.name}"`,
+          `"${g.district}"`,
+          `"${g.river}"`,
+          `"${g.boatsAssigned}"`,
+          `"${g.capacity}"`,  
+          `"${g.status}"`
+        ]);
 
-                          {/* EDIT */}
-                          <button
-                            onClick={() =>
-                              navigate(`/dashboard/ghaats/ghaatdetails/${g.id}`, { state: g.raw })
-                            }
-                            className="flex items-center gap-1 text-emerald-600 hover:underline"
-                          >
-                            <FaEdit />
-                          </button>
-                        </div>
-                      </td>
+        // Combine headers and rows
+        const csvContent = [
+          headers.join(","),
+          ...rows.map(row => row.join(","))
+        ].join("\n");
 
+        // Create and trigger download
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `ghaats_report_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }}
+    >
+      <FaDownload className="text-sm sm:text-base" /> 
+      <span className="text-sm sm:text-base">Export Report</span>
+    </button>
+  </div>
 
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+  {ghaats.length === 0 ? (
+    <p className="text-center text-gray-500">Loading..</p>
+  ) : (
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200 text-sm">
+        <thead className="bg-gray-100 text-gray-700">
+          <tr>
+            <th className="px-6 py-3 font-bold text-center">Sr.No</th>
+            <th className="px-6 py-3 font-bold text-center">Ghaat Name</th>
+            <th className="px-6 py-3 font-bold text-center">District</th>
+            <th className="px-6 py-3 font-bold text-center">River</th>
+            <th className="px-6 py-3 font-bold text-center">Boats Assigned</th>
+            <th className="px-6 py-3 font-bold text-center">Capacity</th>
+            <th className="px-6 py-3 font-bold text-center">Status</th>
+            <th className="px-6 py-3 font-bold text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {ghaats.map((g, idx) => (
+            <tr key={g.id} className="hover:bg-gray-50 transition duration-150">
+              <td className="px-6 py-4 text-center">{idx + 1}</td>
+              <td className="px-6 py-4 font-semibold text-center">{g.name}</td>
+              <td className="px-6 py-4 text-center">{g.district}</td>
+              <td className="px-6 py-4 text-center">{g.river}</td>
+              <td className="px-6 py-4 text-center">{g.boatsAssigned}</td>
+              <td className="px-6 py-4 text-center">{g.capacity}</td>
+              <td className="px-6 py-4 text-center">
+                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-green-700 text-center">
+                  {g.status}
+                </span>
+              </td>
+              <td className="px-6 py-4 text-center">
+                <div className="flex gap-4 justify-center">
+                  <button
+                    onClick={() =>
+                      navigate(`/dashboard/ghaats/ghaatdetailsview/${g.id}`, {
+                        state: { ...g.raw, readOnly: true },
+                      })
+                    }
+                    className="flex items-center gap-1  text-indigo-600 hover:underline"
+                  >
+                    <FaEye />
+                  </button>
+                  <button
+                    onClick={() =>
+                      navigate(`/dashboard/ghaats/ghaatdetails/${g.id}`, { state: g.raw })
+                    }
+                    className="flex items-center gap-1 text-emerald-600 hover:underline"
+                  >
+                    <FaEdit />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
       )}
     </div>
   );

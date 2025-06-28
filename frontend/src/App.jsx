@@ -18,6 +18,8 @@ import SendOtp from "./pages/SendOtp";
 import ResetPassword from "./pages/ResetPassword";
 import BoatDetailone from "./pages/BoatDetainone";
 import GhaatDetailView from "./pages/GhaatDetailView";
+import BoatOwner from "./components/BoatOwnerDetail"; 
+import Pilot from "./components/Poilet";
 
 const App = () => (
   <Routes>
@@ -50,6 +52,8 @@ const App = () => (
       <Route path="life-jackets" element={<LifeJacket />} />
       <Route path="inspection" element={<Inspection />} />
       <Route path="usermanagment" element={<Usermanagment />} />
+      <Route path="boatOwner" element={<BoatOwner />} />
+      <Route path="poilet" element={<Pilot />} />
     </Route>
   </Routes>
 );
