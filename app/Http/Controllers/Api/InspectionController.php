@@ -187,7 +187,7 @@ $data=[
     'conditional_pass'     => BoatInspection::where('overall_status', 'Conditional Pass')->count(),
 ];
 
-return ApiResponse::generateResponse('status','Analytics fetch successfully',$data,200);
+return ApiResponse::generateResponse('success','Analytics fetch successfully',$data,200);
 
 }
 
