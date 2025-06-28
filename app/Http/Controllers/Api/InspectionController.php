@@ -175,4 +175,20 @@ public function upcoming_inspections()
     );
 }
 
+public function analytics(){
+
+$data=[
+    'total_boat'           => $boat = RegisterBoat::count(),
+    'total_inspected'      => $inspected = BoatInspection::count(),
+    'pending'              => $boat - $inspected,
+    'pass_rate_percent'    => $boat ? round(($inspected / $boat) * 100, 2) : 0,
+    'passed'               => BoatInspection::where('overall_status', 'Passed')->count(),
+    'failed'               => BoatInspection::where('overall_status', 'Failed')->count(),
+    'conditional_pass'     => BoatInspection::where('overall_status', 'Conditional Pass')->count(),
+];
+
+return ApiResponse::generateResponse('status','Analytics fetch successfully',$data,200);
+
+}
+
 }
