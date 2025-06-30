@@ -8,7 +8,8 @@ return [
 
     'allowed_origins' => [
     'http://localhost:5173',  
-    'http://localhost:3000',  
+    'http://localhost:3000',
+    'http://34.65.111.173', 
     'https://9w8vdvl0s0yg.share.zrok.io'
 ],
 
