@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaUserTie} from "react-icons/fa";
 import { FaListAlt, FaPlusCircle } from "react-icons/fa";
 import { FaDownload } from "react-icons/fa";
@@ -23,6 +23,7 @@ const BoatOwner = () => {
   });
 
   const [Saving, setSaving] = useState(false);
+  // const [district, setDistricts]=useState([]);
 
   const handleNumberInput = (e) => {
     const value = e.target.value.replace(/\D/g, '');
@@ -37,6 +38,19 @@ const BoatOwner = () => {
   const handleMixedInput = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
+
+  // useEffect(()=>{
+
+  //   (async()=>{
+  //     try{
+  //       const{data}=await api.get('/district-list');
+  //       setDistricts(Array.isArray(data.data)? data.data : []);
+
+  //     }catch{
+  //       setDistricts([]);
+  //     }
+  //   })
+  // },[]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -175,19 +189,7 @@ const BoatOwner = () => {
               placeholder="Enter Complete Address"
             ></textarea>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-              <div>
-                <label htmlFor="district" className="block text-gray-700 font-medium mb-2">District *</label>
-                <select
-                  id="district"
-                  value={formData.district}
-                  onChange={handleMixedInput}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select District</option>
-                  {/* Add options dynamically */}
-                </select>
-              </div>
+              
               <div>
                 <label htmlFor="pincode" className="block text-gray-700 font-medium mb-2">Pincode *</label>
                 <input

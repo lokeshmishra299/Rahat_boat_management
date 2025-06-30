@@ -155,57 +155,57 @@ export default function BoatDetail() {
       .finally(() => setSaving(false));
   };
 
-const Editable = ({ label, field, error }) => {
-  const isNumberOnly = ["support_staff", "passenger_capacity", "year_of_manufacture"].includes(field);
-  const isSelect = field === "registration_authority";
-  const isTextOnly = field === "pilot_name";
+  const Editable = ({ label, field, error }) => {
+    const isNumberOnly = ["support_staff", "passenger_capacity", "year_of_manufacture"].includes(field);
+    const isSelect = field === "registration_authority";
+    const isTextOnly = field === "pilot_name";
 
-  const handleChange = (e) => {
-    let value = e.target.value;
+    const handleChange = (e) => {
+      let value = e.target.value;
 
-    if (isTextOnly && /[^a-zA-Z\s]/.test(value)) return; // only letters and spaces
+      if (isTextOnly && /[^a-zA-Z\s]/.test(value)) return; // only letters and spaces
 
-    setDraft((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+      setDraft((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    };
+
+    return (
+      <div>
+        <label className="text-sm font-medium mb-1 block">{label}</label>
+
+        {isSelect ? (
+          <select
+            name={field}
+            value={draft[field] || ""}
+            onChange={handleChange}
+            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="">Select</option>
+            {[
+              "District Collector",
+              "Sub-Divisional Magistrate",
+              "Circle Officer",
+              "Block Development Officer",
+            ].map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={isNumberOnly ? "number" : "text"}
+            name={field}
+            value={draft[field] || ""}
+            onChange={handleChange}
+            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+        )}
+
+        {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+      </div>
+    );
   };
-
-  return (
-    <div>
-      <label className="text-sm font-medium mb-1 block">{label}</label>
-
-      {isSelect ? (
-        <select
-          name={field}
-          value={draft[field] || ""}
-          onChange={handleChange}
-          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          <option value="">Select</option>
-          {[
-            "District Collector",
-            "Sub-Divisional Magistrate",
-            "Circle Officer",
-            "Block Development Officer",
-          ].map((option) => (
-            <option key={option} value={option}>{option}</option>
-          ))}
-        </select>
-      ) : (
-        <input
-          type={isNumberOnly ? "number" : "text"}
-          name={field}
-          value={draft[field] || ""}
-          onChange={handleChange}
-          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-      )}
-
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-    </div>
-  );
-};
 
 
   /* ─── static field helper ─── */
@@ -226,27 +226,33 @@ const Editable = ({ label, field, error }) => {
     <div className="max-w-5xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md border space-y-10">
       {/* Camera Modal */}
       {showCamera && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 p-4">
-          <Webcam
-            ref={webcamRef}
-            screenshotFormat="image/jpeg"
-            className="rounded-lg shadow-lg max-w-full w-96"
-            videoConstraints={{ facingMode: "environment" }}
-          />
-          <button
-            onClick={captureFromWebcam}
-            className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
-          >
-            Capture
-          </button>
-          <button
-            onClick={() => setShowCamera(false)}
-            className="mt-2 text-sm text-white underline"
-          >
-            Cancel
-          </button>
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center justify-center">
+            <div className="w-full flex justify-center">
+              <Webcam
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                className="rounded-lg shadow sm:w-96 w-full aspect-video object-cover"
+
+                videoConstraints={{ facingMode: "environment" }}
+              />
+            </div>
+            <button
+              onClick={captureFromWebcam}
+              className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
+            >
+              Capture
+            </button>
+            <button
+              onClick={() => setShowCamera(false)}
+              className="mt-2 text-sm text-gray-600 underline"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
+
 
       {/* Header */}
       <div className="border-b pb-4">
@@ -340,11 +346,14 @@ const Editable = ({ label, field, error }) => {
           <Editable label="Passenger Capacity" field="passenger_capacity" error={errors.passenger_capacity} />
           <Editable label="Year of Manufacture" field="year_of_manufacture" error={errors.year_of_manufacture} />
           <Editable label="Registration Authority" field="registration_authority" error={errors.registration_authority} />
+          <Editable label="Additional Remarks" field="remarks" error={errors.remarks} />
+
+
         </div>
       </div>
 
       {/* remarks */}
-      <div>
+      {/* <div>
         <h2 className="text-xl font-semibold mb-2">Additional Remarks</h2>
         <input
           value={draft.remarks ?? ""}
@@ -352,73 +361,91 @@ const Editable = ({ label, field, error }) => {
           className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm"
           placeholder="Add remarks…"
         />
-      </div>
+      </div> */}
 
       {/* image */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Boat Image</h2>
+        <h2 className="text-xl font-semibold mb-4 text-center">Boat Image</h2>
 
         {imgDraft ? (
           <>
-            <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
-              <img
-                src={URL.createObjectURL(imgDraft)}
-                alt="Preview"
-                className="w-full h-64 object-cover"
-              />
+            <div className="flex justify-center">
+              <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
+                <img
+                  src={URL.createObjectURL(imgDraft)}
+                  alt="Preview"
+                  className="w-full h-64 object-cover"
+                />
+              </div>
             </div>
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={() => setImgDraft(null)}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
-              >
-                Cancel
-              </button>
-              {coords.lat && (
-                <div className="bg-blue-50 px-3 py-2 rounded text-sm text-blue-800">
-                  Location captured
-                </div>
-              )}
+            <div className="flex justify-center mt-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setImgDraft(null)}
+                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
+                >
+                  Cancel
+                </button>
+                {coords.lat && (
+                  <div className="bg-blue-50 px-3 py-2 rounded text-sm text-blue-800">
+                    Location captured
+                  </div>
+                )}
+              </div>
             </div>
+
           </>
         ) : (
           <>
-            <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
-              {boat.image ? (
-                <img
-                  src={
-                    boat.image.startsWith("blob:")
-                      ? boat.image
-                      : `http://localhost:8000/storage/${boat.image}`
-                  }
-                  alt="Boat"
-                  className="w-full h-64 object-cover"
-                />
-              ) : (
-                <div className="w-full h-64 flex items-center justify-center bg-gray-50 text-gray-400">
-                  No image
-                </div>
-              )}
+            <div className="w-full flex flex-col items-center justify-center">
+              {/* Boat Image */}
+              <div className="sm:w-80 w-full rounded-lg shadow overflow-hidden">
+                {boat.image ? (
+                  <img
+                    src={
+                      boat.image.startsWith("blob:")
+                        ? boat.image
+                        : `http://localhost:8000/storage/${boat.image}`
+                    }
+                    alt="Boat"
+                    className="w-full h-64 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-64 flex items-center justify-center bg-gray-50 text-gray-400">
+                    No image
+                  </div>
+                )}
+              </div>
+
+              {/* Location Info */}
+              <div className="mt-4 text-sm text-gray-700 space-y-1 text-center">
+                <p><strong>Location:</strong> {draft.location || boat.location || "N/A"}</p>
+                <p><strong>Pincode:</strong> {draft.pincode || boat.pincode || "N/A"}</p>
+                <p><strong>Latitude:</strong> {draft.latitude || boat.latitude || "N/A"}</p>
+                <p><strong>Longitude:</strong> {draft.longitude || boat.longitude || "N/A"}</p>
+              </div>
+
+              {/* Buttons (Capture & Upload) */}
+              <div className="flex gap-2 mt-4 justify-center">
+                <button
+                  onClick={() => setShowCamera(true)}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium transition"
+                >
+                  <FaCamera /> Update Photo
+                </button>
+
+                <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition">
+                  <FaCamera /> Upload Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files[0] && setImgDraft(e.target.files[0])}
+                  />
+                </label>
+              </div>
             </div>
 
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={() => setShowCamera(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-medium transition"
-              >
-                <FaCamera /> Capture Photo
-              </button>
-              
-              <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition">
-                <FaCamera /> Upload Photo
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => e.target.files[0] && setImgDraft(e.target.files[0])}
-                />
-              </label>
-            </div>
           </>
         )}
       </div>

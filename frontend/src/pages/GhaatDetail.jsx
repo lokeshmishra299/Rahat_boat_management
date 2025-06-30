@@ -356,8 +356,8 @@ return (
       </div>
 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
   <EditableCell k="ghaat_name" label="Ghaat Name" value={draft.ghaat_name} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-  <EditableCell k="location" label="Location" value={draft.location} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-  <EditableCell k="pincode" label="Pincode" value={draft.pincode} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  {/* <EditableCell k="location" label="Location" value={draft.location} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
+  {/* <EditableCell k="pincode" label="Pincode" value={draft.pincode} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
   <EditableCell k="boat_capacity" label="Boat Capacity" value={draft.boat_capacity} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
   <EditableCell k="road_accessibility" label="Road Accessibility" value={draft.road_accessibility} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
   <EditableCell k="contact_person" label="Contact Person" value={draft.contact_person} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
@@ -370,62 +370,88 @@ return (
   <EditableCell k="river_id" label="River" value={draft.river_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
 </div>
 
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-gray-700 mb-3">Ghaat Photo</h2>
+<div className="mt-8">
+  <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">
+    Ghaat Photo
+  </h2>
 
-        {showCamera && (
-          <div className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 p-4">
-            <ReactWebcam
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              className="rounded-lg shadow-lg max-w-full w-96"
-              videoConstraints={{ facingMode: "environment" }}
-            />
-            <button
-              onClick={captureFromWebcam}
-              className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
-            >
-              Capture
-            </button>
-            <button
-              onClick={() => setShowCamera(false)}
-              className="mt-2 text-sm text-white underline"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
+  {showCamera && (
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 p-4">
+      <ReactWebcam
+        ref={webcamRef}
+        screenshotFormat="image/jpeg"
+        className="rounded-lg shadow-lg max-w-full w-96"
+        videoConstraints={{ facingMode: "environment" }}
+      />
+      <button
+        onClick={captureFromWebcam}
+        className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
+      >
+        Capture
+      </button>
+      <button
+        onClick={() => setShowCamera(false)}
+        className="mt-2 text-sm text-white underline"
+      >
+        Cancel
+      </button>
+    </div>
+  )}
 
-        {imgDraft ? (
-          <img
-            src={URL.createObjectURL(imgDraft)}
-            alt="Preview"
-            className="w-full sm:w-[320px] h-64 object-cover rounded shadow border mb-3"
-          />
-        ) : draft.photo_path ? (
-          <img
-            src={`http://localhost:8000/storage/${draft.photo_path}`}
-            alt="Ghaat"
-            className="w-full sm:w-[320px] h-64 object-cover rounded shadow border mb-3"
-          />
-        ) : (
-          <p className="italic text-gray-400 mb-2">No image available</p>
-        )}
+  <div className="w-full flex flex-col items-center justify-center">
+    {imgDraft ? (
+      <img
+        src={URL.createObjectURL(imgDraft)}
+        alt="Preview"
+        className="w-full sm:w-80 h-64 object-cover rounded shadow border mb-3"
+      />
+    ) : draft.photo_path ? (
+      <img
+        src={`http://localhost:8000/storage/${draft.photo_path}`}
+        alt="Ghaat"
+        className="w-full sm:w-80 h-64 object-cover rounded shadow border mb-3"
+      />
+    ) : (
+      <p className="italic text-gray-400 mb-2">No image available</p>
+    )}
 
-        <button
-          onClick={() => setShowCamera(true)}
-          className="mt-2 inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
-        >
-          <FaCamera className="text-base" /> Open Camera
-        </button>
 
-        <div className="mt-3 text-sm text-gray-600">
-          <p>Latitude: <span className="font-medium">{coords.lat}</span></p>
-          <p>Longitude: <span className="font-medium">{coords.lon}</span></p>
-          <p>Pincode: <span className="font-medium">{pincode}</span></p>
-          <p>Location: <span className="font-medium">{locationName}</span></p>
-        </div>
-      </div>
+    <div className="mt-3 text-sm text-gray-600 text-center">
+      <p>
+        Latitude: <span className="font-medium">{coords.lat || "—"}</span>
+      </p>
+      <p>
+        Longitude: <span className="font-medium">{coords.lon || "—"}</span>
+      </p>
+      <p>
+        Pincode: <span className="font-medium">{pincode || "—"}</span>
+      </p>
+      <p>
+        Location: <span className="font-medium">{locationName || "—"}</span>
+      </p>
+    </div>
+
+         <div className="flex gap-2 mt-4 justify-center">
+  <button
+    onClick={() => setShowCamera(true)}
+    className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium transition"
+  >
+    <FaCamera className="text-base" /> Update Photo
+  </button>
+
+  <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded font-medium transition">
+    <FaCamera className="text-base" /> Upload Photo
+    <input
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(e) => e.target.files[0] && setImgDraft(e.target.files[0])}
+    />
+  </label>
+</div>
+  </div>
+</div>
+
 
       <div className="pt-4 border-t flex justify-center">
         <button

@@ -38,11 +38,10 @@ const Inspection = () => {
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`py-2 px-4 font-medium border-b-2 transition ${
-                activeTab === t.id
+              className={`py-2 px-4 font-medium border-b-2 transition ${activeTab === t.id
                   ? "border-violet-600 text-violet-600"
                   : "border-transparent text-gray-500 hover:text-violet-600"
-              }`}
+                }`}
             >
               {t.label}
             </button>
@@ -176,9 +175,8 @@ const ConductForm = () => {
 
       {alert && (
         <div
-          className={`mb-6 text-center py-2 rounded ${
-            alert.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-          }`}
+          className={`mb-6 text-center py-2 rounded ${alert.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            }`}
         >
           {alert.msg}
         </div>
@@ -315,9 +313,8 @@ const ConductForm = () => {
         <div className="flex justify-center mt-6">
           <button
             disabled={loading}
-            className={`bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded w-full md:w-auto ${
-              loading && "opacity-50 cursor-not-allowed"
-            }`}
+            className={`bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded w-full md:w-auto ${loading && "opacity-50 cursor-not-allowed"
+              }`}
           >
             {loading ? "Saving…" : "Complete Inspection"}
           </button>
@@ -440,12 +437,12 @@ const Records = () => {
                     {r.boat?.district?.district_name || "—"}
                   </td>
                   <td className="px-4 py-3 border-b text-center">
-                   <button
-  onClick={() => navigate(`/dashboard/inspection/inspectionview/${r.id}`)}
-  className="text-sm px-4 py-1 border rounded hover:bg-gray-100"
->
-  View
-</button>
+                    <button
+                      onClick={() => navigate(`/dashboard/inspection/inspectionview/${r.id}`)}
+                      className="text-sm px-4 py-1 border rounded hover:bg-gray-100"
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               );
@@ -566,7 +563,7 @@ const Schedule = () => {
           <select className="cursor-pointer"
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
-          
+
           >
             {months.map((m, i) => (
               <option key={i} value={i}>{m}</option>
@@ -623,43 +620,89 @@ const Schedule = () => {
 
 /* ================================= Analytics ================================= */
 const Analytics = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get("/analytics", {
+      // headers: {
+      //   Authorization: `Bearer ${token}`,
+      // },
+      // withCredentials: true,
+    })
+
+      .then((res) => {
+        const apiData = res?.data?.data;
+        console.log("anamm data", apiData);
+        if (apiData) {
+          setData(apiData);
+        } else {
+          console.error("Unexpected API format", res);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching analytics:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading || !data) {
+    return (
+      <div className="text-center py-10 text-gray-600">
+        Loading analytics…
+      </div>
+    );
+  }
+
+  // Extract safely with fallback to 0
+  const {
+    total_boat = 0,
+    total_inspected = 0,
+    pass_rate_percent = 0,
+    pending = 0,
+    passed = 0,
+    failed = 0,
+    conditional_pass = 0,
+  } = data;
+
   const kpis = [
     {
       label: "Total Boats",
-      value: 1247,
+      value: total_boat,
       sub: "Registered fleet",
       color: "bg-blue-500",
     },
-    { label: "Inspected", value: 856, sub: "This year", color: "bg-green-500" },
+    {
+      label: "Inspected",
+      value: total_inspected,
+      sub: "This year",
+      color: "bg-green-500",
+    },
     {
       label: "Pass Rate",
-      value: "87%",
+      value: `${pass_rate_percent}%`,
       sub: "Success rate",
       color: "bg-violet-500",
     },
     {
       label: "Pending",
-      value: 391,
+      value: pending,
       sub: "Awaiting inspection",
       color: "bg-orange-500",
     },
   ];
-  const passed = 742,
-    failed = 67,
-    conditional = 47,
-    total = 1247,
-    inspected = passed + failed + conditional;
-  const pct = ((inspected / total) * 100).toFixed(1) + "%";
+
+  const inspected = passed + failed + conditional_pass;
+  const pct =
+    total_boat > 0 ? ((inspected / total_boat) * 100).toFixed(1) + "%" : "0%";
 
   return (
     <div className="space-y-8 mb-8">
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {kpis.map((k) => (
-          <div
-            key={k.label}
-            className="bg-white p-6 rounded-lg shadow relative"
-          >
+          <div key={k.label} className="bg-white p-6 rounded-lg shadow relative">
             <span
               className={`absolute top-4 right-4 w-3 h-3 rounded-full ${k.color}`}
             />
@@ -670,7 +713,7 @@ const Analytics = () => {
         ))}
       </div>
 
-      {/* progress */}
+      {/* Progress */}
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-xl font-semibold mb-1">
           Inspection Status Overview
@@ -682,18 +725,22 @@ const Analytics = () => {
             style={{ width: pct }}
           />
           <span className="absolute right-0 -top-5 text-sm text-gray-600">
-            {inspected}/{total}
+            {inspected}/{total_boat}
           </span>
         </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
           {[
             ["Passed", passed, "green"],
             ["Failed", failed, "red"],
-            ["Conditional", conditional, "yellow"],
-          ].map(([lbl, val, col]) => (
-            <div key={lbl} className={`bg-${col}-50 text-center py-6 rounded`}>
-              <p className={`text-3xl font-bold text-${col}-600`}>{val}</p>
-              <p className={`mt-1 text-sm text-${col}-700`}>{lbl}</p>
+            ["Conditional", conditional_pass, "yellow"],
+          ].map(([label, value, color]) => (
+            <div
+              key={label}
+              className={`bg-${color}-50 text-center py-6 rounded`}
+            >
+              <p className={`text-3xl font-bold text-${color}-600`}>{value}</p>
+              <p className={`mt-1 text-sm text-${color}-700`}>{label}</p>
             </div>
           ))}
         </div>

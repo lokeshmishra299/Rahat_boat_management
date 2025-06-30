@@ -23,6 +23,7 @@ export default function BoatDetailone() {
       .get(`/boat-list/${id}`)
       .then((res) => {
         if (res.data?.status === "success") setBoat(res.data.data);
+
         else setError("Boat not found.");
       })
       .catch(() => setError("Error fetching boat details."))
@@ -52,47 +53,63 @@ export default function BoatDetailone() {
       </div>
 
       {/* Info Grid */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">General Information</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          <Info label="Boat Type" value={boat.boat_type} />
-          <Info label="District Name" value={boat.district?.district_name} />
-          <Info label="Assigned Ghat" value={boat.ghaat?.ghaat_name} />
-          <Info label="Pilot Name" value={boat.pilot_name} />
-          <Info label="Pilot License No." value={boat.pilot_license_no} />
-          <Info label="Support Staff" value={boat.support_staff} />
-          <Info label="Engine Details" value={boat.engine_details} />
-          <Info label="Passenger Capacity" value={boat.passenger_capacity} />
-          <Info label="Year of Manufacture" value={boat.year_of_manufacture} />
-          <Info label="Registration Authority" value={boat.registration_authority} />
-        </div>
-      </div>
+     <div>
+  <h2 className="text-xl font-semibold mb-4">General Information</h2>
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    <Info label="Boat Type" value={boat.boat_type} />
+    <Info label="District Name" value={boat.district?.district_name} />
+    <Info label="Assigned Ghat" value={boat.ghaat?.ghaat_name} />
+    <Info label="Pilot Name" value={boat.pilot_name} />
+    <Info label="Pilot License No." value={boat.pilot_license_no} />
+    <Info label="Support Staff" value={boat.support_staff} />
+    <Info label="Engine Details" value={boat.engine_details} />
+    <Info label="Passenger Capacity" value={boat.passenger_capacity} />
+    <Info label="Year of Manufacture" value={boat.year_of_manufacture} />
+    <Info label="Registration Authority" value={boat.registration_authority} />
+    
+    {/* <Info label="Location" value={boat.location} />
+    <Info label="Pincode" value={boat.pincode} />
+    <Info label="Latitude" value={boat.latitude} />
+    <Info label="Longitude" value={boat.longitude} /> */}
+        <Info label="Additional Remarks" value={boat.remarks} />
 
-      {/* Remarks */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Additional Remarks</h2>
-        <div className="bg-gray-100 rounded px-3 py-2 text-sm border">
-          {boat.remarks || "—"}
-        </div>
-      </div>
+  </div>
+
+  {/* <div className="mt-6">
+    <h2 className="text-xl font-semibold mb-2">Additional Remarks</h2>
+    <div className="bg-gray-100 rounded px-3 py-2 text-sm border">
+      {boat.remarks || "—"}
+    </div>
+  </div> */}
+</div>
+
 
       {/* Image */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Boat Image</h2>
-        <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
-          {boat.image ? (
-            <img
-              src={`http://localhost:8000/storage/${boat.image}`}
-              alt="Boat"
-              className="w-full h-64 object-cover"
-            />
-          ) : (
-            <div className="w-full h-64 flex items-center justify-center bg-gray-50 text-gray-400">
-              No image
-            </div>
-          )}
+<div>
+  <h2 className="text-xl font-semibold mb-4 text-center">Boat Image</h2>
+  
+  <div className="flex justify-center">
+    <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
+      {boat.image && (
+        <div className="text-center mb-4">
+          <img
+            src={`http://localhost:8000/storage/${boat.image}`}
+            alt="Boat"
+            className="w-full max-w-md mx-auto rounded shadow"
+          />
+
+          <div className="mt-4 text-sm text-gray-700 space-y-1">
+            <p><strong>Location:</strong> {boat.location || "N/A"}</p>
+            <p><strong>Pincode:</strong> {boat.pincode || "N/A"}</p>
+            <p><strong>Latitude:</strong> {boat.latitude || "N/A"}</p>
+            <p><strong>Longitude:</strong> {boat.longitude || "N/A"}</p>
+          </div>
         </div>
-      </div>
+      )}
+    </div>
+  </div>
+</div>
+
 
       <div className="pt-4 border-t flex justify-center">
         <button

@@ -125,7 +125,7 @@ const Dashboard = () => {
   </div>
 </nav>
 
-<style jsx>{`
+<style>{`
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -157,13 +157,15 @@ const Dashboard = () => {
               </svg>
             </div>
             Operations Dashboard
+            
           </h2>
+          
 
           {/* stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 cursor-pointer   font-semibold">
             <div
               onClick={() => {
-                navigate("/dashboard/boats?tab=directory"); // 👈 pass tab via URL
+                navigate("/dashboard/boats?tab=directory"); 
               }}
             >
               <StatCard
@@ -176,7 +178,7 @@ const Dashboard = () => {
                 }
                 change={
                   stats
-                    ? `${stats.total_boats.difference} from last month`
+                    ? `+${stats.total_boats.difference} from last month`
                     : "—"
                 }
               />
@@ -197,7 +199,7 @@ const Dashboard = () => {
                 }
                 change={
                   stats
-                    ? `${stats.active_ghaats.difference} from last month`
+                    ? `+${stats.active_ghaats.difference} from last month`
                     : "—"
                 }
               />
@@ -217,7 +219,7 @@ const Dashboard = () => {
                 }
                 change={
                   stats
-                    ? `${stats.districts_covered.difference} from last month`
+                    ? `+${stats.districts_covered.difference} from last month`
                     : "—"
                 }
               />
@@ -232,7 +234,7 @@ const Dashboard = () => {
                 </span>
               }
               change={
-                stats ? `${stats.life_jackets.difference} from last month` : "—"
+                stats ? `+${stats.life_jackets.difference} from last month` : "—"
               }
             />
           </div>

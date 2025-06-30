@@ -54,7 +54,7 @@ const handleReset = async (e) => {
     } else if (err.response?.data?.message) {
       setErrorMessage(err.response.data.message);
     } else {
-      setErrorMessage("Something went wrong.");
+      setErrorMessage("Email ID doesn't exist.");
     }
   } finally {
     setLoading(false);

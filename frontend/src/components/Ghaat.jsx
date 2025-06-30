@@ -33,8 +33,21 @@ const statusMap = {
 
 export default function Ghaat() {
   const [loading, setLoading] = useState(false);
-  const [view, setView] = useState("register");
+  // const [view, setView] = useState("register");
   const navigate = useNavigate();
+
+
+
+    const [searchParams] = useSearchParams();
+  const initialView = searchParams.get("tab") === "directory" ? "directory" : "register";
+  const [view, setView] = useState(initialView);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    setView(tab === "directory" ? "directory" : "register");
+  }, [searchParams]);
+  
+  
 
   // Webcam and geolocation states
   const webcamRef = useRef(null);
@@ -143,11 +156,11 @@ export default function Ghaat() {
   }, []);
 
   // Fetch ghaat list
-  const fetchGhaatList = useCallback(async () => {
-    try {
-      const { data } = await api.get("/ghaat-list");
-      const list = Array.isArray(data.data)
-        ? data.data.map((d) => ({
+ const fetchGhaatList = useCallback(async () => {
+  try {
+    const { data } = await api.get("/ghaat-list");
+    const list = Array.isArray(data.data)
+      ? data.data.map((d) => ({
           id: d.id,
           name: d.ghaat_name,
           district: d.district_record?.district_name || d.district_id,
@@ -157,12 +170,18 @@ export default function Ghaat() {
           status: statusMap[d.status] ?? "Operational",
           raw: d,
         }))
-        : [];
-      setGhaats(list);
-    } catch {
-      setGhaats([]);
-    }
-  }, []);
+      : [];
+    setGhaats(list);
+  } catch {
+    setGhaats([]);
+  }
+}, []);
+
+useEffect(() => {
+  if (view === "directory") {
+    fetchGhaatList();
+  }
+}, [view, fetchGhaatList]);
 
   // Form handlers
   const handleChange = (e) => setFormData((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -251,15 +270,15 @@ export default function Ghaat() {
   };
 
   //  const [view, setView] = useState("register");
-  const [searchParams] = useSearchParams();
-  
- useEffect(() => {
-  const tab = searchParams.get("tab");
-  if (tab === "directory") {
-    setView("directory");
-    // fetchGhaatList(); // ✅ Correct function
-  }
-}, [searchParams]);
+  // const [searchParams] = useSearchParams();
+  // 
+//  useEffect(() => {
+//   const tab = searchParams.get("tab");
+//   if (tab === "directory") {
+//     setView("directory");
+//     // fetchGhaatList(); // ✅ Correct function
+//   }
+// }, [searchParams]);
 
  
   return (

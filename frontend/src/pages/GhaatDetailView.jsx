@@ -97,18 +97,32 @@ export default function GhaatDetailView() {
         <Field label="Longitude" value={ghaat.longitude} />
       </div>
 
-      <div>
-        <h2 className="text-xl font-semibold text-gray-700 mb-3">Ghaat Photo</h2>
-        {ghaat.photo_path ? (
-          <img
-            src={`http://localhost:8000/storage/${ghaat.photo_path}`}
-            alt="Ghaat"
-            className="w-full sm:w-[320px] h-64 object-cover rounded shadow border"
-          />
-        ) : (
-          <p className="italic text-gray-400">No image available</p>
-        )}
-      </div>
+     <div>
+  <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">
+    Ghaat Photo
+  </h2>
+
+  <div className="w-full flex flex-col items-center justify-center">
+    {ghaat.photo_path ? (
+      <img
+        src={`http://localhost:8000/storage/${ghaat.photo_path}`}
+        alt="Ghaat"
+        className="w-full sm:w-80 h-64 object-cover rounded shadow border"
+      />
+    ) : (
+      <p className="italic text-gray-400 text-center">No image available</p>
+    )}
+
+    {/* Location Info Below Image */}
+    <div className="mt-4 text-sm text-gray-700 space-y-1 text-center">
+      <p><strong>Location:</strong> {ghaat.location || "N/A"}</p>
+      <p><strong>Pincode:</strong> {ghaat.pincode || "N/A"}</p>
+      <p><strong>Latitude:</strong> {ghaat.latitude || "N/A"}</p>
+      <p><strong>Longitude:</strong> {ghaat.longitude || "N/A"}</p>
+    </div>
+  </div>
+</div>
+
 
       <div className="pt-4 border-t flex justify-center">
         <button

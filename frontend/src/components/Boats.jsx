@@ -225,7 +225,7 @@ const Boats = () => {
       setPhotoFile(null);
       setCoords({ lat: "", lon: "" });
       setPincode("");
-      setTimeout(() => setView("directory"), 2000);
+      setTimeout(() => setView("directory"), 1000);
     } catch (err) {
       const v = err.response?.data;
       if (v?.data && typeof v.data === "object") setErrors(v.data);
@@ -235,19 +235,31 @@ const Boats = () => {
     }
   };
 
-  const [view, setView] = useState("register");
-const [searchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+const initialView = searchParams.get("tab") === "directory" ? "directory" : "register";
+const [view, setView] = useState(initialView); // ✅ yahi sahi hai
 
+// optional, url se live update:
 useEffect(() => {
   const tab = searchParams.get("tab");
-  if (tab === "directory") {
-    setView("directory");
-    loadBoats(); // call only if you have this function
-  }
+  setView(tab === "directory" ? "directory" : "register");
 }, [searchParams]);
+
+
+//   const [view, setView] = useState("register");
+// const [searchParams] = useSearchParams();
+
+// useEffect(() => {
+//   const tab = searchParams.get("tab");
+//   if (tab === "directory") {
+//     setView("directory");
+//     loadBoats(); // call only if you have this function
+//   }
+// }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50 to-white px-4 sm:px-10 py-10">
+      <Toaster position="top-right" reverseOrder={false} />
       <div className="text-center mb-10">
         <div className="inline-flex items-center justify-center bg-green-100 rounded-full p-3 shadow">
           <FaShip className="text-green-600 text-2xl" />
@@ -260,7 +272,6 @@ useEffect(() => {
         </p>
       </div>
 
-      <Toaster position="top-right" reverseOrder={false} />
 
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10">
         <button
