@@ -39,10 +39,15 @@ public function store(Request $request)
         'phone.regex'                => 'Phone number must be 10 digits.',
     ]);
 
-    if($validated['total_jackets']>$validated['total_allocated_jackets']){
-
-        return ApiResponse::generateResponse('error','Total jackets cannot exceed total allocated jackets',null,422);
-    }
+   if ($validated['total_jackets'] > $validated['total_allocated_jackets']) {
+    return response()->json([
+        'status' => 'error',
+        'message' => 'Total jackets cannot exceed total allocated jackets',
+        'errors' => [
+            'total_jackets' => ['Total jackets cannot exceed total allocated jackets.']
+        ]
+    ], 422);
+}
 
     $lifeJacket=LifeJacket::create($validated);
 

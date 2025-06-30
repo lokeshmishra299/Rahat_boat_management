@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\BoatManagement;
+use App\Http\Controllers\Api\BoatOwnerController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DistrictController;
 use App\Http\Controllers\Api\GhaatController;
@@ -77,6 +78,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/designation',[RoleController::class,'designation']);
 
     // Route::post('/resister-user',[])
+
+    Route::post('/boat-owner',[BoatOwnerController::class,'store']);
 
 
 

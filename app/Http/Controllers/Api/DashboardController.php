@@ -71,8 +71,11 @@ class DashboardController extends Controller
         $totalGhaats = Ghaat::count();
         $ghaatsLast30Days = Ghaat::where('created_at', '>=', $thirtyDaysAgo)->count();
 
-        $totalDistricts = District::count();
-        $districtsLast30Days = District::where('created_at', '>=', $thirtyDaysAgo)->count();
+        $totalDistricts = Ghaat::distinct('district_id')->count('district_id');
+        $districtsLast30Days = Ghaat::where('created_at', '>=', $thirtyDaysAgo)
+            ->distinct('district_id')
+            ->count('district_id');
+
 
         $totalLifeJackets = LifeJacket::sum('total_jackets');
         $jacketsLast30Days = LifeJacket::where('created_at', '>=', $thirtyDaysAgo)->sum('total_jackets');

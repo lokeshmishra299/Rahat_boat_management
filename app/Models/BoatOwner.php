@@ -26,4 +26,9 @@ class BoatOwner extends Model
 
         return $this->belongsTo(District::class);
     }
+
+    public function boatFamilyMembers()
+    {
+        return $this->hasMany(BoatFamilyMember::class, 'boat_owner_id');
+    }
 }

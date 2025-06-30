@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class BoatFamilyMember extends Model
+{
+    protected $table="family_members";
+
+    protected $fillable=[
+        'boat_owner_id',
+        'name',
+        'age',
+        'relation',
+    ];
+
+    public function boatOwner(){
+
+        return $this->belongsTo(BoatOwner::class);
+    }
+}

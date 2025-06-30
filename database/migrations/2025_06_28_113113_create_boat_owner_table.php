@@ -15,14 +15,13 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->foreignId('district_id')->constrained('districts')->onDelete('cascade');
-            $table->integer('number');
-            $table->string('email');
+            $table->string('number');
+            $table->string('email')->nullable();
             $table->string('adhar_no');
             $table->integer('boat_owned');
             $table->string('address');
             $table->string('pincode');
-            $table->string('family');
-            $table->string('relation');
+            $table->string('relation')->nullable();
             $table->timestamps();
         });
     }
