@@ -7,10 +7,16 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
+const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+
+const token = localStorage.getItem("access_token");
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api",
-  headers: { "Content-Type": "application/json" },
-  withCredentials: true,
+  baseURL: BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  },
 });
 
 const ForgotPassword = () => {

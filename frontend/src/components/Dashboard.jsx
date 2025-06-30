@@ -17,12 +17,18 @@ import {
 } from "react-icons/fa";
 import { FaClipboardCheck } from "react-icons/fa6";
 import Footer from "./Footer";
+const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+
 
 /* ───── Axios with token ───── */
 const token = localStorage.getItem("access_token");
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
-  headers: token ? { Authorization: `Bearer ${token}` } : {},
+  baseURL: BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  },
+  withCredentials: true, 
 });
 
 /* ───── Stat card ───── */

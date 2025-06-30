@@ -6,13 +6,13 @@ import { Toaster, toast } from 'react-hot-toast';
 
 
 /* ── API helper (token-aware) ── */
+const token = localStorage.getItem("access_token");
+
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api",
   headers: {
     "Content-Type": "application/json",
-    ...(localStorage.getItem("access_token") && {
-      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-    }),
+    ...(token && { Authorization: `Bearer ${token}` }),
   },
 });
 

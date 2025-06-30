@@ -13,9 +13,14 @@ const STATUS_COLORS = {
 
 /* ——— authorised axios instance ——— */
 const token = localStorage.getItem("access_token");
+
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
-  headers: { "Content-Type": "application/json", ...(token && { Authorization: `Bearer ${token}` }) },
+  baseURL: import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api",
+  headers: {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  },
+  withCredentials: true, 
 });
 
 export default function DistrictDashboard() {

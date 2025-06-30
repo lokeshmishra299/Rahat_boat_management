@@ -6,11 +6,16 @@ import { FaCamera } from "react-icons/fa";
 import Webcam from "react-webcam";
 
 /* ---------- API ---------- */
+const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+
+const token = localStorage.getItem("access_token");
+
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
-  headers: localStorage.getItem("access_token")
-    ? { Authorization: `Bearer ${localStorage.getItem("access_token")}` }
-    : {},
+  baseURL: BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  },
 });
 
 export default function BoatDetail() {

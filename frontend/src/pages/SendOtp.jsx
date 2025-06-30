@@ -5,10 +5,16 @@ import Footer from "../components/Footer";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 
+const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+
+const token = localStorage.getItem("access_token");
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api",
-  headers: { "Content-Type": "application/json" },
-  withCredentials: true,
+  baseURL: BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  },
 });
 
 const SendOtp = () => {
