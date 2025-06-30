@@ -1,8 +1,11 @@
 // src/components/LifeJacket.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Toaster, toast } from 'react-hot-toast';
 
-/* ── API helper (token‑aware) ── */
+
+
+/* ── API helper (token-aware) ── */
 const api = axios.create({
   baseURL: "http://localhost:8000/api",
   headers: {
@@ -13,8 +16,14 @@ const api = axios.create({
   },
 });
 
+/* ───────────────────────────────────────────────────────── */
+import { useSearchParams } from "react-router-dom";
 export default function LifeJacket() {
-  const [tab, setTab] = useState("record");
+  // const [tab, setTab] = useState("record");
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "directory" ? "tracking" : "record";
+  const [tab, setTab] = useState(initialTab);
+
   const [reload, setReload] = useState(false);
 
   /* headline stats & rows for tracking */
@@ -63,6 +72,8 @@ export default function LifeJacket() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 px-6 py-10">
+      <Toaster position="top-right" reverseOrder={false} />
+
       {/* statistic cards */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         {cards.map((c) => (
@@ -94,11 +105,10 @@ export default function LifeJacket() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-6 py-2 rounded-full font-semibold ${
-              tab === t.id
+            className={`px-6 py-2 rounded-full font-semibold ${tab === t.id
                 ? "bg-orange-600 text-white"
                 : "bg-white text-slate-700 shadow hover:bg-slate-50"
-            }`}
+              }`}
           >
             {t.label}
           </button>
@@ -149,7 +159,7 @@ function RecordForm({ onSaved }) {
     perBoat: "Jackets per boat",
     total: "Total jackets distributed",
     allocated: "Total jackets allocated",
-    phone: "10‑digit mobile number",
+    phone: "10-digit mobile number",
     notes: "Any additional information",
   };
   const reqMsg = "This field is required.";
@@ -160,11 +170,12 @@ function RecordForm({ onSaved }) {
       try {
         const d = await api.get("/district-list");
         setDistricts(d.data.data || []);
-      } catch {}
+        console.log(d.data)
+      } catch { }
       try {
         const g = await api.get("/ghaat-list");
         setGhaats(g.data.data || []);
-      } catch {}
+      } catch { }
     })();
   }, []);
 
@@ -181,28 +192,27 @@ function RecordForm({ onSaved }) {
   /* submit */
   const submit = async (e) => {
     e.preventDefault();
-    setErrors({});
-    const required = [
-      "district",
-      "ghat",
-      "boats",
-      "perBoat",
-      "total",
-      "allocated",
-      "date",
-    ];
-    const miss = {};
-    required.forEach((k) => !val[k] && (miss[k] = reqMsg));
-    if (val.phone && val.phone.length !== 10) miss.phone = "10 digits only";
-    if (Object.keys(miss).length) return setErrors(miss);
 
-    const dist = districts.find((d) => d.district_name === val.district);
-    const ghat = ghaats.find((g) => g.ghaat_name === val.ghat);
-    if (!dist || !ghat) return alert("Select valid district & ghat");
+    setSubmitting(true);   // show  “Saving…”
+    setErrors({});         // clear old errors first
+
+    /* ---------- 1. client‑side quick checks (optional) ---------- */
+    const early = {};
+    // if (!districts.find((d) => d.district_name === val.district)) {
+    //   early.district = "Select a valid district.";
+    // }
+    // if (!ghaats.find((g) => g.ghaat_name === val.ghat)) {
+    //   early.ghat = "Select a valid ghat.";
+    // }
+    // if (Object.keys(early).length) setErrors(early);   // **do not return** – let backend run too
+
+    /* ---------- 2. build payload (use '' when id not found) ---------- */
+    const dist = districts.find((d) => d.district_name === val.district) || {};
+    const ghat = ghaats.find((g) => g.ghaat_name === val.ghat) || {};
 
     const payload = {
-      district_id: dist.id,
-      ghaat_id: ghat.id,
+      district_id: dist.id ?? "",
+      ghaat_id: ghat.id ?? "",
       no_of_boats: +val.boats,
       jackets_per_boat: +val.perBoat,
       total_jackets: +val.total,
@@ -213,35 +223,59 @@ function RecordForm({ onSaved }) {
       distribution_notes: val.notes,
     };
 
+    /* ---------- 3. send request & handle errors ---------- */
     try {
-      setSubmitting(true);
       await api.post("/life-jackets", payload);
-      alert("Distribution saved!");
-      /* reset & refresh */
+
+      toast.success("Distribution saved!");
       setVal({
-        district: "",
-        ghat: "",
-        boats: "",
-        perBoat: "",
-        total: "",
-        allocated: "",
-        date: "",
-        received: "",
-        phone: "",
-        notes: "",
+        district: "", ghat: "", boats: "", perBoat: "", total: "",
+        allocated: "", date: "", received: "", phone: "", notes: "",
       });
       onSaved();
-    } catch {
-      alert("Save failed.");
+    } catch (err) {
+      const apiErr =
+        err.response?.data?.errors   // Laravel 422
+        || err.response?.data?.data; // sometimes wrapped in data
+
+      if (apiErr && typeof apiErr === "object") {
+        const map = {
+          district_id: "district",
+          ghaat_id: "ghat",
+          no_of_boats: "boats",
+          jackets_per_boat: "perBoat",
+          total_jackets: "total",
+          total_allocated_jackets: "allocated",
+          distribution_date: "date",
+          received_by: "received",
+          phone: "phone",
+          distribution_notes: "notes",
+        };
+
+        setErrors(
+          Object.fromEntries(
+            Object.entries(apiErr).map(([k, v]) => [
+              map[k] ?? k,
+              Array.isArray(v) ? v[0] : v,
+            ])
+          )
+        );
+      } else {
+        // alert("Save failed.");
+      }
     } finally {
-      setSubmitting(false);
+      setSubmitting(false); // re‑enable button
     }
   };
+
 
   /* ghat options filtered by district */
   const filteredGhaats = ghaats.filter(
     (g) => g.district_record?.district_name === val.district
   );
+
+
+
 
   return (
     <form onSubmit={submit} className="bg-white shadow p-8 rounded-xl">
@@ -416,11 +450,10 @@ function RecordForm({ onSaved }) {
       <div className="mt-6 flex items-center justify-center">
         <button
           disabled={submitting}
-          className={`px-8 py-3 rounded-full font-semibold ${
-            submitting
+          className={`px-8 py-3 rounded-full font-semibold ${submitting
               ? "bg-slate-400 cursor-not-allowed"
               : "bg-orange-600 text-white hover:bg-orange-700"
-          }`}
+            }`}
         >
           {submitting ? "Saving…" : "Record Distribution"}
         </button>
@@ -431,11 +464,22 @@ function RecordForm({ onSaved }) {
 
 /* ──────────────────────── Distribution Tracking ─────────────────────── */
 function DistributionTracking({ rows, stats, loading }) {
+  const { useState: useToggle } = React;
   if (loading) return <p className="text-center text-slate-500">Loading…</p>;
 
   const pct = stats.allocated
     ? ((stats.distributed / stats.allocated) * 100).toFixed(1)
     : "0.0";
+
+  /* group by district */
+  const grouped = rows.reduce((acc, r) => {
+    (acc[r.district] = acc[r.district] || []).push(r);
+    return acc;
+  }, {});
+
+  const [open, setOpen] = useToggle({});
+
+  const toggle = (d) => setOpen((o) => ({ ...o, [d]: !o[d] }));
 
   return (
     <div className="space-y-10">
@@ -448,39 +492,22 @@ function DistributionTracking({ rows, stats, loading }) {
         </p>
       </section>
 
-      {/* progress bar block */}
-    {/* ── Progress Summary ── */}
-<section className="bg-orange-50 p-6 rounded-xl shadow">
-  {/* heading + % */}
-  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-    <h1 className="text-slate-700 text-lg sm:text-xl md:text-2xl font-semibold">
-      Overall Distribution Progress
-    </h1>
+      {/* ── Progress Summary ── */}
+      <section className="bg-orange-50 p-6 rounded-xl shadow">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <h1 className="text-slate-700 text-lg sm:text-xl md:text-2xl font-semibold">
+            Overall Distribution Progress
+          </h1>
+          <span className="text-base sm:text-sm font-bold text-slate-600">
+            {pct}%
+          </span>
+        </div>
 
-    {/* on XS it sits under heading; on ≥sm it floats right */}
-    <span className="text-base sm:text-sm font-bold text-slate-600">
-      {pct}%
-    </span>
-  </div>
+        <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+          <div className="h-full bg-orange-600" style={{ width: `${pct}%` }} />
+        </div>
 
-  {/* progress bar */}
-  <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
-    <div className="h-full bg-orange-600" style={{ width: `${pct}%` }} />
-  </div>
-
-  {/* numbers row */}
-  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 mt-4">
-    <span className="text-sm font-medium text-orange-700">
-      {stats.distributed} distributed
-    </span>
-    <span className="text-sm font-medium text-slate-500">
-      {stats.allocated} total allocated
-    </span>
-  </div>
-</section>
-
-      {/* <section className="bg-orange-50 p-6 rounded-xl shadow">
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 mt-4">
           <span className="text-sm font-medium text-orange-700">
             {stats.distributed} distributed
           </span>
@@ -488,13 +515,7 @@ function DistributionTracking({ rows, stats, loading }) {
             {stats.allocated} total allocated
           </span>
         </div>
-        <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
-          <div className="h-full bg-orange-600" style={{ width: `${pct}%` }} />
-        </div>
-        <div className="text-right text-sm font-semibold text-orange-700 mt-1">
-          {pct}%
-        </div>
-      </section> */}
+      </section>
 
       {/* table or empty */}
       {rows.length === 0 ? (
@@ -506,26 +527,59 @@ function DistributionTracking({ rows, stats, loading }) {
           <table className="min-w-full text-sm text-left">
             <thead className="bg-slate-100 text-slate-700">
               <tr>
-                <th className="px-4 py-3 font-medium">District</th>
-                <th className="px-4 py-3 font-medium">Ghaat</th>
-                <th className="px-4 py-3 font-medium">Boats</th>
-                <th className="px-4 py-3 font-medium">Allocated</th>
-                <th className="px-4 py-3 font-medium">Distributed</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium text-center">District</th>
+                <th className="px-4 py-3 font-medium text-center">Ghaat</th>
+                <th className="px-4 py-3 font-medium text-center">Boats</th>
+                <th className="px-4 py-3 font-medium text-center">Allocated</th>
+                <th className="px-4 py-3 font-medium text-center">Distributed</th>
+                <th className="px-4 py-3 font-medium text-center">Date</th>
+                <th className="px-4 py-3 font-medium text-center">Status</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((r, idx) => (
-                <tr key={idx} className="border-t border-slate-200">
-                  <td className="px-4 py-3">{r.district}</td>
-                  <td className="px-4 py-3">{r.ghaat}</td>
-                  <td className="px-4 py-3">{r.boats}</td>
-                  <td className="px-4 py-3">{r.total_allocated}</td>
-                  <td className="px-4 py-3">{r.total_distributed}</td>
-                  <td className="px-4 py-3">{r.distribution_date}</td>
-                  <td className="px-4 py-3">{r.status}</td>
-                </tr>
+              {Object.entries(grouped).map(([district, distRows]) => (
+                <React.Fragment key={district}>
+                  {/* Always show first row */}
+                  {/* Always show first row */}
+                  <tr className="border-t border-slate-200">
+                    <td className="px-4 py-3 font-semibold text-center">
+                      {distRows.length > 1 ? (
+                        <span
+                          className="cursor-pointer "
+                          onClick={() => toggle(district)}
+                        >
+                          {open[district] ? "−" : "+"} {district}
+                        </span>
+                      ) : (
+                        district
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">{distRows[0].ghaat}</td>
+                    <td className="px-4 py-3 text-center">{distRows[0].boats}</td>
+                    <td className="px-4 py-3 text-center">{distRows[0].total_allocated}</td>
+                    <td className="px-4 py-3 text-center">{distRows[0].total_distributed}</td>
+                    <td className="px-4 py-3 text-center">
+                      {distRows[0].children?.[0]?.distribution_date || 'N/A'}
+                    </td>
+                    <td className="px-4 py-3 text-center">{distRows[0].status}</td>
+                  </tr>
+
+                  {/* Show additional rows only when expanded */}
+                  {/* Show additional rows only when expanded */}
+                  {open[district] && distRows.flatMap(r =>
+                    r.children?.map((child, idx) => (
+                      <tr key={idx} className="border-t border-slate-200">
+                        <td className="px-6 py-3 text-center">{r.district}</td>
+                        <td className="px-4 py-3 text-center">{r.ghaat}</td>
+                        <td className="px-4 py-3 text-center">{child.boats}</td>
+                        <td className="px-4 py-3 text-center">{child.total_allocated}</td>
+                        <td className="px-4 py-3 text-center">{child.total_distributed}</td>
+                        <td className="px-4 py-3 text-center">{child.distribution_date}</td>
+                        <td className="px-4 py-3 text-center ">{child.status}</td>
+                      </tr>
+                    )) || []
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

@@ -1,6 +1,6 @@
+// src/pages/SendOtp.jsx
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaLock } from "react-icons/fa";
 import Footer from "../components/Footer";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -12,46 +12,36 @@ const api = axios.create({
 });
 
 const SendOtp = () => {
-  const location = useLocation();
+  const { state } = useLocation();
   const navigate = useNavigate();
-  const email = location.state?.email || ""; 
+  const email = state?.email || "";
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (!email) {
-      navigate("/forgot-password");
-    }
+    if (!email) navigate("/forgot-password");
   }, [email, navigate]);
 
-const handleVerifyOtp = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setErrorMessage("");
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMessage("");
 
-  try {
-    const response = await api.post("/verify-otp", { email, otp });
-
-    if (response.data.status === "success") {
-      navigate("/reset-password", { state: { email, otp } });
-    } else {
-      setErrorMessage(response.data.message || "Invalid OTP");
+    try {
+      const res = await api.post("/verify-otp", { email, otp });
+      if (res.data.status === "success") {
+        navigate("/reset-password", { state: { email, otp } });
+      } else setErrorMessage(res.data.message || "Invalid OTP");
+    } catch (err) {
+      setErrorMessage(
+        err.response?.data?.message || "Something went wrong. Try again."
+      );
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("OTP verify error:", err);
-
-    if (err.response && err.response.data && err.response.data.message) {
-      setErrorMessage(err.response.data.message);
-    } else {
-      setErrorMessage("Something went wrong. Try again later.");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const container = {
     hidden: { opacity: 0, scale: 0.9, y: 40 },
@@ -64,90 +54,92 @@ const handleVerifyOtp = async (e) => {
   };
 
   return (
-    <div className="h-screen w-full flex justify-center items-center bg-gradient-to-br from-indigo-200 to-slate-200 relative overflow-hidden text-gray-900 px-4 sm:px-8 py-4">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#e3a5b6] via-[#d1a4cb] to-[#5782c4] text-gray-900">
+      {/* Centered Card */}
+      <div className="flex-grow flex items-center mt-10 justify-center px-4">
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="visible"
+          className="w-full max-w-md rounded-2xl bg-white/20 backdrop-blur-xl shadow-xl p-4 sm:p-6"
+        >
+          {/* Logo */}
+          <div className="flex justify-center mb-4">
+            <div className="bg-[#0b2d5e] rounded-full p-2 ring-4 ring-white/30">
+              <img
+                src="/images/Rahat.jpeg"
+                alt="Rahat logo"
+                className="h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover"
+              />
+            </div>
+          </div>
 
-      <motion.div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[28rem] w-[28rem] bg-emerald-500/40 blur-[120px] rounded-sm" />
-      <motion.div className="absolute -bottom-40 right-1/2 translate-x-1/3 h-[24rem] w-[24rem] bg-fuchsia-600/40 blur-[120px] rounded-full" />
+          <h1 className="text-center text-lg font-bold text-[#1f4068] tracking-wide mb-1">
+            Rahat Boat Management
+          </h1>
+          <h2 className="text-center text-2xl font-extrabold text-white mb-1">
+            Enter OTP
+          </h2>
+          <p className="text-center text-sm text-white/80 mb-6">
+            5‑digit OTP sent to your registered email
+          </p>
 
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="visible"
-        className="relative z-10 w-[92%] max-w-sm bg-gray-300 backdrop-blur-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] rounded-lg p-8"
-      >
-
-        <motion.div initial={{ rotateY: 90 }} animate={{ rotateY: 0 }} transition={{ delay: 0.5, duration: 0.6 }} className="flex justify-center mb-4">
-          <img src="/images/Rahat.jpeg" alt="Relief Commissioner logo" className="h-20 w-20 object-cover rounded-full ring-4 ring-white/30" />
-        </motion.div>
-
-        <h1 className="text-xl font-extrabold text-center tracking-wide mb-4">
-          Rahat Boat Management
-        </h1>
-
-        <h1 className="text-2xl font-extrabold text-center tracking-wide text-blue-700">
-          Please Enter OTP
-        </h1>
-        <p className="text-center text-sm text-slate-600 mt-2 mb-8">
-          5 digit OTP has been sent to your registered Email ID.
-        </p>
-
-        <form onSubmit={handleVerifyOtp} className="space-y-6">
-          <label className="block">
-            <span className="block text-sm font-medium mb-2">Enter OTP</span>
+          <form onSubmit={handleVerifyOtp} className="space-y-6">
+            {/* OTP boxes */}
             <div className="flex justify-between gap-2">
-              {[0, 1, 2, 3, 4].map((index) => (
+              {[0, 1, 2, 3, 4].map((i) => (
                 <input
-                  key={index}
+                  key={i}
+                  id={`otp-${i}`}
                   type="text"
                   maxLength={1}
-                  className="w-12 h-12 text-center text-xl rounded-lg border border-gray-400 focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={otp[index] || ""}
+                  className="w-12 h-12 text-center text-lg rounded-md bg-[#1f4068] text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white"
+                  value={otp[i] || ""}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^\d?$/.test(val)) {
-                      const newOtp = otp.split("");
-                      newOtp[index] = val;
-                      setOtp(newOtp.join(""));
-
-                      // Move to next input automatically
-                      const next = document.getElementById(`otp-${index + 1}`);
-                      if (val && next) next.focus();
+                    const v = e.target.value;
+                    if (/^\d?$/.test(v)) {
+                      const arr = otp.split("");
+                      arr[i] = v;
+                      setOtp(arr.join(""));
+                      if (v && document.getElementById(`otp-${i + 1}`))
+                        document.getElementById(`otp-${i + 1}`).focus();
                     }
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === "Backspace" && !otp[index] && index > 0) {
-                      const prev = document.getElementById(`otp-${index - 1}`);
-                      if (prev) prev.focus();
+                    if (e.key === "Backspace" && !otp[i] && i > 0) {
+                      document.getElementById(`otp-${i - 1}`)?.focus();
                     }
                   }}
-                  id={`otp-${index}`}
                 />
               ))}
             </div>
-          </label>
 
-          {errorMessage && (
-            <p className="text-sm text-red-600">{errorMessage}</p>
-          )}
+            {errorMessage && (
+              <p className="text-sm text-red-600">{errorMessage}</p>
+            )}
 
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 rounded-md font-semibold tracking-wide transition focus:outline-none focus:ring-2 shadow-lg ${loading
-                ? "bg-emerald-400 cursor-not-allowed"
-                : "bg-blue-500 text-white focus:ring-emerald-400 shadow-emerald-600/30"
+            {/* Submit */}
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3 rounded-md text-white font-semibold transition ${
+                loading
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-[#1f4068] hover:bg-[#163358]"
               }`}
-          >
-            {loading ? "Verifying…" : "Verify OTP"}
-          </motion.button>
-        </form>
-      </motion.div>
-
-      <div className="absolute bottom-0 w-full">
-        <Footer />
+            >
+              {loading ? "Verifying…" : "VERIFY OTP"}
+            </motion.button>
+          </form>
+        </motion.div>
       </div>
+
+      {/* Footer */}
+      <footer className="text-center text-white text-sm opacity-80">
+        <Footer />
+      </footer>
     </div>
   );
 };

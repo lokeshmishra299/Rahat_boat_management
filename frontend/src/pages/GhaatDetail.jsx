@@ -231,7 +231,7 @@ export default function GhaatDetail() {
     if (k === "district_id") {
       return (
         <div>
-          <p className="text-xs uppercase text-gray-500 font-semibold mb-1">{label}</p>
+          <p className="text-xs text-gray-500 font-semibold mb-1">{label}</p>
           {editing === k ? (
             <>
               <select
@@ -264,7 +264,7 @@ export default function GhaatDetail() {
     if (k === "river_id") {
       return (
         <div>
-          <p className="text-xs uppercase text-gray-500 font-semibold mb-1">{label}</p>
+          <p className="text-xs text-gray-500 font-semibold mb-1">{label}</p>
           {editing === k ? (
             <>
               <select
@@ -296,7 +296,7 @@ export default function GhaatDetail() {
 // Existing input for other fields
 return (
   <div>
-    <p className="text-xs uppercase text-gray-500 font-semibold mb-1">{label}</p>
+    <p className="text-xs text-gray-500 font-semibold mb-1">{label}</p>
     {editing === k && !isReadOnly ? (
       <input
         type={isNumberOnly ? "number" : "text"}

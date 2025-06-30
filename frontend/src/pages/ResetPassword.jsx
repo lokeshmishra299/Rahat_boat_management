@@ -1,3 +1,4 @@
+// src/pages/ResetPassword.jsx
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -13,53 +14,48 @@ const api = axios.create({
 });
 
 const ResetPassword = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { email, otp } = location.state || {};
+  const navigate   = useNavigate();
+  const { state }  = useLocation();
+  const email      = state?.email ?? "";
+  const otp        = state?.otp ?? "";
 
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPwd, setShowPwd] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [password, setPassword]             = useState("");
+  const [confirmPassword, setConfirmPwd]    = useState("");
+  const [showPwd, setShowPwd]               = useState(false);
+  const [loading, setLoading]               = useState(false);
+  const [errors, setErrors]                 = useState({});
 
   const handleReset = async (e) => {
     e.preventDefault();
     setErrors({});
-
     setLoading(true);
+
     try {
-      const response = await api.post("/reset-password", {
+      const { data } = await api.post("/reset-password", {
         email,
         otp,
         password,
         password_confirmation: confirmPassword,
       });
 
-      if (response.data.status === "success") {
+      if (data.status === "success") {
         toast.success("Password reset successfully!");
-        setTimeout(() => {
-          navigate("/login");
-        }, 1500);
+        setTimeout(() => navigate("/login"), 1200);
       } else {
-        toast.error(response.data.message || "Reset failed.");
+        toast.error(data.message || "Reset failed.");
       }
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.data || {});
-      } else if (err.response?.data?.message) {
-        toast.error(err.response.data.message);
-      } else {
-        toast.error("Something went wrong.");
-      }
+      } else toast.error(err.response?.data?.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
   };
 
   const renderErrors = (field) =>
-    errors[field]?.map((msg, idx) => (
-      <p key={idx} className="text-sm text-red-600 mt-1">
+    errors[field]?.map((msg, i) => (
+      <p key={i} className="text-sm text-red-600 mt-1">
         {msg}
       </p>
     ));
@@ -75,91 +71,97 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-indigo-200 to-slate-200 relative overflow-hidden text-gray-900">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#e3a5b6] via-[#d1a4cb] to-[#5782c4] text-gray-900">
       <Toaster position="top-right" />
-      <motion.div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[28rem] w-[28rem] bg-emerald-500/40 blur-[120px] rounded-full" />
-      <motion.div className="absolute -bottom-40 right-1/2 translate-x-1/3 h-[24rem] w-[24rem] bg-fuchsia-600/40 blur-[120px] rounded-full" />
 
-      <div className="flex-grow flex justify-center items-center px-4 sm:px-8 py-10">
+      {/* Centered Card */}
+      <div className="flex-grow flex items-center mt-10 justify-center px-4">
         <motion.div
           variants={container}
           initial="hidden"
           animate="visible"
-          className="relative z-10 w-full max-w-sm bg-gray-300 backdrop-blur-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] rounded-lg p-6"
+          className="w-full max-w-md rounded-2xl bg-white/20 backdrop-blur-xl shadow-xl p-4 sm:p-6"
         >
-          <motion.div
-            initial={{ rotateY: 90 }}
-            animate={{ rotateY: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="flex justify-center mb-4"
-          >
-            <img
-              src="/images/Rahat.jpeg"
-              alt="Relief Commissioner logo"
-              className="h-20 w-20 object-cover rounded-full ring-4 ring-white/30"
-            />
-          </motion.div>
+          {/* Logo */}
+          <div className="flex justify-center mb-4">
+            <div className="bg-[#0b2d5e] rounded-full p-2 ring-4 ring-white/30">
+              <img
+                src="/images/Rahat.jpeg"
+                alt="Rahat logo"
+                className="h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover"
+              />
+            </div>
+          </div>
 
-          <h1 className="text-xl font-extrabold text-center tracking-wide mb-2">
+          <h1 className="text-center text-lg font-bold text-[#1f4068] tracking-wide mb-1">
             Rahat Boat Management
           </h1>
-
-          <p className="text-center text-sm text-slate-600 mb-6">
+          <p className="text-center text-sm text-white/80 mb-4">
             Please set your new password
           </p>
 
           <form onSubmit={handleReset} className="space-y-4">
-            <label className="block">
-              <span className="block text-sm font-medium mb-1">New Password</span>
+            {/* New password */}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                New Password
+              </label>
               <span className="relative">
                 <input
                   type={showPwd ? "text" : "password"}
                   placeholder="Enter new password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="peer w-full rounded-lg bg-white/90 px-4 py-2 pr-10 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition shadow-inner"
+                  className="w-full rounded-md bg-[#1f4068] px-4 py-3 pr-10 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPwd((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 peer-focus:text-emerald-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80"
                 >
                   {showPwd ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </span>
               {renderErrors("password")}
-            </label>
+            </div>
 
-            <label className="block">
-              <span className="block text-sm font-medium mb-1">Confirm Password</span>
+            {/* Confirm password */}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Confirm Password
+              </label>
               <input
                 type={showPwd ? "text" : "password"}
                 placeholder="Confirm new password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-lg bg-white/90 px-4 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition shadow-inner"
+                onChange={(e) => setConfirmPwd(e.target.value)}
+                className="w-full rounded-md bg-[#1f4068] px-4 py-3 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white"
               />
               {renderErrors("confirm_password")}
-            </label>
+            </div>
 
+            {/* Submit */}
             <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               type="submit"
               disabled={loading}
-              className={`w-full py-2 rounded-lg font-semibold tracking-wide transition focus:outline-none focus:ring-2 shadow-lg ${
+              className={`w-full py-3 rounded-md text-white font-semibold transition ${
                 loading
-                  ? "bg-emerald-400 cursor-not-allowed"
-                  : "bg-blue-500 text-white focus:ring-emerald-400 shadow-emerald-600/30"
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-[#1f4068] hover:bg-[#163358]"
               }`}
             >
-              {loading ? "Resetting…" : "Reset Password"}
+              {loading ? "Resetting…" : "RESET PASSWORD"}
             </motion.button>
           </form>
         </motion.div>
       </div>
 
-      <Footer />
+      {/* Footer */}
+      <footer className="text-center text-white text-sm opacity-80">
+        <Footer />
+      </footer>
     </div>
   );
 };
