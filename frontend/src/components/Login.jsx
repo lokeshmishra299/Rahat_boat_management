@@ -58,7 +58,9 @@ const handleSubmit = async (e) => {
     if (token) {
       localStorage.setItem("access_token", token);
       toast.success("Login successful!");
-      setTimeout(() => navigate("/dashboard", { replace: true }), 2000);
+      setTimeout(() => {
+  window.location.href = "/dashboard"; // hard redirect (fixes reload issue)
+}, 1000);
     } else {
       setErrors({ password: "Unexpected response from server." });
     }

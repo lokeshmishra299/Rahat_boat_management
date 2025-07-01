@@ -104,19 +104,31 @@ const Boats = () => {
     setPhotoName("captured.jpg");
     setShowCamera(false);
 
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const lat = pos.coords.latitude.toFixed(6);
-      const lon = pos.coords.longitude.toFixed(6);
-      setCoords({ lat, lon });
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lon = pos.coords.longitude.toFixed(6);
+        setCoords({ lat, lon });
 
-      const pin = await getPincode(lat, lon);
-      setPincode(pin);
+        const pin = await getPincode(lat, lon);
+        setPincode(pin);
 
-      if (pin) {
-        const loc = await getLocationFromPincode(pin);
-        setLocationName(loc);
+        if (pin) {
+          const loc = await getLocationFromPincode(pin);
+          setLocationName(loc);
+        }
+      },
+      (err) => {
+        console.error("Location error", err);
+        if (err.code === 1) {
+          toast.error("Location permission denied.", { id: "location-error" });
+
+        } else {
+          toast.error("Failed to get location. Please check GPS access.");
+        }
       }
-    });
+    );
+
   };
 
   // Helper functions for geolocation
@@ -237,26 +249,26 @@ const Boats = () => {
   };
 
   const [searchParams] = useSearchParams();
-const initialView = searchParams.get("tab") === "directory" ? "directory" : "register";
-const [view, setView] = useState(initialView); // ✅ yahi sahi hai
+  const initialView = searchParams.get("tab") === "directory" ? "directory" : "register";
+  const [view, setView] = useState(initialView); // ✅ yahi sahi hai
 
-// optional, url se live update:
-useEffect(() => {
-  const tab = searchParams.get("tab");
-  setView(tab === "directory" ? "directory" : "register");
-}, [searchParams]);
+  // optional, url se live update:
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    setView(tab === "directory" ? "directory" : "register");
+  }, [searchParams]);
 
 
-//   const [view, setView] = useState("register");
-// const [searchParams] = useSearchParams();
+  //   const [view, setView] = useState("register");
+  // const [searchParams] = useSearchParams();
 
-// useEffect(() => {
-//   const tab = searchParams.get("tab");
-//   if (tab === "directory") {
-//     setView("directory");
-//     loadBoats(); // call only if you have this function
-//   }
-// }, [searchParams]);
+  // useEffect(() => {
+  //   const tab = searchParams.get("tab");
+  //   if (tab === "directory") {
+  //     setView("directory");
+  //     loadBoats(); // call only if you have this function
+  //   }
+  // }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50 to-white px-4 sm:px-10 py-10">
@@ -298,7 +310,7 @@ useEffect(() => {
         </button>
       </div>
 
-      
+
 
       {/* Camera Modal */}
       {showCamera && (
@@ -308,7 +320,19 @@ useEffect(() => {
             screenshotFormat="image/jpeg"
             className="rounded-lg shadow-lg max-w-full w-96"
             videoConstraints={{ facingMode: "environment" }}
+
+            onUserMediaError={(err) => {
+              console.error("Camera permission error", err);
+              toast.error("Camera access denied. Please allow camera permission in your browser settings.", {
+  id: "camera-error",
+});
+            }}
+
+            onUserMedia={() => {
+              console.log("Camera access granted");
+            }}
           />
+
           <button
             onClick={captureFromWebcam}
             className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
@@ -368,6 +392,10 @@ useEffect(() => {
             {photoName && (
               <p className="text-sm text-green-700 mt-2">Selected: {photoName}</p>
             )}
+
+            {errors.image && (
+  <p className="text-red-500 text-sm text-center mt-2">{errors.image}</p>
+)}
           </div>
 
           {/* Location Info */}
@@ -575,127 +603,126 @@ useEffect(() => {
           </form>
         </div>
       ) : (
-<div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border relative">
-  <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-    <h3 className="text-xl sm:text-2xl font-bold text-sky-700 text-center sm:text-left">
-      Registered Boats
-    </h3>
-    <button 
-      className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-md transition-colors w-full sm:w-auto justify-center"
-      onClick={() => {
-        // CSV Export Functionality
-        const headers = [
-          "Sr.No",
-          "Registration No",
-          "Pilot",
-          "Boat Type",
-          "District",
-          "Status"
-        ];
+        <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border relative">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h3 className="text-xl sm:text-2xl font-bold text-sky-700 text-center sm:text-left">
+              Registered Boats
+            </h3>
+            <button
+              className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-md transition-colors w-full sm:w-auto justify-center"
+              onClick={() => {
+                // CSV Export Functionality
+                const headers = [
+                  "Sr.No",
+                  "Registration No",
+                  "Pilot",
+                  "Boat Type",
+                  "District",
+                  "Status"
+                ];
 
-        const rows = boats.map((boat, index) => [
-          index + 1,
-          `"${boat.registration_no}"`,
-          `"${boat.pilot_name}"`,
-          `"${boat.boat_type}"`,
-          `"${boat.district?.district_name || 'N/A'}"`,
-          `"${boat.status || 'Active'}"`
-        ]);
+                const rows = boats.map((boat, index) => [
+                  index + 1,
+                  `"${boat.registration_no}"`,
+                  `"${boat.pilot_name}"`,
+                  `"${boat.boat_type}"`,
+                  `"${boat.district?.district_name || 'N/A'}"`,
+                  `"${boat.status || 'Active'}"`
+                ]);
 
-        const csvContent = [
-          headers.join(","),
-          ...rows.map(row => row.join(","))
-        ].join("\n");
+                const csvContent = [
+                  headers.join(","),
+                  ...rows.map(row => row.join(","))
+                ].join("\n");
 
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `boat_report_${new Date().toISOString().slice(0,10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }}
-    >
-      <FaDownload className="text-sm sm:text-base" /> 
-      <span className="text-sm sm:text-base">Export Report</span>
-    </button>
-  </div>
+                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                link.setAttribute("download", `boat_report_${new Date().toISOString().slice(0, 10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+            >
+              <FaDownload className="text-sm sm:text-base" />
+              <span className="text-sm sm:text-base">Export Report</span>
+            </button>
+          </div>
 
-  {loadingBoats ? (
-    <p className="text-center text-gray-500">Loading...</p>
-  ) : boatsError ? (
-    <p className="text-center text-red-500">{boatsError}</p>
-  ) : boats.length === 0 ? (
-    <p className="text-center text-gray-500">No boats registered yet</p>
-  ) : (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50">
-          <tr className="text-left font-semibold text-gray-700">
-            <th className="px-4 py-3">Sr.No</th>
-            <th className="px-4 py-3">Reg. No.</th>
-            <th className="px-4 py-3">Pilot</th>
-            <th className="px-4 py-3">Type</th>
-            <th className="px-4 py-3">District</th>
-            <th className="px-4 py-3">Status</th>
-            <th className="px-4 py-3">Action</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {boats.map((boat, idx) => (
-            <tr key={boat.id} className="hover:bg-gray-50">
-              <td className="px-4 py-2">{idx + 1}</td>
-              <td className="px-4 py-2 font-semibold">
-                {boat.registration_no}
-              </td>
-              <td className="px-4 py-2">{boat.pilot_name}</td>
-              <td className="px-4 py-2">{boat.boat_type}</td>
-              <td className="px-4 py-2">
-                {boat.district?.district_name || "—"}
-              </td>
-              <td className="px-4 py-2">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    boat.status === "Active"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}
-                >
-                  {boat.status || "Active"}
-                </span>
-              </td>
-              <td className="px-4 py-2 flex gap-3">
-                <button
-                  onClick={() =>
-                    navigate(`/dashboard/boats/boatdetailsone/${boat.id}`, {
-                      state: { ...boat, readOnly: true },
-                    })
-                  }
-                  className="text-sky-600 hover:text-sky-800"
-                  title="View"
-                >
-                  <FaEye className="text-lg" />
-                </button>
-                <button
-                  onClick={() =>
-                    navigate(`/dashboard/boats/boatdetails/${boat.id}`, {
-                      state: boat,
-                    })
-                  }
-                  className="text-green-600 hover:text-green-800"
-                  title="Edit"
-                >
-                  <FaEdit className="text-lg" />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )}
-</div>
+          {loadingBoats ? (
+            <p className="text-center text-gray-500">Loading...</p>
+          ) : boatsError ? (
+            <p className="text-center text-red-500">{boatsError}</p>
+          ) : boats.length === 0 ? (
+            <p className="text-center text-gray-500">No boats registered yet</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 text-sm">
+                <thead className="bg-gray-50">
+                  <tr className="text-left font-semibold text-gray-700">
+                    <th className="px-4 py-3">Sr.No</th>
+                    <th className="px-4 py-3">Reg. No.</th>
+                    <th className="px-4 py-3">Pilot</th>
+                    <th className="px-4 py-3">Type</th>
+                    <th className="px-4 py-3">District</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {boats.map((boat, idx) => (
+                    <tr key={boat.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2">{idx + 1}</td>
+                      <td className="px-4 py-2 font-semibold">
+                        {boat.registration_no}
+                      </td>
+                      <td className="px-4 py-2">{boat.pilot_name}</td>
+                      <td className="px-4 py-2">{boat.boat_type}</td>
+                      <td className="px-4 py-2">
+                        {boat.district?.district_name || "—"}
+                      </td>
+                      <td className="px-4 py-2">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${boat.status === "Active"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                            }`}
+                        >
+                          {boat.status || "Active"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 flex gap-3">
+                        <button
+                          onClick={() =>
+                            navigate(`/dashboard/boats/boatdetailsone/${boat.id}`, {
+                              state: { ...boat, readOnly: true },
+                            })
+                          }
+                          className="text-sky-600 hover:text-sky-800"
+                          title="View"
+                        >
+                          <FaEye className="text-lg" />
+                        </button>
+                        <button
+                          onClick={() =>
+                            navigate(`/dashboard/boats/boatdetails/${boat.id}`, {
+                              state: boat,
+                            })
+                          }
+                          className="text-green-600 hover:text-green-800"
+                          title="Edit"
+                        >
+                          <FaEdit className="text-lg" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

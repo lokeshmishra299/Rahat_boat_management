@@ -17,7 +17,7 @@ const Footer = () => {
           CMP Techsseract LLP
         </span> | Powered by&nbsp;
         <span 
-          onClick={() => window.open("https://uphcm.com/")} 
+          onClick={() => window.open("https://upite.gov.in/Pages/Updesco")} 
           className="font-semibold cursor-pointer text-fuchsia-600">
           UPDESCO
         </span>

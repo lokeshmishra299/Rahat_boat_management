@@ -5,6 +5,7 @@ import { RiLogoutBoxRLine } from 'react-icons/ri';
 import { IoClose } from 'react-icons/io5';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { Toaster, toast } from 'react-hot-toast';
 
 const Header = () => {
   /* ───────────────────────────────────────────────────────── dropdown state */
@@ -41,7 +42,7 @@ const Header = () => {
         withCredentials: true,
       });
 
-      const user=data.data;
+      const user = data.data;
       setProfile({
         name: user.name || '',
         email: user.email || '',
@@ -68,7 +69,11 @@ const Header = () => {
       console.error('Logout error:', err?.response || err);
     } finally {
       localStorage.removeItem('access_token');
-      navigate('/login', { replace: true });
+      toast.success('Logout Successfully');
+      setTimeout(() => {
+        navigate('/login', { replace: true });
+      }, 100);
+
     }
   };
 
@@ -76,6 +81,7 @@ const Header = () => {
     <>
       {/* ╭──────────────── Header bar ───────────────╮ */}
       <header className="flex flex-wrap items-center justify-between gap-4 px-4 py-4 bg-white shadow-sm">
+        <Toaster position="top-right" />
         {/* Logo + Title */}
         <div className="flex items-center gap-4 flex-wrap">
           <div className="bg-gradient-to-br from-purple-600 to-purple-800 text-white px-5 py-3 rounded-2xl font-extrabold text-2xl shadow-md">
