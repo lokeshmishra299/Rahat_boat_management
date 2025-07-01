@@ -80,6 +80,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::post('/resister-user',[])
 
     Route::post('/boat-owner',[BoatOwnerController::class,'store']);
+    Route::get('/boat-owner-list',[BoatOwnerController::class,'directory']);
+    Route::get('/boat-owner-list/{id}',[BoatOwnerController::class,'owner_detail']);
+    Route::post('/boat-owner-edit/{id}',[BoatOwnerController::class,'edit_detail']);
+
+
 
 
 

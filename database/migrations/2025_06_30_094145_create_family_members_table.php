@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('boat_owner_id')->constrained('boat_owner')->onDelete('cascade');
             $table->string('name');
+            $table->string('mobile');
+            $table->string('adhar');
             $table->integer('age');
             $table->string('relation');
             $table->timestamps();

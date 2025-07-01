@@ -11,7 +11,8 @@ class BoatFamilyMember extends Model
     protected $fillable=[
         'boat_owner_id',
         'name',
-        'age',
+        'mobile',
+        'adhar',
         'relation',
     ];
 

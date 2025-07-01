@@ -20,6 +20,7 @@ class BoatOwner extends Model
         'pincode',
         'family',
         'relation',
+        'dob'
     ];
 
     public function district(){

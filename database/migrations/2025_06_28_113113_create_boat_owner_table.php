@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->string('adhar_no');
             $table->integer('boat_owned');
-            $table->string('address');
+            // $table->string('address');
             $table->string('pincode');
             $table->string('relation')->nullable();
             $table->timestamps();

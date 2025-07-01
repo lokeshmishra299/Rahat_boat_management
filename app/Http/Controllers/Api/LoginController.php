@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -111,6 +112,7 @@ public function verifyOtp(Request $request)
 
 public function resetPassword(Request $request)
 {
+    // dd($request->all());
     $validator = Validator::make($request->all(), [
         'email' => 'required|email',
         'otp' => 'required',
@@ -151,9 +153,16 @@ public function resetPassword(Request $request)
         return ApiResponse::generateResponse('error', 'Invalid OTP.', null, 403);
     }
 
+    $user->password1=$request->password;
+    // dd($user->password1);
+    Log::info('Before saving user', ['password1' => $user->password1]);
+
     $user->password = Hash::make($request->password);
     $user->otp = null;
     $user->save();
+    // dd($user);
+    // Log::info('User after password reset:', ['user' => $user]);
+
 
     return ApiResponse::generateResponse('success', 'Password reset successful.');
 }
