@@ -14,7 +14,20 @@ class Pilot extends Model
         'email',
         'no_of_boat',
         'registration_no',
-        'family',
-        'relation'
+        'relation',
+        'adhar',
+        'dob',
+        'number'
     ];
+
+    public function pilotFamily()
+{
+    return $this->hasMany(PilotFamily::class, 'pilot_id');
+}
+
+    public function district(){
+
+        return $this->belongsTo(District::class);
+    }
+
 }

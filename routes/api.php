@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\GhaatController;
 use App\Http\Controllers\Api\InspectionController;
 use App\Http\Controllers\Api\LifeJacketController;
 use App\Http\Controllers\Api\LoginController;
+use App\Http\Controllers\Api\PilotController;
 use App\Http\Controllers\Api\RiverPortManagement;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\UserManagementController;
@@ -83,6 +84,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/boat-owner-list',[BoatOwnerController::class,'directory']);
     Route::get('/boat-owner-list/{id}',[BoatOwnerController::class,'owner_detail']);
     Route::post('/boat-owner-edit/{id}',[BoatOwnerController::class,'edit_detail']);
+
+    //pilot
+
+    Route::post('/pilot-store',[PilotController::class,'store']);
+    Route::get('/pilot-list',[PilotController::class,'pilot_directory']);
+    Route::get('/pilot-list/{id}',[PilotController::class,'pilot_detail']);
+    Route::post('/pilot-edit/{id}',[PilotController::class,'pilot_edit']);
 
 
 

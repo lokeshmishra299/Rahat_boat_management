@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('name');
             $table->string('mobile');
             $table->string('adhar');
-            $table->integer('age');
             $table->string('relation');
             $table->timestamps();
         });
