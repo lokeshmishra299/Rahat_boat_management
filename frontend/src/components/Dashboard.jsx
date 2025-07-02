@@ -28,7 +28,7 @@ const api = axios.create({
     "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
   },
-  withCredentials: true, 
+  withCredentials: true,
 });
 
 /* ───── Stat card ───── */
@@ -58,6 +58,8 @@ const Dashboard = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
+const token = localStorage.getItem("access_token");
+const user = JSON.parse(localStorage.getItem("user"));
 
   /* fetch stats once */
   useEffect(() => {
@@ -78,8 +80,7 @@ const Dashboard = () => {
       : pathname.startsWith(`/dashboard/${seg}`);
 
   const linkCls = (seg, bg) =>
-    `px-4 py-1 rounded-full font-medium ${
-      isActive(seg) ? `text-white ${bg}` : "text-gray-600 hover:text-blue-600"
+    `px-4 py-1 rounded-full font-medium ${isActive(seg) ? `text-white ${bg}` : "text-gray-600 hover:text-blue-600"
     }`;
 
   const statusCls = {
@@ -120,10 +121,19 @@ const Dashboard = () => {
               <FaClipboardCheck className="inline-block mr-2 text-lg" />
               Inspection
             </Link>
-            <Link to="usermanagment" className={linkCls("usermanagment", "bg-yellow-400")}>
+            {/* <Link to="usermanagment" className={linkCls("usermanagment", "bg-yellow-400")}>
               <FaUsersCog className="inline-block mr-2 text-lg" />
               User Management
-            </Link>
+            </Link> */}
+
+            {user && user.role_id !== 2 && (
+              <Link to="usermanagment" className={linkCls("usermanagment", "bg-yellow-400")}>
+                <FaUsersCog className="inline-block mr-2 text-lg" />
+                User Management
+              </Link>
+            )}
+
+
             <Link to="boatowner" className={linkCls("boatowner", "bg-rose-500")}>
               <FaUserTie className="inline-block mr-2 text-lg" />
               Boat Owner

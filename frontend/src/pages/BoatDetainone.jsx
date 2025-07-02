@@ -106,8 +106,8 @@ export default function BoatDetailone() {
           <div className="mt-4 text-sm text-gray-700 space-y-1">
             <p><strong>Location:</strong> {boat.location || "N/A"}</p>
             <p><strong>Pincode:</strong> {boat.pincode || "N/A"}</p>
-            <p><strong>Latitude:</strong> {boat.latitude || "N/A"}</p>
-            <p><strong>Longitude:</strong> {boat.longitude || "N/A"}</p>
+            {/* <p><strong>Latitude:</strong> {boat.latitude || "N/A"}</p> */}
+            {/* <p><strong>Longitude:</strong> {boat.longitude || "N/A"}</p> */}
           </div>
         </div>
       )}

@@ -98,8 +98,8 @@ export default function GhaatDetailView() {
         <Field label="Registered Boats" value={ghaat.registered_boats_count} />
         <Field label="District" value={districtName} />
         <Field label="River" value={riverName} />
-        <Field label="Latitude" value={ghaat.latitude} />
-        <Field label="Longitude" value={ghaat.longitude} />
+        {/* <Field label="Latitude" value={ghaat.latitude} />
+        <Field label="Longitude" value={ghaat.longitude} /> */}
       </div>
 
      <div>
@@ -122,8 +122,8 @@ export default function GhaatDetailView() {
     <div className="mt-4 text-sm text-gray-700 space-y-1 text-center">
       <p><strong>Location:</strong> {ghaat.location || "N/A"}</p>
       <p><strong>Pincode:</strong> {ghaat.pincode || "N/A"}</p>
-      <p><strong>Latitude:</strong> {ghaat.latitude || "N/A"}</p>
-      <p><strong>Longitude:</strong> {ghaat.longitude || "N/A"}</p>
+      {/* <p><strong>Latitude:</strong> {ghaat.latitude || "N/A"}</p>
+      <p><strong>Longitude:</strong> {ghaat.longitude || "N/A"}</p> */}
     </div>
   </div>
 </div>

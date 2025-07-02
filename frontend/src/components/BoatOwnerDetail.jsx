@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { FaUserTie, FaListAlt, FaPlusCircle, FaDownload } from 'react-icons/fa';
 import axios from 'axios';
 import {Toaster, toast} from 'react-hot-toast';
+import { FaEye, FaPen } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
 
@@ -21,6 +23,8 @@ const BoatOwner = () => {
   const [activeTab, setActiveTab] = useState('register');
   const [Saving, setSaving] = useState(false);
   const [districts, setDistricts] = useState([]);
+
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -116,6 +120,8 @@ const BoatOwner = () => {
 
       if (response.data.status === 'success') {
         toast.success('Boat owner and family details saved successfully!');
+        setActiveTab('directory');
+         fetchOwners();
         setFormData({
           name: '',
           number: '',
@@ -168,6 +174,30 @@ const BoatOwner = () => {
       setSaving(false);
     }
   };
+
+const [owners, setOwners] = useState([]);
+const [loadingOwners, setLoadingOwners] = useState(false);
+
+const fetchOwners = () => {
+  setLoadingOwners(true); // loading start
+  api.get('/boat-owner-list')
+    .then((res) => {
+      if (res.data.status === 'success') {
+        setOwners(res.data.data); // owners set ho gaye
+      }
+    })
+    .catch((err) => {
+      console.error('Failed to fetch boat owners:', err);
+    })
+    .finally(() => {
+      setLoadingOwners(false); // loading khatam
+    });
+};
+
+
+useEffect(() => {
+  fetchOwners();
+}, []);
 
   return (
     <div className="max-w-[1200px] mx-auto p-6 mt-10 pb-2">
@@ -224,8 +254,8 @@ const BoatOwner = () => {
 
             </div>
             <div>
-              <label className="block text-gray-700 font-medium mb-2">Date of Birth *</label>
-              <input id="dob" value={formData.dob} onChange={handleMixedInput} type="date" className="w-full px-4 py-2 border border-gray-300 rounded-md" />
+              <label className="block text-gray-700 font-medium mb-2 ">Date of Birth *</label>
+              <input id="dob" value={formData.dob} onChange={handleMixedInput} type="date" className="w-full cursor-pointer px-4 py-2 border border-gray-300 rounded-md" />
               {errors.dob && <p className="text-red-500 text-sm mt-1">{errors.dob}</p>}
 
             </div>
@@ -239,7 +269,7 @@ const BoatOwner = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div>
               <label className="block text-gray-700 font-medium mb-2">District *</label>
-              <select id="district" value={formData.district} onChange={handleMixedInput} className="w-full px-4 py-2 border border-gray-300 rounded-md">
+              <select id="district" value={formData.district} onChange={handleMixedInput} className="w-full cursor-pointer px-4 py-2 border border-gray-300 rounded-md">
                 <option value="">Select District</option>
                 {districts.map(d => (
                   <option key={d.id} value={d.district_name}>{d.district_name}</option>
@@ -258,78 +288,81 @@ const BoatOwner = () => {
           <div className="mb-8">
             <label className="block text-gray-700 font-medium mb-2">Family Members </label>
             {formData.family.map((member, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                {/* Name */}
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Name"
-                    value={member.name}
-                    onChange={(e) => handleFamilyChange(index, 'name', e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-md w-full"
-                  />
-                  {errors.family?.[index]?.name && (
-                    <p className="text-red-500 text-sm">{errors.family[index].name}</p>
-                  )}
-                </div>
+            <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+  {/* Name */}
+  <div>
+    <input
+      type="text"
+      placeholder="Name"
+      value={member.name}
+      onChange={(e) =>
+        handleFamilyChange(index, 'name', e.target.value.replace(/[^a-zA-Z\s]/g, ''))
+      }
+      className="px-4 py-2 border border-gray-300 rounded-md w-full"
+    />
+    {errors.family?.[index]?.name && (
+      <p className="text-red-500 text-sm">{errors.family[index].name}</p>
+    )}
+  </div>
 
-                {/* Mobile */}
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Mobile Number"
-                    value={member.mobile}
-                    onChange={(e) =>
-                      handleFamilyChange(index, 'mobile', e.target.value.replace(/\D/g, ''))
-                    }
-                    className="px-4 py-2 border border-gray-300 rounded-md w-full"
-                  />
-                  {errors.family?.[index]?.mobile && (
-                    <p className="text-red-500 text-sm">{errors.family[index].mobile}</p>
-                  )}
-                </div>
+  {/* Mobile */}
+  <div>
+    <input
+      type="text"
+      placeholder="Mobile Number"
+      value={member.mobile}
+      onChange={(e) =>
+        handleFamilyChange(index, 'mobile', e.target.value.replace(/\D/g, '').slice(0, 10))
+      }
+      className="px-4 py-2 border border-gray-300 rounded-md w-full"
+    />
+    {errors.family?.[index]?.mobile && (
+      <p className="text-red-500 text-sm">{errors.family[index].mobile}</p>
+    )}
+  </div>
 
-                {/* Aadhar */}
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Aadhar Number"
-                    value={member.aadhar}
-                    onChange={(e) =>
-                      handleFamilyChange(index, 'aadhar', e.target.value.replace(/\D/g, ''))
-                    }
-                    className="px-4 py-2 border border-gray-300 rounded-md w-full"
-                  />
-                  {errors.family?.[index]?.adhar && (
-                    <p className="text-red-500 text-sm">{errors.family[index].adhar}</p>
-                  )}
-                </div>
+  {/* Aadhar */}
+  <div>
+    <input
+      type="text"
+      placeholder="Aadhar Number"
+      value={member.aadhar}
+      onChange={(e) =>
+        handleFamilyChange(index, 'aadhar', e.target.value.replace(/\D/g, '').slice(0, 12))
+      }
+      className="px-4 py-2 border border-gray-300 rounded-md w-full"
+    />
+    {errors.family?.[index]?.adhar && (
+      <p className="text-red-500 text-sm">{errors.family[index].adhar}</p>
+    )}
+  </div>
 
-                {/* Relation */}
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Relation with Owner"
-                    value={member.relation}
-                    onChange={(e) => handleFamilyChange(index, 'relation', e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-md w-full"
-                  />
-                  {errors.family?.[index]?.relation && (
-                    <p className="text-red-500 text-sm">{errors.family[index].relation}</p>
-                  )}
-                </div>
+  {/* Relation */}
+  <div>
+    <input
+      type="text"
+      placeholder="Relation with Owner"
+      value={member.relation}
+      onChange={(e) => handleFamilyChange(index, 'relation', e.target.value)}
+      className="px-4 py-2 border border-gray-300 rounded-md w-full"
+    />
+    {errors.family?.[index]?.relation && (
+      <p className="text-red-500 text-sm">{errors.family[index].relation}</p>
+    )}
+  </div>
 
-                {/* Remove Button */}
-                {index > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => removeFamilyMember(index)}
-                    className="text-red-600 hover:underline text-sm col-span-full"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
+  {/* Remove Button */}
+  {index > 0 && (
+    <button
+      type="button"
+      onClick={() => removeFamilyMember(index)}
+      className="text-red-600 hover:underline text-sm col-span-full"
+    >
+      Remove
+    </button>
+  )}
+</div>
+
             ))}
 
             <button
@@ -350,7 +383,7 @@ const BoatOwner = () => {
         </form>
       ) : (
         <div className="bg-white shadow-md rounded-lg p-6">
-          <div className="bg-white shadow-md rounded-lg p-6">
+          <div className="bg-white">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-blue-700">Registered Boat Owners</h2>
               <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2">
@@ -358,43 +391,56 @@ const BoatOwner = () => {
               </button>
             </div>
             {/* Static sample table */}
-            <table className="w-full border text-sm text-left text-gray-600">
-              <thead className="bg-gray-100 text-gray-700 font-semibold">
-                <tr>
-                  <th className="px-4 py-2">Sr.No</th>
-                  <th className="px-4 py-2">Reg. No.</th>
-                  <th className="px-4 py-2">Pilot</th>
-                  <th className="px-4 py-2">Type</th>
-                  <th className="px-4 py-2">District</th>
-                  <th className="px-4 py-2">Status</th>
-                  <th className="px-4 py-2">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { sr: 1, reg: '22222', pilot: 'lokesh mishra', type: 'Manual (Paddle/Oar)', district: 'Auraiya', status: 'Active' },
-                  { sr: 2, reg: '22229', pilot: 'abhi', type: 'Hybrid', district: 'Agra', status: 'Active' },
-                  { sr: 3, reg: 'UP32 8127', pilot: 'ABHISHEK', type: 'Engine Driven', district: 'Lucknow', status: 'Active' },
-                  { sr: 4, reg: 'UP32 8129', pilot: 'ABHISHEK', type: 'Hybrid', district: 'Agra', status: 'Active' },
-                  { sr: 5, reg: 'UP32 8188', pilot: 'ABHISHEK', type: 'Engine Driven', district: 'Amroha', status: 'Active' },
-                ].map((boat, i) => (
-                  <tr key={i} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-2">{boat.sr}</td>
-                    <td className="px-4 py-2 font-bold text-black">{boat.reg}</td>
-                    <td className="px-4 py-2 capitalize">{boat.pilot}</td>
-                    <td className="px-4 py-2">{boat.type}</td>
-                    <td className="px-4 py-2">{boat.district}</td>
-                    <td className="px-4 py-2">
-                      <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">{boat.status}</span>
-                    </td>
-                    <td className="px-4 py-2 space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800"><i className="fas fa-eye"></i></button>
-                      <button className="text-green-600 hover:text-green-800"><i className="fas fa-pen"></i></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+<div className="overflow-x-auto mt-4">
+
+{loadingOwners ? (  <p className="text-center text-blue-600 font-semibold py-4">Loading boat owners...</p>) 
+:(
+
+  <table className="w-full border text-sm text-left text-gray-600">
+    <thead className="bg-gray-100 text-gray-700 font-semibold">
+      <tr>
+        <th className="px-4 py-2">Sr.No</th>
+        <th className="px-4 py-2">Name</th>
+        <th className="px-4 py-2">District</th>
+        <th className="px-4 py-2">Pincode</th>
+        <th className="px-4 py-2">No Of Boat Owned</th>
+        <th className="px-4 py-2">Mobile No</th>
+        <th className="px-4 py-2">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {owners.map((owner, index) => (
+        <tr key={owner.id} className="border-b hover:bg-gray-50">
+          <td className="px-4 py-2">{index + 1}</td>
+          <td className="px-4 py-2 font-bold capitalize">{owner.name}</td>
+          <td className="px-4 py-2">{owner.district?.district_name || 'N/A'}</td>
+          <td className="px-4 py-2">{owner.pincode}</td>
+          <td className="px-4 py-2">{owner.boat_owned}</td>
+          <td className="px-4 py-2">{owner.number}</td>
+          <td className="px-4 py-2 space-x-3">
+            <button title="View" className="text-blue-600 hover:text-blue-800 text-lg">
+              <FaEye onClick={()=>{
+                navigate(`/dashboard/boatowner/boatownerview/${owner.id}`);
+              }} />
+            </button>
+            <button title="Edit" className="text-green-600 hover:text-green-800 text-lg">
+              <FaPen onClick={()=>{
+                navigate(`/dashboard/boatowner/boatowneredit/${owner.id}`);
+              }} />
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+)
+
+}
+</div>
+
+
+
+
           </div>
 
           {/* ... */}
@@ -405,3 +451,5 @@ const BoatOwner = () => {
 };
 
 export default BoatOwner;
+
+// /dashboard/boats/boatdetails/${boat.id}`

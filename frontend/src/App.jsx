@@ -20,6 +20,10 @@ import BoatDetailone from "./pages/BoatDetainone";
 import GhaatDetailView from "./pages/GhaatDetailView";
 import BoatOwner from "./components/BoatOwnerDetail"; 
 import Pilot from "./components/Poilet";
+import BoatOwnerView from "./pages/BoatOwnerView";
+import BoatOwnerEdit from "./pages/BoatOwnerEdit";
+import PiloteView from "./pages/PilotView";
+import PiloteEdit from "./pages/PiloteEdit";
 
 const App = () => (
   <Routes>
@@ -45,14 +49,21 @@ const App = () => (
       <Route path="ghaats/ghaatdetails/:id" element={<GhaatDetail />}/>
       <Route path="ghaats/ghaatdetailsview/:id" element={<GhaatDetailView />}/>
 
+      <Route path="boatOwner" element={<BoatOwner />} />
+<Route path="boatowner/boatownerview/:id" element={<BoatOwnerView />} />
+        <Route path="boatowner/boatowneredit/:id" element={<BoatOwnerEdit />} />
+
+        <Route path="poilet/pioletview/:id" element={<PiloteView />} />
+        <Route path="poilet/pioletedit/:id" element={<PiloteEdit />} />
+
 
 {/* forget pass */}
   {/* <Route path="forgot-password" element={<ForgotPassword />} /> */}
       <Route path="districts" element={<District />} />
       <Route path="life-jackets" element={<LifeJacket />} />
       <Route path="inspection" element={<Inspection />} />
+    
       <Route path="usermanagment" element={<Usermanagment />} />
-      <Route path="boatOwner" element={<BoatOwner />} />
       <Route path="poilet" element={<Pilot />} />
     </Route>
   </Routes>

@@ -426,8 +426,8 @@ export default function BoatDetail() {
               <div className="mt-4 text-sm text-gray-700 space-y-1 text-center">
                 <p><strong>Location:</strong> {draft.location || boat.location || "N/A"}</p>
                 <p><strong>Pincode:</strong> {draft.pincode || boat.pincode || "N/A"}</p>
-                <p><strong>Latitude:</strong> {draft.latitude || boat.latitude || "N/A"}</p>
-                <p><strong>Longitude:</strong> {draft.longitude || boat.longitude || "N/A"}</p>
+                {/* <p><strong>Latitude:</strong> {draft.latitude || boat.latitude || "N/A"}</p> */}
+                {/* <p><strong>Longitude:</strong> {draft.longitude || boat.longitude || "N/A"}</p> */}
               </div>
 
               {/* Buttons (Capture & Upload) */}

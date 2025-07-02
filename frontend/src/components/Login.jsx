@@ -51,20 +51,25 @@ const handleSubmit = async (e) => {
     return;
   }
 
-  try {
-    const { data } = await api.post("login", { email, password, remember });
-    const token = data?.access_token ?? data?.token ?? data?.data?.access_token ?? null;
+try {
+  const { data } = await api.post("login", { email, password, remember });
+  const token = data?.access_token ?? data?.token ?? data?.data?.access_token ?? null;
+  const user = data?.user ?? data?.data?.user ?? null;
 
-    if (token) {
-      localStorage.setItem("access_token", token);
-      toast.success("Login successful!");
-      setTimeout(() => {
-  window.location.href = "/dashboard"; // hard redirect (fixes reload issue)
-}, 1000);
-    } else {
-      setErrors({ password: "Unexpected response from server." });
+  if (token) {
+    localStorage.setItem("access_token", token);
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user)); 
     }
-  } catch (err) {
+    toast.success("Login successful!");
+    setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 1000);
+  } else {
+    setErrors({ password: "Unexpected response from server." });
+  }
+}
+ catch (err) {
     const apiErrors = err.response?.data?.data;
     const generalMsg = err.response?.data?.message;
 

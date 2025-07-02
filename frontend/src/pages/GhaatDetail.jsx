@@ -422,12 +422,12 @@ return (
 
 
     <div className="mt-3 text-sm text-gray-600 text-center">
-      <p>
+      {/* <p>
         Latitude: <span className="font-medium">{coords.lat || "—"}</span>
       </p>
       <p>
         Longitude: <span className="font-medium">{coords.lon || "—"}</span>
-      </p>
+      </p> */}
       <p>
         Pincode: <span className="font-medium">{pincode || "—"}</span>
       </p>

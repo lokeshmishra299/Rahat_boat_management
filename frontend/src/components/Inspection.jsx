@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 
 /* ------------ Axios setup ------------ */
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
-
 const token = localStorage.getItem("access_token");
 console.log(token); // change if tunnel alters;
 const api = axios.create({
@@ -33,27 +32,31 @@ const Inspection = () => {
   return (
     <div className="p-4 md:p-8 min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto">
-        {/* tab bar */}
-        <div className="flex justify-center space-x-6 border-b border-gray-200 mb-8">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`py-2 px-4 font-medium border-b-2 transition ${activeTab === t.id
-                  ? "border-violet-600 text-violet-600"
-                  : "border-transparent text-gray-500 hover:text-violet-600"
-                }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+  {/* 🌟 Modern Responsive Tab Bar */}
+  <div className="flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-6 mb-8 px-2">
+    {tabs.map((t) => (
+      <button
+        key={t.id}
+        onClick={() => setActiveTab(t.id)}
+        className={`py-2 px-5 rounded-full font-medium text-sm md:text-base shadow-sm transition-all duration-200
+          ${
+            activeTab === t.id
+              ? "bg-violet-600 text-white shadow-md scale-105"
+              : "bg-gray-100 text-gray-700 hover:bg-violet-100 hover:text-violet-700"
+          }`}
+      >
+        {t.label}
+      </button>
+    ))}
+  </div>
 
-        {activeTab === "conduct" && <ConductForm />}
-        {activeTab === "records" && <Records />}
-        {activeTab === "schedule" && <Schedule />}
-        {activeTab === "analytics" && <Analytics />}
-      </div>
+  {/* 👇 Tab Content */}
+  {activeTab === "conduct" && <ConductForm />}
+  {activeTab === "records" && <Records />}
+  {activeTab === "schedule" && <Schedule />}
+  {activeTab === "analytics" && <Analytics />}
+</div>
+
     </div>
   );
 };
@@ -106,68 +109,89 @@ const ConductForm = () => {
         : [...f.inspection_checklist, item],
     }));
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setAlert(null);
-    setLoading(true);
-    setFormErrors({});
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setAlert(null);
+  setFormErrors({});          // clear old
+  setLoading(true);
 
-    try {
-      // Step 1: Lookup ID by registration number
-      const lookupRes = await api.post("/boat-id-lookup", {
-        registration_no: form.register_boat_id,
-      });
+  /* ── 0️⃣ Client‑side “required” check ── */
+  const err = {};
+  if (!form.register_boat_id.trim()) err.register_boat_id = "Registration no. is required.";
+  if (!form.inspection_date)        err.inspection_date   = "Inspection date is required.";
+  if (!form.inspector_name.trim())  err.inspector_name    = "Inspector name is required.";
+  if (!form.inspector_id.trim())    err.inspector_id      = "Inspector ID is required.";
 
-      const boatId = lookupRes.data?.data?.id;
+  if (Object.keys(err).length) {       // ⬅️ कुछ छूटा हुआ है
+    setFormErrors(err);
+    setLoading(false);
+    return;                            // backend पर call मत करो
+  }
 
-      if (!boatId) {
-        setAlert({
-          ok: false,
-          msg: "Boat ID not found for given registration number.",
-        });
-        setLoading(false);
-        return;
-      }
+  /* ── 1️⃣ Boat‑ID lookup ── */
+  try {
+    const { data: lookupRes } = await api.post("/boat-id-lookup", {
+      registration_no: form.register_boat_id,
+    });
 
-      // Step 2: Prepare payload with actual boat ID
-      const payload = {
-        ...form,
-        register_boat_id: boatId, // ✅ use ID, not registration no
-      };
-
-      // Step 3: Submit inspection
-      await api.post("/conduct-inspection", payload);
-
-      setAlert({ ok: true, msg: "Inspection saved successfully!" });
-      setFormErrors({});
-      setForm((f) => ({
-        ...f,
-        inspection_date: "",
-        inspector_name: "",
-        inspector_id: "",
-        recommendations: "",
-        inspection_remarks: "",
-        inspection_checklist: [],
-      }));
-    } catch (err) {
-      const errors = err.response?.data?.data;
-      if (errors) {
-        setFormErrors(errors);
-      } else {
-        setAlert({
-          ok: false,
-          msg: err.response?.data?.message || "Something went wrong.",
-        });
-      }
-      console.error(err);
-    } finally {
+    const boatId = lookupRes?.data?.id;
+    if (!boatId) {
+      setAlert({ ok: false, msg: "Boat ID not found for given registration number." });
       setLoading(false);
+      return;
     }
-  };
+
+    /* ── 2️⃣ Inspection submit (backend validation) ── */
+    await api.post("/conduct-inspection", { ...form, register_boat_id: boatId });
+
+    toast.success("Inspection saved successfully!");
+    // setAlert({ ok: true, msg: "Inspection saved successfully!" });
+
+    // reset form (जो fields री‑इनिशियलाइज़ करने हों)
+    setForm({
+      register_boat_id: "",
+      inspection_date : "",
+      inspector_name  : "",
+      inspector_id    : "",
+      hull_condition  : "Good",
+      engine_condition: "Good",
+      safety_equipment: "Complete",
+      overall_status  : "Passed",
+      recommendations : "",
+      inspection_remarks: "",
+      inspection_checklist: [],
+    });
+
+  } catch (err) {
+    /* ── 3️⃣ Backend errors → UI ── */
+    let apiErr = err.response?.data?.errors || err.response?.data?.data || {};
+
+    // map key if backend sends registration_no
+    if (apiErr.registration_no) {
+      apiErr.register_boat_id = apiErr.registration_no;
+      delete apiErr.registration_no;
+    }
+
+    // array → string
+    apiErr = Object.fromEntries(
+      Object.entries(apiErr).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+    );
+
+    setFormErrors(apiErr);
+    setAlert({ ok: false, msg: "Please fix the highlighted fields." });
+    console.error("Backend validation:", apiErr);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <>
+            <Toaster position="top-right" reverseOrder={false} />
       <h2 className="text-2xl font-semibold text-center mb-1">
+      
         Annual Boat Inspection Form
       </h2>
       <p className="text-gray-600 text-center mb-6">
@@ -176,8 +200,9 @@ const ConductForm = () => {
 
       {alert && (
         <div
-          className={`mb-6 text-center py-2 rounded ${alert.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            }`}
+          className={`mb-6 text-center py-2 rounded ${
+            alert.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}
         >
           {alert.msg}
         </div>
@@ -186,59 +211,92 @@ const ConductForm = () => {
       <form onSubmit={handleSubmit}>
         {/* info grid */}
         <div className="grid md:grid-cols-3 gap-4 mb-6">
-          <div>
-            <input
-              className="border p-2 rounded w-full"
-              placeholder="Boat Registration Number *"
-              value={form.register_boat_id}
-              onChange={field("register_boat_id")}
-            />
-            {formErrors.register_boat_id && (
-              <p className="text-red-500 text-sm mt-1">
-                {formErrors.register_boat_id}
-              </p>
-            )}
-          </div>
+  {/* Boat Register Name */}
+  <div>
+    <label htmlFor="register_boat_id" className="block text-gray-700 font-semibold mb-1">
+      Boat Registration Number *
+    </label>
+    <input
+      id="register_boat_id"
+      className="border p-2 rounded w-full"
+      placeholder="Boat Registration Number *"
+      value={form.register_boat_id}
+      onChange={field("register_boat_id")}
+    />
+    {formErrors.register_boat_id && (
+      <p className="text-red-500 text-sm mt-1">
+        {formErrors.register_boat_id}
+      </p>
+    )}
+  </div>
 
-          <div>
-            <input
-              type="date"
-              className="border p-2 rounded w-full"
-              value={form.inspection_date}
-              onChange={field("inspection_date")}
-            />
-            {formErrors.inspection_date && (
-              <p className="text-red-500 text-sm mt-1">
-                {formErrors.inspection_date}
-              </p>
-            )}
-          </div>
+  {/* Inspection Date */}
+  <div>
+    <label htmlFor="inspection_date" className="block text-gray-700 font-semibold mb-1">
+      Inspection Date *
+    </label>
+    <input
+      id="inspection_date"
+      type="date"
+      className="border p-2 rounded w-full"
+      value={form.inspection_date}
+      onChange={field("inspection_date")}
+    />
+    {formErrors.inspection_date && (
+      <p className="text-red-500 text-sm mt-1">
+        {formErrors.inspection_date}
+      </p>
+    )}
+  </div>
 
-          <div>
-            <input
-              className="border p-2 rounded w-full"
-              placeholder="Inspector Name *"
-              value={form.inspector_name}
-              onChange={field("inspector_name")}
-            />
-            {formErrors.inspector_name && (
-              <p className="text-red-500 text-sm mt-1">
-                {formErrors.inspector_name}
-              </p>
-            )}
-          </div>
+  {/* Inspector Name */}
+ <div>
+  <label htmlFor="inspector_name" className="block text-gray-700 font-semibold mb-1">
+    Inspector Name *
+  </label>
+  <input
+    id="inspector_name"
+    className="border p-2 rounded w-full"
+    placeholder="Inspector Name *"
+    value={form.inspector_name}
+    onChange={(e) => {
+      const value = e.target.value;
+      if (/^[a-zA-Z\s]*$/.test(value)) {
+        setForm((prev) => ({ ...prev, inspector_name: value }));
+      }
+    }}
+  />
+  {formErrors.inspector_name && (
+    <p className="text-red-500 text-sm mt-1">
+      {formErrors.inspector_name}
+    </p>
+  )}
+</div>
 
-          <div className="md:col-span-3">
-            <input
-              className="border p-2 rounded w-full"
-              placeholder="Inspector ID"
-              value={form.inspector_id}
-              onChange={field("inspector_id")}
-            />
-          </div>
-        </div>
+
+  {/* Inspector ID */}
+  <div>
+    <label htmlFor="inspector_id" className="block text-gray-700 font-semibold mb-1">
+      Inspector ID
+    </label>
+    <input
+      id="inspector_id"
+      className="border p-2 rounded w-full"
+      placeholder="Inspector ID"
+      value={form.inspector_id}
+      onChange={field("inspector_id")}
+    />
+    {formErrors.inspector_id && (
+      <p className="text-red-500 text-sm mt-1">
+        {formErrors.inspector_id}
+      </p>
+    )}
+  </div>
+</div>
 
         {/* checklist */}
+        <h1 className=" font-semibold text-gray-800 mb-4">Inspection Checklist</h1>
+    
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           {checklistItems.map((item) => (
             <label key={item} className="flex items-center space-x-2">
@@ -314,8 +372,9 @@ const ConductForm = () => {
         <div className="flex justify-center mt-6">
           <button
             disabled={loading}
-            className={`bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded w-full md:w-auto ${loading && "opacity-50 cursor-not-allowed"
-              }`}
+            className={`bg-violet-600 font-semibold hover:bg-violet-700 text-white px-6 py-2 rounded-full w-full md:w-auto ${
+              loading && "opacity-50 cursor-not-allowed"
+            }`}
           >
             {loading ? "Saving…" : "Complete Inspection"}
           </button>
@@ -438,12 +497,12 @@ const Records = () => {
                     {r.boat?.district?.district_name || "—"}
                   </td>
                   <td className="px-4 py-3 border-b text-center">
-                    <button
-                      onClick={() => navigate(`/dashboard/inspection/inspectionview/${r.id}`)}
-                      className="text-sm px-4 py-1 border rounded hover:bg-gray-100"
-                    >
-                      View
-                    </button>
+                   <button
+  onClick={() => navigate(`/dashboard/inspection/inspectionview/${r.id}`)}
+  className="text-sm px-4 py-1 border rounded hover:bg-gray-100"
+>
+  View
+</button>
                   </td>
                 </tr>
               );
@@ -564,7 +623,7 @@ const Schedule = () => {
           <select className="cursor-pointer"
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
-
+          
           >
             {months.map((m, i) => (
               <option key={i} value={i}>{m}</option>
@@ -625,16 +684,11 @@ const Analytics = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/analytics", {
-      // headers: {
-      //   Authorization: `Bearer ${token}`,
-      // },
-      // withCredentials: true,
-    })
-
+    api
+      .get("/analytics")
       .then((res) => {
         const apiData = res?.data?.data;
-        console.log("anamm data", apiData);
+        console.log(apiData);
         if (apiData) {
           setData(apiData);
         } else {

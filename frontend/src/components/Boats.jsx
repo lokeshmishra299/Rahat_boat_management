@@ -402,7 +402,8 @@ const Boats = () => {
           {(coords.lat || coords.lon) && (
             <div className="mb-6 p-3 bg-blue-50 rounded-lg text-center">
               <p className="font-medium text-blue-800">
-                Location: {coords.lat}, {coords.lon} | Pincode: {pincode} | {locationName}
+                {/* Location: {coords.lat}, {coords.lon} | Pincode: {pincode} | {locationName} */}
+                 Pincode: {pincode} | {locationName}
               </p>
             </div>
           )}
