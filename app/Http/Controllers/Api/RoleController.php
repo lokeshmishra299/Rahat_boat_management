@@ -25,14 +25,18 @@ class RoleController extends Controller
     }
 public function view_roles()
 {
-    $roles = Role::all(); // saare roles fetch karo
+    $user = auth()->user();
 
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Role list fetched successfully',
-        'data' => $roles
-    ]);
+    if ($user && $user->role && $user->role->name === 'district_nodal') {
+        $roles = Role::where('name', 'ghaat_nodal')->get();
+    } else {
+        $roles = Role::all();
+    }
+
+    return ApiResponse::generateResponse('success','Role list fetched successfully',$roles,200);
+    
 }
+
 
 public function update(Request $request, $id)
 {
@@ -79,14 +83,20 @@ public function destroy($id)
     return ApiResponse::generateResponse('success','Role Deleted Successfully!');
 }
 
-public function designation(){
+public function designation()
+{
+    $user = auth()->user();
 
-    $designation=Designation::select('id','name')->get();
-    // dd($designation);
+    if ($user && $user->role && $user->role->name === 'district_nodal') {
+        $designation = Designation::where('name', 'Ghaat Nodal')
+            ->select('id', 'name')
+            ->get();
+    } else {
+        $designation = Designation::select('id', 'name')->get();
+    }
 
-    return ApiResponse::generateResponse('success','Designation Fetch Successfully',$designation);
-
-
+    return ApiResponse::generateResponse('success', 'Designation Fetch Successfully', $designation);
 }
+
 
 }
