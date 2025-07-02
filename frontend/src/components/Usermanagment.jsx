@@ -234,7 +234,7 @@ export default function Usermanagment() {
           </button>
 
           {/* add role */}
-          <div className="flex flex-col sm:flex-row items-center justify-between">
+        {/*  <div className="flex flex-col sm:flex-row items-center justify-between">
             <div className="w-full sm:w-1/2">
               <label className="text-sm font-semibold block mb-1">Role Name</label>
               <input
@@ -247,7 +247,7 @@ export default function Usermanagment() {
             <button onClick={addRole} className="px-6 py-2 bg-green-600 text-white rounded mt-2 sm:mt-6">
               Register Role
             </button>
-          </div>
+          </div>  */}
 
           {/* role table */}
           <table className="min-w-full text-sm border mt-6 border-collapse">
@@ -393,7 +393,7 @@ export default function Usermanagment() {
               </select>
             </div>
 
-                        {/* Contact No — placed next to confirmPassword to align */}
+            {/* Contact No — placed next to confirmPassword to align */}
             <div>
               <label className="text-sm font-semibold block mb-1">Contact No *</label>
               <input

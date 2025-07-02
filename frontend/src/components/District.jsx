@@ -91,14 +91,14 @@ export default function DistrictDashboard() {
     },
     {
       label: "Total Boats",
-      value: counts.total_registered_boats || "--",
+      value: counts.total_registered_boats || "0",
       subtitle: "Across all districts",
       dot: "bg-emerald-500",
       onClick: () => navigate("/dashboard/boats?tab=directory"),
     },
     {
       label: "Total Ghaats",
-      value: counts.total_ghaats || "--",
+      value: counts.total_ghaats || "0",
       subtitle: "River ports operational",
       dot: "bg-purple-500",
       onClick: () => navigate("/dashboard/ghaats?tab=directory"),
@@ -180,7 +180,7 @@ export default function DistrictDashboard() {
                 <th className="py-3 px-4 text-center font-medium">Completion</th>
                 <th className="py-3 px-4 text-center font-medium">Last Update</th>
                 <th className="py-3 px-4 text-center font-medium">Status</th>
-                <th className="py-3 px-4 text-center font-medium">Actions</th>
+                {/* <th className="py-3 px-4 text-center font-medium">Actions</th> */}
               </tr>
             </thead>
             <tbody>
@@ -210,9 +210,9 @@ export default function DistrictDashboard() {
                     <td className="py-3 px-4 text-center">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[r.status]}`}>{r.status}</span>
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    {/* <td className="py-3 px-4 text-center">
                       <button className="text-blue-600 hover:underline font-medium">View Details</button>
-                    </td>
+                    </td> */}
                   </tr>
                 ))}
 

@@ -208,7 +208,7 @@ const Dashboard = () => {
           </div>
 
           {/* activity & districts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mt-10">
             {/* recent activity */}
             <div className="bg-white p-5 rounded-lg shadow border">
               <h3 className="text-xl font-bold text-blue-700 mb-1">Recent Activity</h3>
@@ -233,7 +233,7 @@ const Dashboard = () => {
             </div>
 
             {/* top districts */}
-            <div className="bg-white p-5 rounded-lg shadow border">
+            {/* <div className="bg-white p-5 rounded-lg shadow border">
               <h3 className="text-xl font-bold text-purple-700 mb-1">Top Districts by Completion</h3>
               <p className="text-sm text-gray-500 mb-4">Data entry and registration progress</p>
               {[
@@ -257,7 +257,7 @@ const Dashboard = () => {
                   <div className="text-xs text-gray-500 mt-1">🚤 {d.boats} boats</div>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
         </main>
       ) : (
