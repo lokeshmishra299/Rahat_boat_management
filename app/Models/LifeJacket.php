@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\DistrictDataScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +23,11 @@ class LifeJacket extends Model
         'total_allocated_jackets',
         'status',
     ];
+
+        protected static function booted()
+    {
+        static::addGlobalScope(new DistrictDataScope);
+    }
 
     public function ghaat()
     {

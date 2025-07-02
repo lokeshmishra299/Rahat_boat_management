@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\DistrictDataScope;
 use Illuminate\Database\Eloquent\Model;
 
 class Pilot extends Model
@@ -19,6 +20,11 @@ class Pilot extends Model
         'dob',
         'number'
     ];
+
+            protected static function booted()
+    {
+        static::addGlobalScope(new DistrictDataScope);
+    }
 
     public function pilotFamily()
 {

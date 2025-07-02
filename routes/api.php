@@ -71,6 +71,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/users', [UserManagementController::class, 'store']);
 
+
+    
     Route::post('/roles', [RoleController::class, 'store_roles']);
     Route::get('/roles', [RoleController::class, 'view_roles']);
     Route::put('/roles/{id}', [RoleController::class, 'update']);

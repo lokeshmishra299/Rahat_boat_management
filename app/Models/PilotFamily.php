@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\DistrictDataScope;
 use Illuminate\Database\Eloquent\Model;
 
 class PilotFamily extends Model
@@ -16,6 +17,11 @@ class PilotFamily extends Model
         'adhar',
         'relation'
     ];
+
+            protected static function booted()
+    {
+        static::addGlobalScope(new DistrictDataScope);
+    }
 
     public function pilot(){
 

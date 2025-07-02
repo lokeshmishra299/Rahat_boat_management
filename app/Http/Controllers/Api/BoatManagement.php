@@ -14,13 +14,23 @@ use Illuminate\Support\Facades\Http;
 class BoatManagement extends Controller
 {
     public function district_list(Request $request)
-    {
+{
+    $user = auth()->user();
+    // dd($user);
+    if ($user && $user->role && $user->role->name === 'district_nodal') {
+        $districts = District::where('id', $user->district_id)
+            ->select('id', 'district_name')
+            ->orderBy('district_name', 'asc')
+            ->get();
+    } else {
         $districts = District::select('id', 'district_name')
             ->orderBy('district_name', 'asc')
             ->get();
-
-        return ApiResponse::generateResponse('success', 'District list fetched successfully', $districts);
     }
+
+    return ApiResponse::generateResponse('success', 'District list fetched successfully', $districts);
+}
+
 
    /* public function store(Request $request)
     {

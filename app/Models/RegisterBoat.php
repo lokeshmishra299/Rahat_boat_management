@@ -2,16 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\DistrictDataScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class RegisterBoat extends Model
 {
-        use HasFactory;
+    use HasFactory;
 
-    protected $table='register_boats';
+    protected $table = 'register_boats';
 
-     protected $fillable = [
+    protected $fillable = [
         'registration_no',
         'district_id',
         'image',
@@ -31,19 +32,23 @@ class RegisterBoat extends Model
         'remarks',
     ];
 
+    protected static function booted()
+    {
+        static::addGlobalScope(new DistrictDataScope);
+    }
+
     public function district()
-{
-    return $this->belongsTo(District::class, 'district_id');
-}
+    {
+        return $this->belongsTo(District::class, 'district_id');
+    }
 
-public function ghaat()
-{
-    return $this->belongsTo(Ghaat::class, 'ghaat_id');
-}
+    public function ghaat()
+    {
+        return $this->belongsTo(Ghaat::class, 'ghaat_id');
+    }
 
-public function inspections()
-{
-    return $this->hasMany(BoatInspection::class, 'register_boat_id');
-}
-
+    public function inspections()
+    {
+        return $this->hasMany(BoatInspection::class, 'register_boat_id');
+    }
 }

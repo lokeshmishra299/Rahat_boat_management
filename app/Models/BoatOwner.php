@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\DistrictDataScope;
 use Illuminate\Database\Eloquent\Model;
 
 class BoatOwner extends Model
 {
-    protected $table='boat_owner';
+    protected $table = 'boat_owner';
 
-    protected $fillable=[
+    protected $fillable = [
 
         'name',
         'district_id',
@@ -23,7 +24,13 @@ class BoatOwner extends Model
         'dob'
     ];
 
-    public function district(){
+    protected static function booted()
+    {
+        static::addGlobalScope(new DistrictDataScope);
+    }
+
+    public function district()
+    {
 
         return $this->belongsTo(District::class);
     }
