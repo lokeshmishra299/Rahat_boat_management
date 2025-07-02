@@ -70,9 +70,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
 
     Route::post('/users', [UserManagementController::class, 'store']);
+    Route::get('/user-list',[UserManagementController::class,'user_list']);
 
 
-    
+
     Route::post('/roles', [RoleController::class, 'store_roles']);
     Route::get('/roles', [RoleController::class, 'view_roles']);
     Route::put('/roles/{id}', [RoleController::class, 'update']);

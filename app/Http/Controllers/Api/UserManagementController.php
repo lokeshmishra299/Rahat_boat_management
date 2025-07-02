@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -78,4 +79,14 @@ class UserManagementController extends Controller
             'data' => $user
         ]);
     }
+
+    public function user_list(){
+
+        $user=User::with('district','designation','role')->get();
+        // dd($user->toArray());
+        return ApiResponse::generateResponse('success','User list fetch successfully',$user,200);
+
+    }
+
+    
 }

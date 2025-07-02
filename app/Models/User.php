@@ -52,6 +52,13 @@ class User extends Authenticatable
     {
         return $this->belongsTo(District::class);
     }
+
+    
+
+      public function designation()
+    {
+        return $this->belongsTo(Designation::class);
+    }
     
 // public function roles()
 // {
