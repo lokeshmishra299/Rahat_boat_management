@@ -25,6 +25,8 @@ class UserManagementController extends Controller
             'role_id'        => 'required|exists:roles,id',
             'district_id'    => 'required|exists:districts,id',
             'designation_id'  => 'required|exists:designations,id',
+                        'number'       => 'required|numeric|digits:10|unique:boat_owner,number',
+
         ], [
             'name.required'           => 'Full name is required.',
             'email.required'          => 'Email address is required.',
@@ -42,6 +44,11 @@ class UserManagementController extends Controller
             'district_id.exists'      => 'Selected district is invalid.',
             'designation_id.required'  => 'Please select a designation.',
             'designation_id.exists'    => 'Selected designation is invalid.',
+            'number.required'         => 'Please enter the mobile number.',
+        'number.numeric'          => 'Mobile number must be numeric.',
+        'number.digits'           => 'Mobile number must be exactly 10 digits.',
+        'number.unique'           => 'This mobile number is already registered.',
+
         ]);
 
 
@@ -61,6 +68,7 @@ class UserManagementController extends Controller
             'role_id'        => $request->role_id,
             'district_id'    => $request->district_id,
             'designation_id'  => $request->designation_id,
+            'number'         => $request->number
         ]);
 
         return response()->json([
