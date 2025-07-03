@@ -191,4 +191,12 @@ return ApiResponse::generateResponse('success','Analytics fetch successfully',$d
 
 }
 
+public function registration_no_list(){
+
+    $boat=RegisterBoat::select('registration_no')->get();
+    // dd($boat->toArray());
+    
+    return ApiResponse::generateResponse('success','Registered boat name fetched successfully',$boat,200);
+}
+
 }

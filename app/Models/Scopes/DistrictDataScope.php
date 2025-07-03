@@ -11,15 +11,21 @@ use Illuminate\Support\Facades\Log;
 
 class DistrictDataScope implements Scope
 {
-    public function apply(Builder $builder, Model $model): void
+public function apply(Builder $builder, Model $model): void
 {
     $user = Auth::user();
 
+    // Skip scope for District model itself
     if ($model instanceof District) {
         return;
     }
 
-    if ($user && $user->role && $user->role->name === 'district_nodal') {
+    // Apply district filter for both district_nodal and ghat_nodal users
+    if (
+        $user &&
+        $user->role &&
+        in_array($user->role->name, ['district_nodal', 'ghaat_nodal'])
+    ) {
         Log::info('Applying district scope', [
             'user_id'     => $user->id,
             'district_id' => $user->district_id,

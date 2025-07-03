@@ -52,6 +52,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/life-jackets',[LifeJacketController::class,'store']);
     Route::get('/life-jackets-tracking',[LifeJacketController::class,'distribuation_tracking']);
+    Route::post('/ghaat-boat-count', [LifeJacketController::class, 'getBoatCountByGhat']);
+
+    
 
     //Conduct inspection
 
@@ -63,6 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/upcoming-inspections', [InspectionController::class, 'upcoming_inspections']);
     Route::get('/analytics',[InspectionController::class,'analytics']);
 
+    Route::get('/boat-registration-no',[InspectionController::class,'registration_no_list']);
 
 
     //Dashboard

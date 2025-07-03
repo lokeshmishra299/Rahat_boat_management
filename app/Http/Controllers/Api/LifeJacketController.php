@@ -6,6 +6,7 @@ use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\LifeJacket;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LifeJacketController extends Controller
 {
@@ -31,8 +32,7 @@ public function store(Request $request)
         'ghaat_id'          => 'required|exists:ghaats,id',
         'district_id'       => 'required|exists:districts,id',
         'no_of_boats'       => 'required|integer|min:1',
-        'jackets_per_boat'  => 'required|integer|min:1',
-        // 'total_jackets'     => 'required|integer|min:1',
+        'total_jackets'     => 'required|integer|min:1',
         // 'total_allocated_jackets' =>'required|integer|min:1',
         'distribution_date' => 'required|date',
         'received_by'       => 'required|string|max:255',
@@ -46,8 +46,8 @@ public function store(Request $request)
         'no_of_boats.required'       => 'Number of boats is required.',
         'no_of_boats.integer'        => 'Number of boats must be a number.',
         'jackets_per_boat.required'  => 'Jackets per boat is required.',
-        // 'total_jackets.required'     => 'Total jackets is required.',
-        // 'total_allocated_jackets.required'=>'Total allocated jackets is required',
+        'total_jackets.required'     => 'Total jackets is required.',
+        'total_allocated_jackets.required'=>'Total allocated jackets is required',
         'distribution_date.required' => 'Distribution date is required.',
         'distribution_date.date'     => 'Distribution date must be a valid date.',
         'received_by.required'       => 'Receiver name is required.',
@@ -174,7 +174,35 @@ public function distribuation_tracking()
     ]);
 }
 
+public function getBoatCountByGhat(Request $request)
+{
+    // dd($request->all());
+    $ghaat_id = $request->ghat_id;
+    $district_id = $request->district_id;
 
+    if (!$ghaat_id || !$district_id) {
+        return ApiResponse::generateResponse('error', 'Missing ghat or district information.', []);
+    }
 
+   $totalBoats = DB::table('register_boats')
+    ->where('ghaat_id', $ghaat_id)
+    ->where('district_id', $district_id)
+    ->count();
+    // dd( $totalBoats);
+
+$totalCapacity = (int)DB::table('register_boats')
+    ->where('ghaat_id', $ghaat_id)
+    ->where('district_id', $district_id)
+    ->sum('passenger_capacity');
+
+// dd( $totalCapacity,$totalBoats );
+
+    return ApiResponse::generateResponse('success', 'Boat count fetched', [
+        'district_id' => $district_id,
+        'ghaat_id'    => $ghaat_id,
+        'total_boats' => $totalBoats,
+         'total_capacity'    => $totalCapacity
+    ]);
+}
 
 }

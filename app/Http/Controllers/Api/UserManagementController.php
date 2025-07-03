@@ -80,13 +80,15 @@ class UserManagementController extends Controller
         ]);
     }
 
-    public function user_list(){
+public function user_list()
+{
+    $users = User::with('district', 'designation', 'role')
+                ->whereIn('role_id', [1, 2])
+                ->get();
 
-        $user=User::with('district','designation','role')->get();
-        // dd($user->toArray());
-        return ApiResponse::generateResponse('success','User list fetch successfully',$user,200);
+    return ApiResponse::generateResponse('success', 'User list fetch successfully', $users, 200);
+}
 
-    }
     
      public function user_list_id($id){
 
@@ -111,13 +113,7 @@ class UserManagementController extends Controller
     $validator = Validator::make($request->all(), [
         'name'           => 'required|string|max:255',
         'email'          => 'required|email|unique:users,email,' . $id,
-        'password'       => [
-            'nullable', // only validate if sent
-            'string',
-            'min:8',
-            'confirmed',
-            'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
-        ],
+       
         'role_id'        => 'required|exists:roles,id',
         'district_id'    => 'required|exists:districts,id',
         'designation_id' => 'required|exists:designations,id',
@@ -128,10 +124,7 @@ class UserManagementController extends Controller
         'email.email'             => 'Please provide a valid email address.',
         'email.unique'            => 'This email is already registered.',
 
-        'password.required'       => 'Password is required.',
-        'password.min'            => 'Password must be at least 8 characters.',
-        'password.confirmed'      => 'Password confirmation does not match.',
-        'password.regex'          => 'Password must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number.',
+        
 
         'role_id.required'        => 'Please select a role.',
         'role_id.exists'          => 'Selected role is invalid.',
@@ -162,10 +155,7 @@ class UserManagementController extends Controller
     $user->designation_id = $request->designation_id;
     $user->number         = $request->number;
 
-    if ($request->filled('password')) {
-        $user->password1 = $request->password;
-        $user->password  = Hash::make($request->password);
-    }
+   
 
     $user->save();
 
