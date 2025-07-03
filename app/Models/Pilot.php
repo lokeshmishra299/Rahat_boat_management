@@ -21,10 +21,10 @@ class Pilot extends Model
         'number'
     ];
 
-            protected static function booted()
-    {
-        static::addGlobalScope(new DistrictDataScope);
-    }
+    //         protected static function booted()
+    // {
+    //     static::addGlobalScope(new DistrictDataScope);
+    // }
 
     public function pilotFamily()
 {
