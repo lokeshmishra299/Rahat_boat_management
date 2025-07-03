@@ -17,10 +17,7 @@ class BoatFamilyMember extends Model
         'relation',
     ];
 
-        protected static function booted()
-{
-    static::addGlobalScope(new DistrictDataScope);
-}
+
 
     public function boatOwner(){
 

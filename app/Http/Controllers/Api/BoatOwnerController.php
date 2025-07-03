@@ -110,7 +110,7 @@ class BoatOwnerController extends Controller
 public function directory(){
 
     $boatOwner=BoatOwner::with('district')->get();
-    // dd($boatOwner);
+    // dd($boatOwner->toArray());
 
     return ApiResponse::generateResponse('success','Boat Owner fetch successfully',$boatOwner,200);
 }
@@ -126,31 +126,33 @@ public function owner_detail($id){
 public function edit_detail(Request $request, $id)
 {
     $validator = Validator::make(array_merge($request->all(), ['id' => $id]), [
-        'id'           => 'required|exists:boat_owner,id',
-        'name'         => 'required|string',
-        'district_id'  => 'required|exists:districts,id',
-        'number'       => 'required|numeric|digits:10|unique:boat_owner,number,' . $id,
-        'email'        => 'nullable|email',
-        'adhar_no'     => 'required|numeric|digits:12|unique:boat_owner,adhar_no,' . $id,
-        'dob'          => 'required|date',
-        'boat_owned'   => 'required|integer|min:1',
-        'pincode'      => 'required|digits:6',
-        'family'               => 'nullable|array',
-        'family.*.id'          => 'nullable|integer|exists:boat_family_members,id',
-        'family.*.name'        => 'required_with:family|string',
-        'family.*.relation'    => 'required_with:family|string',
-        'family.*.mobile'      => 'required_with:family|numeric|digits:10',
-        'family.*.adhar'       => 'required_with:family|numeric|digits:12',
+        'id'                        => 'required|exists:boat_owner,id',
+        'name'                      => 'required|string',
+        'district_id'               => 'required|exists:districts,id',
+        'number'                    => 'required|numeric|digits:10|unique:boat_owner,number,' . $id,
+        'email'                     => 'nullable|email',
+        'adhar_no'                  => 'required|numeric|digits:12|unique:boat_owner,adhar_no,' . $id,
+        'dob'                       => 'required|date',
+        'boat_owned'                => 'required|integer|min:1',
+        'pincode'                   => 'required|digits:6',
+
+        // ✅ Validate the correct family array key (as sent from frontend)
+        'family_members'               => 'nullable|array',
+        'family_members.*.id'          => 'nullable|integer|exists:family_members,id',
+        'family_members.*.name'        => 'required_with:family_members|string',
+        'family_members.*.relation'    => 'required_with:family_members|string',
+        'family_members.*.mobile'      => 'required_with:family_members|numeric|digits:10',
+        'family_members.*.adhar'       => 'required_with:family_members|numeric|digits:12',
     ], [
-        'id.required'          => 'Boat owner ID is required.',
-        'id.exists'            => 'Boat owner not found.',
-        'number.unique'        => 'This mobile number is already registered.',
-        'adhar_no.unique'      => 'This Aadhar number is already registered.',
-        'family.*.id.exists'   => 'Invalid family member ID.',
-        'family.*.name.required_with'     => 'Family member name is required.',
-        'family.*.relation.required_with' => 'Family member relation is required.',
-        'family.*.mobile.required_with'   => 'Family member mobile number is required.',
-        'family.*.adhar.required_with'    => 'Family member Aadhar number is required.',
+        'id.required'                        => 'Boat owner ID is required.',
+        'id.exists'                          => 'Boat owner not found.',
+        'number.unique'                      => 'This mobile number is already registered.',
+        'adhar_no.unique'                    => 'This Aadhar number is already registered.',
+        'family_members.*.id.exists'    => 'Invalid family member ID.',
+        'family_members.*.name.required_with'     => 'Family member name is required.',
+        'family_members.*.relation.required_with' => 'Family member relation is required.',
+        'family_members.*.mobile.required_with'   => 'Family member mobile number is required.',
+        'family_members.*.adhar.required_with'    => 'Family member Aadhar number is required.',
     ]);
 
     if ($validator->fails()) {
@@ -162,8 +164,9 @@ public function edit_detail(Request $request, $id)
         );
     }
 
-    $owner = BoatOwner::find($id);
+    $owner = BoatOwner::findOrFail($id);
 
+    // ✅ Update main boat owner data
     $owner->update([
         'name'         => $request->name,
         'district_id'  => $request->district_id,
@@ -175,29 +178,33 @@ public function edit_detail(Request $request, $id)
         'pincode'      => $request->pincode,
     ]);
 
-    $submittedFamily = $request->family ?? [];
+    // ✅ Process family members
+    $submittedFamily = $request->family_members ?? [];
 
+    // Get existing IDs
     $currentIds = $owner->boatFamilyMembers()->pluck('id')->toArray();
     $incomingIds = collect($submittedFamily)->pluck('id')->filter()->toArray();
+
+    // Delete removed family members
     $idsToDelete = array_diff($currentIds, $incomingIds);
+    if (!empty($idsToDelete)) {
+        BoatFamilyMember::whereIn('id', $idsToDelete)->delete();
+    }
 
-    BoatFamilyMember::whereIn('id', $idsToDelete)->delete();
-
+    // Add/update family members
     foreach ($submittedFamily as $member) {
-        if (isset($member['id'])) {
-            $existing = BoatFamilyMember::where('id', $member['id'])
+        if (!empty($member['id'])) {
+            // Update existing
+            BoatFamilyMember::where('id', $member['id'])
                 ->where('boat_owner_id', $owner->id)
-                ->first();
-
-            if ($existing) {
-                $existing->update([
+                ->update([
                     'name'     => $member['name'],
                     'adhar'    => $member['adhar'],
                     'mobile'   => $member['mobile'],
                     'relation' => $member['relation'],
                 ]);
-            }
         } else {
+            // Create new
             $owner->boatFamilyMembers()->create([
                 'name'     => $member['name'],
                 'adhar'    => $member['adhar'],
