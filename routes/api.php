@@ -71,6 +71,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/users', [UserManagementController::class, 'store']);
     Route::get('/user-list',[UserManagementController::class,'user_list']);
+        Route::get('/user-list/{id}',[UserManagementController::class,'user_list_id']);
+        Route::post('/user-edit/{id}',[UserManagementController::class,'user_edit']);
+
+
 
 
 

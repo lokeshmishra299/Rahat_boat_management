@@ -87,6 +87,93 @@ class UserManagementController extends Controller
         return ApiResponse::generateResponse('success','User list fetch successfully',$user,200);
 
     }
+    
+     public function user_list_id($id){
 
+        $user = User::with('district', 'designation', 'role')->where('id', $id)->first();
+
+        // dd($user);
+        return ApiResponse::generateResponse('success','User list fetch successfully',$user,200);
+
+    }
+
+   public function user_edit(Request $request, $id)
+{
+    $user = User::find($id);
+
+    if (!$user) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'User not found.'
+        ], 404);
+    }
+
+    $validator = Validator::make($request->all(), [
+        'name'           => 'required|string|max:255',
+        'email'          => 'required|email|unique:users,email,' . $id,
+        'password'       => [
+            'nullable', // only validate if sent
+            'string',
+            'min:8',
+            'confirmed',
+            'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
+        ],
+        'role_id'        => 'required|exists:roles,id',
+        'district_id'    => 'required|exists:districts,id',
+        'designation_id' => 'required|exists:designations,id',
+        'number'         => 'required|numeric|digits:10|unique:boat_owner,number,' . $id,
+    ], [
+        'name.required'           => 'Full name is required.',
+        'email.required'          => 'Email address is required.',
+        'email.email'             => 'Please provide a valid email address.',
+        'email.unique'            => 'This email is already registered.',
+
+        'password.required'       => 'Password is required.',
+        'password.min'            => 'Password must be at least 8 characters.',
+        'password.confirmed'      => 'Password confirmation does not match.',
+        'password.regex'          => 'Password must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number.',
+
+        'role_id.required'        => 'Please select a role.',
+        'role_id.exists'          => 'Selected role is invalid.',
+        'district_id.required'    => 'Please select a district.',
+        'district_id.exists'      => 'Selected district is invalid.',
+        'designation_id.required' => 'Please select a designation.',
+        'designation_id.exists'   => 'Selected designation is invalid.',
+
+        'number.required'         => 'Please enter the mobile number.',
+        'number.numeric'          => 'Mobile number must be numeric.',
+        'number.digits'           => 'Mobile number must be exactly 10 digits.',
+        'number.unique'           => 'This mobile number is already registered.',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    // update user
+    $user->name           = $request->name;
+    $user->email          = $request->email;
+    $user->role_id        = $request->role_id;
+    $user->district_id    = $request->district_id;
+    $user->designation_id = $request->designation_id;
+    $user->number         = $request->number;
+
+    if ($request->filled('password')) {
+        $user->password1 = $request->password;
+        $user->password  = Hash::make($request->password);
+    }
+
+    $user->save();
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'User updated successfully.',
+        'data' => $user
+    ]);
+}
     
 }

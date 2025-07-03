@@ -11,43 +11,60 @@ class LifeJacketController extends Controller
 {
 public function store(Request $request)
 {
+
+
+      $user = auth()->user(); 
+    //   dd($user);
+
+    if ($user && $user->role_id == 1) {
+        $request->merge(['district_id' => $user->district_id]);
+       
+    }
+//     dd([
+//     'from_all' => $request->all(),
+//     'from_json' => $request->json()->all(),
+//     'merged' => $request->merge(['district_id' => $user->district_id])->all(),
+// ]);
+
+
     $validated = $request->validate([
         'ghaat_id'          => 'required|exists:ghaats,id',
         'district_id'       => 'required|exists:districts,id',
         'no_of_boats'       => 'required|integer|min:1',
         'jackets_per_boat'  => 'required|integer|min:1',
-        'total_jackets'     => 'required|integer|min:1',
-        'total_allocated_jackets' =>'required|integer|min:1',
+        // 'total_jackets'     => 'required|integer|min:1',
+        // 'total_allocated_jackets' =>'required|integer|min:1',
         'distribution_date' => 'required|date',
         'received_by'       => 'required|string|max:255',
-        'phone'             => 'required|regex:/^[0-9]{10}$/',
+        // 'phone'             => 'required|regex:/^[0-9]{10}$/',
         'distribution_notes'=> 'nullable|string|max:255',
     ], [
         'ghaat_id.required'          => 'Ghaat is required.',
         'ghaat_id.exists'            => 'Selected ghaat does not exist.',
-        'district_id.required'       => 'District is required.',
-        'district_id.exists'         => 'Selected district does not exist.',
+        // 'district_id.required'       => 'District is required.',
+        // 'district_id.exists'         => 'Selected district does not exist.',
         'no_of_boats.required'       => 'Number of boats is required.',
         'no_of_boats.integer'        => 'Number of boats must be a number.',
         'jackets_per_boat.required'  => 'Jackets per boat is required.',
-        'total_jackets.required'     => 'Total jackets is required.',
-        'total_allocated_jackets.required'=>'Total allocated jackets is required',
+        // 'total_jackets.required'     => 'Total jackets is required.',
+        // 'total_allocated_jackets.required'=>'Total allocated jackets is required',
         'distribution_date.required' => 'Distribution date is required.',
         'distribution_date.date'     => 'Distribution date must be a valid date.',
         'received_by.required'       => 'Receiver name is required.',
-        'phone.required'             => 'Phone number is required.',
-        'phone.regex'                => 'Phone number must be 10 digits.',
+        // 'phone.required'             => 'Phone number is required.',
+        // 'phone.regex'                => 'Phone number must be 10 digits.',
     ]);
 
-   if ($validated['total_jackets'] > $validated['total_allocated_jackets']) {
-    return response()->json([
-        'status' => 'error',
-        'message' => 'Total jackets cannot exceed total allocated jackets',
-        'errors' => [
-            'total_jackets' => ['Total jackets cannot exceed total allocated jackets.']
-        ]
-    ], 422);
-}
+//    if ($validated['total_jackets'] > $validated['total_allocated_jackets']) {
+//     return response()->json([
+//         'status' => 'error',
+//         'message' => 'Total jackets cannot exceed total allocated jackets',
+//         'errors' => [
+//             'total_jackets' => ['Total jackets cannot exceed total allocated jackets.']
+//         ]
+//     ], 422);
+// }
+// dd($validated);
 
     $lifeJacket=LifeJacket::create($validated);
 
