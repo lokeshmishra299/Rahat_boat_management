@@ -7,15 +7,19 @@ import { Toaster, toast } from 'react-hot-toast';
 
 
 /* ── API helper (token-aware) ── */
+const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+
+const token = localStorage.getItem("access_token");
+
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
-    ...(localStorage.getItem("access_token") && {
-      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-    }),
+    skip_zrok_interstitial: "true",
+    ...(token && { Authorization: `Bearer ${token}` }),
   },
 });
+
 
 /* ───────────────────────────────────────────────────────── */
 import { useSearchParams } from "react-router-dom";
@@ -98,11 +102,12 @@ export default function LifeJacket() {
     })();
   }, [reload]);
 
+  
 
   /* cards config */
   const cards = [
-    { label: "Total Allocated", val: stats.allocated, emoji: "📦", bg: "orange" },
-    { label: "Distributed", val: stats.distributed, emoji: "🛟", bg: "green" },
+    { label: "Total Target", val: stats.allocated, emoji: "📦", bg: "orange" },
+    { label: "Total Distributed", val: stats.distributed, emoji: "🛟", bg: "green" },
     {
       label: "Distribution Rate",
       val: stats.efficiency,
@@ -288,6 +293,26 @@ setVal((v) => ({
     })();
   }, []);
 
+ const [boats, setBoats] = useState([]);
+
+  useEffect(() => {
+    api.get("/boat-registration-no")
+      .then((res) => {
+        if (res.data.status === "success") {
+          const boatNumbers = res.data.data.map((item) => item.registration_no);
+          setBoats(boatNumbers);
+
+          // Optionally auto-fill if not already set
+          if (!val.boats && boatNumbers.length > 0) {
+            setVal({ ...val, boats: boatNumbers[0] }); // default to first boat
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch boats", err);
+      });
+  }, []);
+
   /* handlers */
   const handle = async (e) => {
     const { name, value } = e.target;
@@ -457,21 +482,28 @@ setVal((v) => ({
         </div>
 
         {/* Boats */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Boats *</label>
-          <input
-            name="boats"
-            value={val.boats}
-            readOnly
-            placeholder={ph.boats}
-            className={`${inputCls} bg-gray-100 cursor-not-allowed`}
-          />
+<div>
+  <label className="block text-sm font-medium mb-1">Boats *</label>
+  <select
+    className={`${inputCls} bg-gray-100 cursor-pointer`}
+    value={val.boats}
+    onChange={(e) => {
+      // Prevent changing value
+      alert("This value is auto-filled and cannot be changed.");
+    }}
+  >
+    <option value="">{boats.length === 0 ? "Loading..." : "Select Boat"}</option>
+    {boats.map((boat, idx) => (
+      <option key={idx} value={boat}>
+        {boat}
+      </option>
+    ))}
+  </select>
 
-
-          {errors.boats && (
-            <p className="text-xs text-red-600 mt-1">{errors.boats}</p>
-          )}
-        </div>
+  {errors?.boats && (
+    <p className="text-xs text-red-600 mt-1">{errors.boats}</p>
+  )}
+</div>
 
         {/* Total allocated */}
 {/* Total jackets distributed */}

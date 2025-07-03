@@ -4,11 +4,13 @@ import axios from "axios";
 import { useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import Select from "react-select";
 
 /* ------------ Axios setup ------------ */
-const BASE_URL = "http://127.0.0.1:8000/api";
+const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+
 const token = localStorage.getItem("access_token");
-console.log(token); // change if tunnel alters;
+
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -182,6 +184,23 @@ const handleSubmit = async (e) => {
   }
 };
 
+const [boatOptions, setBoatOptions] = useState([]);
+
+useEffect(() => {
+  const fetchBoatNumbers = async () => {
+    try {
+      const res = await api.get("/boat-registration-no");
+      if (res.data?.status === "success") {
+        setBoatOptions(res.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch boat registration numbers", err);
+    }
+  };
+
+  fetchBoatNumbers();
+}, []);
+
 
 
   return (
@@ -201,23 +220,44 @@ const handleSubmit = async (e) => {
         {/* info grid */}
         <div className="grid md:grid-cols-3 gap-4 mb-6">
   {/* Boat Register Name */}
-  <div>
-    <label htmlFor="register_boat_id" className="block text-gray-700 font-semibold mb-1">
-      Boat Registration Number *
-    </label>
-    <input
-      id="register_boat_id"
-      className="border p-2 rounded w-full"
-      placeholder="Boat Registration Number *"
-      value={form.register_boat_id}
-      onChange={field("register_boat_id")}
-    />
-    {formErrors.register_boat_id && (
-      <p className="text-red-500 text-sm mt-1">
-        {formErrors.register_boat_id}
-      </p>
-    )}
-  </div>
+ 
+<div>
+  <label htmlFor="register_boat_id" className="block text-gray-700 font-semibold mb-1">
+    Boat Registration Number *
+  </label>
+
+  <Select
+    id="register_boat_id"
+    options={boatOptions.map((boat) => ({
+      value: boat.registration_no,
+      label: boat.registration_no,
+    }))}
+    value={
+      form.register_boat_id
+        ? {
+            value: form.register_boat_id,
+            label: form.register_boat_id,
+          }
+        : null
+    }
+    onChange={(selected) =>
+      setForm((prev) => ({
+        ...prev,
+        register_boat_id: selected?.value || "",
+      }))
+    }
+    placeholder="Select Boat Registration Number"
+    isClearable
+    className="react-select-container"
+    classNamePrefix="react-select"
+  />
+
+  {formErrors.register_boat_id && (
+    <p className="text-red-500 text-sm mt-1">
+      {formErrors.register_boat_id}
+    </p>
+  )}
+</div>
 
   {/* Inspection Date */}
   <div>
