@@ -2,11 +2,18 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Toaster, toast } from 'react-hot-toast';
+
+const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+
+const token = localStorage.getItem("access_token");
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api",
-  headers: { "Content-Type": "application/json" },
-  withCredentials: true,
+  baseURL: BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  },
 });
 
 const InputField = ({ label, value, onChange, type = "text", readOnly = false, error, maxLength, pattern }) => (
@@ -40,6 +47,7 @@ export default function BoatOwnerEdit() {
   useEffect(() => {
     api.get(`/boat-owner-list/${id}`).then((res) => {
       if (res.data.status === "success") {
+          
         const data = res.data.data;
         if (data.dob && data.dob.includes("T")) {
           data.dob = data.dob.split("T")[0];
@@ -111,7 +119,7 @@ const handleSubmit = async () => {
       address: owner.address || "",
       pincode: owner.pincode,
       district_id: owner.district_id,
-      boat_family_members: owner.boat_family_members.map((m) => ({
+      family_members: owner.boat_family_members.map((m) => ({
         id: m.id,
         name: m.name,
         mobile: m.mobile,
@@ -131,6 +139,8 @@ const handleSubmit = async () => {
       setOwner(updated);
       setDisplayName(updated.name);
 
+      
+  toast.success("Boat Owner updated successfully!");
       // 👇 Go back to previous page
       navigate(-1);
     } else {
@@ -152,7 +162,11 @@ const handleSubmit = async () => {
   if (!owner) return null;
 
   return (
+    
+
     <div className="max-w-5xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md border space-y-10">
+       <Toaster position="top-right" reverseOrder={false} />
+    
       <h1 className="text-3xl text-center font-bold text-indigo-700 mb-1">
         ✏️ Edit Boat Owner - {displayName}
       </h1>
@@ -188,16 +202,120 @@ const handleSubmit = async () => {
 
         {owner.boat_family_members.map((member, index) => (
           <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 relative">
-            <InputField label="Name" value={member.name} onChange={(e) => handleFamilyChange(index, "name", e.target.value)} />
-            <InputField label="Mobile" value={member.mobile} onChange={(e) => handleFamilyChange(index, "mobile", e.target.value)} />
-            <InputField label="Aadhar" value={member.adhar} onChange={(e) => handleFamilyChange(index, "adhar", e.target.value)} />
-            <InputField label="Relation" value={member.relation} onChange={(e) => handleFamilyChange(index, "relation", e.target.value)} />
-            <button
+     {/* Name Field */}
+<div>
+  <InputField
+    label="Name"
+    value={member.name}
+    onChange={(e) => {
+      const val = e.target.value;
+      if (/^[a-zA-Z\s]*$/.test(val)) {
+        handleFamilyChange(index, "name", val);
+      }
+    }}
+    onKeyDown={(e) => {
+      const key = e.key;
+      if (
+        !/^[a-zA-Z\s]$/.test(key) &&
+        key !== "Backspace" &&
+        key !== "Tab" &&
+        key !== "ArrowLeft" &&
+        key !== "ArrowRight"
+      ) {
+        e.preventDefault();
+      }
+    }}
+  />
+  {errors[`family_members.${index}.name`] && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors[`family_members.${index}.name`][0]}
+    </p>
+  )}
+</div>
+
+{/* Mobile Field */}
+<div>
+  <InputField
+    label="Mobile"
+    value={member.mobile}
+    onChange={(e) => {
+      const val = e.target.value.replace(/\D/g, "");
+      if (val.length <= 10) {
+        handleFamilyChange(index, "mobile", val);
+      }
+    }}
+    onKeyDown={(e) => {
+      const allowedKeys = ["Backspace", "Tab", "ArrowLeft", "ArrowRight"];
+      if (!/^\d$/.test(e.key) && !allowedKeys.includes(e.key)) {
+        e.preventDefault();
+      }
+    }}
+  />
+  {errors[`family_members.${index}.mobile`] && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors[`family_members.${index}.mobile`][0]}
+    </p>
+  )}
+</div>
+
+{/* Aadhar Field */}
+<div>
+  <InputField
+    label="Aadhar"
+    value={member.adhar}
+    onChange={(e) => {
+      const val = e.target.value.replace(/\D/g, "");
+      if (val.length <= 12) {
+        handleFamilyChange(index, "adhar", val);
+      }
+    }}
+    onKeyDown={(e) => {
+      const allowedKeys = ["Backspace", "Tab", "ArrowLeft", "ArrowRight"];
+      if (!/^\d$/.test(e.key) && !allowedKeys.includes(e.key)) {
+        e.preventDefault();
+      }
+    }}
+  />
+  {errors[`family_members.${index}.adhar`] && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors[`family_members.${index}.adhar`][0]}
+    </p>
+  )}
+</div>
+
+{/* Relation Field */}
+<div>
+  <InputField
+    label="Relation"
+    value={member.relation}
+    onChange={(e) => {
+      const val = e.target.value;
+      if (/^[a-zA-Z\s]*$/.test(val)) {
+        handleFamilyChange(index, "relation", val);
+      }
+    }}
+    onKeyDown={(e) => {
+      const key = e.key;
+      const allowedKeys = ["Backspace", "Tab", "ArrowLeft", "ArrowRight"];
+      if (!/^[a-zA-Z\s]$/.test(key) && !allowedKeys.includes(key)) {
+        e.preventDefault();
+      }
+    }}
+  />
+  {errors[`family_members.${index}.relation`] && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors[`family_members.${index}.relation`][0]}
+    </p>
+  )}
+</div>
+
+
+            {/* <button
               onClick={() => deleteFamilyMember(index)}
               className="absolute top-0 right-0 text-red-600 hover:underline text-sm"
             >
               🗑 Delete
-            </button>
+            </button> */}
           </div>
         ))}
 
@@ -220,5 +338,6 @@ const handleSubmit = async () => {
         </button>
       </div>
     </div>
+   
   );
 }

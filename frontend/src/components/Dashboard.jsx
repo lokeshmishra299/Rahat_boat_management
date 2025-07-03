@@ -105,10 +105,12 @@ const user = JSON.parse(localStorage.getItem("user"));
               <FaShip className="inline-block mr-2 text-lg" />
               Boats
             </Link>
+            {user && user.role_id !== 2 && (
             <Link to="ghaats" className={linkCls("ghaats", "bg-sky-500")}>
               <FaWater className="inline-block mr-2 text-lg" />
               Ghaats
             </Link>
+             )}
             <Link to="districts" className={linkCls("districts", "bg-red-500")}>
               <FaMapMarkedAlt className="inline-block mr-2 text-lg" />
               Districts

@@ -84,7 +84,7 @@ export default function DistrictDashboard() {
   const metrics = [
     {
       label: "Total Districts",
-      value: counts.total_districts_with_ghaats || "--",
+      value: counts.total_districts_with_ghaats || "0",
       subtitle: `${counts.total_district || 0} districts total`,
       dot: "bg-blue-500",
       // onClick: () => alert("Total Districts clicked"),
@@ -103,19 +103,19 @@ export default function DistrictDashboard() {
       dot: "bg-purple-500",
       onClick: () => navigate("/dashboard/ghaats?tab=directory"),
     },
-    {
-      label: "Avg Completion",
-      value: `${avgCompletion}%`,
-      subtitle: "Data entry progress",
-      dot: "bg-orange-500",
-      onClick: () => {},
-    },
+    // {
+    //   label: "Avg Completion",
+    //   value: `${avgCompletion}%`,
+    //   subtitle: "Data entry progress",
+    //   dot: "bg-orange-500",
+    //   onClick: () => {},
+    // },
   ];
 
   return (
     <div className="space-y-8 p-6 bg-gray-50 min-h-screen">
       {/* metric cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {metrics.map((m) => (
           <div
             key={m.label}
@@ -177,7 +177,7 @@ export default function DistrictDashboard() {
                 <th className="py-3 px-4 text-left font-medium">District</th>
                 <th className="py-3 px-4 text-center font-medium">Boats</th>
                 <th className="py-3 px-4 text-center font-medium">Ghaats</th>
-                <th className="py-3 px-4 text-center font-medium">Completion</th>
+                {/* <th className="py-3 px-4 text-center font-medium">Completion</th> */}
                 <th className="py-3 px-4 text-center font-medium">Last Update</th>
                 <th className="py-3 px-4 text-center font-medium">Status</th>
                 {/* <th className="py-3 px-4 text-center font-medium">Actions</th> */}
@@ -198,14 +198,14 @@ export default function DistrictDashboard() {
                     <td className="py-3 px-4 font-medium text-gray-800">{r.district}</td>
                     <td className="py-3 px-4 text-center">{r.boats}</td>
                     <td className="py-3 px-4 text-center">{r.ghaats}</td>
-                    <td className="py-3 px-4 text-center w-48">
+                    {/* <td className="py-3 px-4 text-center w-48">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-gray-700 min-w-[2.5rem]">{r.completion}%</span>
                         <div className="flex-1 bg-gray-200 h-2 rounded-full">
                           <div className="bg-gray-800 h-2 rounded-full" style={{ width: `${r.completion}%` }} />
                         </div>
                       </div>
-                    </td>
+                    </td> */}
                     <td className="py-3 px-4 text-center whitespace-nowrap">{r.lastUpdate}</td>
                     <td className="py-3 px-4 text-center">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[r.status]}`}>{r.status}</span>

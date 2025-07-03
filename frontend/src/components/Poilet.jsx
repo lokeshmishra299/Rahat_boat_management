@@ -1,6 +1,6 @@
 // src/components/PilotManagement.jsx
 import React, { useEffect, useState } from 'react';
-import { FaUserShield, FaListAlt, FaPlusCircle, FaDownload, FaEye, FaPen } from 'react-icons/fa';
+import { FaUserShield, FaListAlt, FaPlusCircle, FaDownload, FaEye, FaEdit } from 'react-icons/fa';
 import axios from 'axios';
 import { Toaster, toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -223,9 +223,52 @@ const PilotManagement = () => {
         </form>
       ) : (
         <div className="bg-white rounded shadow p-4">
-          <div className="flex justify-between mb-4">
-            <h2 className="text-xl font-bold text-blue-700">Registered Pilots</h2>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2"><FaDownload /> Export</button>
+         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h3 className="text-xl sm:text-2xl font-bold text-sky-700 text-center sm:text-left">
+              Registered pilots
+            </h3>
+           <button
+  className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-md transition-colors w-full sm:w-auto justify-center"
+  onClick={() => {
+    const headers = [
+      "Sr.No",
+      "Name",
+      "Mobile",
+      "Aadhar",
+      "No of Boats",
+      "Registration No"
+    ];
+
+    const rows = pilots.map((pilot, index) => [
+      index + 1,
+      `"${pilot.name}"`,
+      `"${pilot.number}"`,
+      `"${pilot.adhar}"`,
+      `"${pilot.no_of_boat}"`,
+      `"${pilot.registration_no}"`
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `pilot_report_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }}
+>
+  <FaDownload className="text-sm sm:text-base" />
+  <span className="text-sm sm:text-base">Export Report</span>
+</button>
+
+        
           </div>
           <div className="overflow-x-auto">
             {loading ? <p className="text-center">Loading...</p> : (
@@ -252,11 +295,11 @@ const PilotManagement = () => {
                       <td className="px-4 py-2">{pilot.registration_no}</td>
                       <td className="px-4 py-2 space-x-2">
 
-                        <button className="text-blue-600"><FaEye onClick={()=>{
+                        <button className="text-blue-600 hover:text-blue-800 text-lg"><FaEye onClick={()=>{
                           navigate(`/dashboard/poilet/pioletview/${pilot.id}`);
                         }} />
                         </button>
-                        <button className="text-green-600"><FaPen onClick={()=>{
+                        <button className="text-green-600 hover:text-green-800 text-lg"><FaEdit onClick={()=>{
                           navigate(`/dashboard/poilet/pioletedit/${pilot.id}`);
                         }} /></button>
                       </td>

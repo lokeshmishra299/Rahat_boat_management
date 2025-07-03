@@ -24,6 +24,9 @@ import BoatOwnerView from "./pages/BoatOwnerView";
 import BoatOwnerEdit from "./pages/BoatOwnerEdit";
 import PiloteView from "./pages/PilotView";
 import PiloteEdit from "./pages/PiloteEdit";
+import InspectionView from "./pages/InspectionView";
+import UserListEdit from "./pages/UserListEdit";
+import UserListView from "./pages/UserListView";
 
 const App = () => (
   <Routes>
@@ -55,6 +58,7 @@ const App = () => (
 
         <Route path="poilet/pioletview/:id" element={<PiloteView />} />
         <Route path="poilet/pioletedit/:id" element={<PiloteEdit />} />
+        <Route path="inspection/inspectionview/:id" element={<InspectionView />} />
 
 
 {/* forget pass */}
@@ -64,6 +68,9 @@ const App = () => (
       <Route path="inspection" element={<Inspection />} />
     
       <Route path="usermanagment" element={<Usermanagment />} />
+
+      <Route path="usermanagment/userlistview/:id" element={<UserListView/>} />
+        <Route path="usermanagment/userlistedit/:id" element={<UserListEdit />} />
       <Route path="poilet" element={<Pilot />} />
     </Route>
   </Routes>

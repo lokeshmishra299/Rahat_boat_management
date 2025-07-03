@@ -11,6 +11,7 @@ const Header = () => {
   /* ───────────────────────────────────────────────────────── dropdown state */
   const [openMenu, setOpenMenu] = useState(false);
   const menuRef = useRef(null);
+  const [userName, setUserName] = useState("");
 
   /* ───────────────────────────────────────────────────────── profile modal  */
   const [showProfile, setShowProfile] = useState(false);
@@ -28,6 +29,15 @@ const Header = () => {
     document.addEventListener('mousedown', outside);
     return () => document.removeEventListener('mousedown', outside);
   }, [openMenu]);
+
+
+  useEffect(() => {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setUserName(parsed.name || "Admin");
+    }
+  }, []);
 
   /* ───────── open profile modal & fetch data */
   const handleProfile = async () => {
@@ -107,8 +117,9 @@ const Header = () => {
             onClick={() => setOpenMenu((p) => !p)}
             className="border px-4 py-1 rounded-md hover:bg-gray-100 transition text-sm font-medium"
           >
-            Admin
+            {userName}
           </button>
+
 
           {/* Dropdown */}
           {openMenu && (

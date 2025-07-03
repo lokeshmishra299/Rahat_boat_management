@@ -6,7 +6,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
 /* ------------ Axios setup ------------ */
-const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+const BASE_URL = "http://127.0.0.1:8000/api";
 const token = localStorage.getItem("access_token");
 console.log(token); // change if tunnel alters;
 const api = axios.create({
@@ -112,73 +112,70 @@ const ConductForm = () => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   setAlert(null);
-  setFormErrors({});          // clear old
+  setFormErrors({});
   setLoading(true);
 
-  /* ── 0️⃣ Client‑side “required” check ── */
-  const err = {};
-  if (!form.register_boat_id.trim()) err.register_boat_id = "Registration no. is required.";
-  if (!form.inspection_date)        err.inspection_date   = "Inspection date is required.";
-  if (!form.inspector_name.trim())  err.inspector_name    = "Inspector name is required.";
-  if (!form.inspector_id.trim())    err.inspector_id      = "Inspector ID is required.";
-
-  if (Object.keys(err).length) {       // ⬅️ कुछ छूटा हुआ है
-    setFormErrors(err);
-    setLoading(false);
-    return;                            // backend पर call मत करो
-  }
-
-  /* ── 1️⃣ Boat‑ID lookup ── */
   try {
+    // 🔎 Boat-ID Lookup
     const { data: lookupRes } = await api.post("/boat-id-lookup", {
       registration_no: form.register_boat_id,
     });
 
     const boatId = lookupRes?.data?.id;
+
     if (!boatId) {
-      setAlert({ ok: false, msg: "Boat ID not found for given registration number." });
+      // 🛑 Custom error if boat not found
+      setFormErrors({
+        register_boat_id: "Boat not found. Please enter a valid registration number.",
+      });
       setLoading(false);
       return;
     }
 
-    /* ── 2️⃣ Inspection submit (backend validation) ── */
-    await api.post("/conduct-inspection", { ...form, register_boat_id: boatId });
+    // ✅ Submit to backend (no client-side validation)
+    await api.post("/conduct-inspection", {
+      ...form,
+      register_boat_id: boatId,
+    });
 
     toast.success("Inspection saved successfully!");
-    // setAlert({ ok: true, msg: "Inspection saved successfully!" });
 
-    // reset form (जो fields री‑इनिशियलाइज़ करने हों)
+    // 🔄 Reset form
     setForm({
       register_boat_id: "",
-      inspection_date : "",
-      inspector_name  : "",
-      inspector_id    : "",
-      hull_condition  : "Good",
+      inspection_date: "",
+      inspector_name: "",
+      inspector_id: "",
+      hull_condition: "Good",
       engine_condition: "Good",
       safety_equipment: "Complete",
-      overall_status  : "Passed",
-      recommendations : "",
+      overall_status: "Passed",
+      recommendations: "",
       inspection_remarks: "",
       inspection_checklist: [],
     });
 
   } catch (err) {
-    /* ── 3️⃣ Backend errors → UI ── */
-    let apiErr = err.response?.data?.errors || err.response?.data?.data || {};
+    // 🧹 Handle backend errors cleanly
+    let apiErr = err.response?.data?.errors || {};
 
-    // map key if backend sends registration_no
+    // ⚠️ If only `message` returned (e.g., Boat not found)
+    if (!Object.keys(apiErr).length && err.response?.data?.message) {
+      apiErr.register_boat_id = err.response.data.message;
+    }
+
+    // 🔄 Map Laravel's `registration_no` → frontend `register_boat_id`
     if (apiErr.registration_no) {
       apiErr.register_boat_id = apiErr.registration_no;
       delete apiErr.registration_no;
     }
 
-    // array → string
+    // 🔤 Convert array errors to string
     apiErr = Object.fromEntries(
       Object.entries(apiErr).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
     );
 
     setFormErrors(apiErr);
-    setAlert({ ok: false, msg: "Please fix the highlighted fields." });
     console.error("Backend validation:", apiErr);
   } finally {
     setLoading(false);
@@ -198,15 +195,7 @@ const handleSubmit = async (e) => {
         Complete annual safety and compliance inspection for rescue boats
       </p>
 
-      {alert && (
-        <div
-          className={`mb-6 text-center py-2 rounded ${
-            alert.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-          }`}
-        >
-          {alert.msg}
-        </div>
-      )}
+   
 
       <form onSubmit={handleSubmit}>
         {/* info grid */}
@@ -755,9 +744,9 @@ const Analytics = () => {
   return (
     <div className="space-y-8 mb-8">
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4  gap-6">
         {kpis.map((k) => (
-          <div key={k.label} className="bg-white p-6 rounded-lg shadow relative">
+          <div key={k.label} className="bg-white rounded-xl shadow p-6 cursor-pointer transform transition-transform duration-200 hover:scale-[1.03] hover:shadow-lg  relative">
             <span
               className={`absolute top-4 right-4 w-3 h-3 rounded-full ${k.color}`}
             />

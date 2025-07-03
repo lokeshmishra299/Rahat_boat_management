@@ -1,12 +1,15 @@
 // src/pages/PiloteEdit.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { FaShip, FaEdit, FaEye, FaListAlt, FaPlusCircle, FaCamera } from "react-icons/fa";
 import axios from "axios";
+import { Toaster, toast } from 'react-hot-toast';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api",
-  headers: { "Content-Type": "application/json" },
-  withCredentials: true,
+  baseURL: "http://localhost:8000/api",
+  headers: localStorage.getItem("access_token")
+    ? { Authorization: `Bearer ${localStorage.getItem("access_token")}` }
+    : {},
 });
 
 const InputField = ({ label, value, onChange, type = "text", readOnly = false, error, maxLength }) => (
@@ -32,6 +35,7 @@ const PiloteEdit = () => {
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
     api.get(`/pilot-list/${id}`)
@@ -41,8 +45,8 @@ const PiloteEdit = () => {
           if (data.dob?.includes("T")) {
             data.dob = data.dob.split("T")[0];
           }
-          // rename pilot_family to family
           setPilot({ ...data, family: data.pilot_family || [] });
+          setDisplayName(data.name);
         }
       })
       .catch(() => console.error("Failed to fetch pilot data"))
@@ -111,7 +115,7 @@ const PiloteEdit = () => {
         no_of_boat: pilot.no_of_boat,
         registration_no: pilot.registration_no,
         relation: pilot.relation,
-        family: pilot.family.map((m) => ({
+        pilot_family_members: pilot.family.map((m) => ({
           id: m.id,
           name: m.name,
           mobile: m.mobile,
@@ -122,6 +126,7 @@ const PiloteEdit = () => {
 
       const res = await api.post(`/pilot-edit/${id}`, payload);
       if (res.data.status === "success") {
+        toast.success("Pilot details updated successfully");
         navigate(-1);
       } else {
         setErrors(res.data.errors || {});
@@ -129,8 +134,6 @@ const PiloteEdit = () => {
     } catch (err) {
       if (err.response?.data?.data) {
         setErrors(err.response.data.data);
-      } else {
-        console.error("Unknown error:", err);
       }
     } finally {
       setSaving(false);
@@ -142,8 +145,9 @@ const PiloteEdit = () => {
 
   return (
     <div className="max-w-5xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md border space-y-10">
+      <Toaster position="top-right" reverseOrder={false} />
       <h1 className="text-3xl text-center font-bold text-indigo-700 mb-1">
-        ✏️ Edit Pilot - {pilot.name}
+        ✏️ Edit Pilot - {displayName}
       </h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -162,16 +166,32 @@ const PiloteEdit = () => {
 
         {pilot.family.map((member, index) => (
           <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 relative">
-            <InputField label="Name" value={member.name} onChange={(e) => handleFamilyChange(index, "name", e.target.value)} />
-            <InputField label="Mobile" value={member.mobile} onChange={(e) => handleFamilyChange(index, "mobile", e.target.value)} maxLength={10} />
-            <InputField label="Aadhar" value={member.adhar} onChange={(e) => handleFamilyChange(index, "adhar", e.target.value)} maxLength={12} />
-            <InputField label="Relation" value={member.relation} onChange={(e) => handleFamilyChange(index, "relation", e.target.value)} />
-            <button
-              onClick={() => deleteFamilyMember(index)}
-              className="absolute top-0 right-0 text-red-600 hover:underline text-sm"
-            >
-              🗑 Delete
-            </button>
+            <InputField
+              label="Name"
+              value={member.name}
+              onChange={(e) => handleFamilyChange(index, "name", e.target.value)}
+              error={errors[`pilot_family_members.${index}.name`] && errors[`pilot_family_members.${index}.name`][0]}
+            />
+            <InputField
+              label="Mobile"
+              value={member.mobile}
+              onChange={(e) => handleFamilyChange(index, "mobile", e.target.value)}
+              maxLength={10}
+              error={errors[`pilot_family_members.${index}.mobile`] && errors[`pilot_family_members.${index}.mobile`][0]}
+            />
+            <InputField
+              label="Aadhar"
+              value={member.adhar}
+              onChange={(e) => handleFamilyChange(index, "adhar", e.target.value)}
+              maxLength={12}
+              error={errors[`pilot_family_members.${index}.adhar`] && errors[`pilot_family_members.${index}.adhar`][0]}
+            />
+            <InputField
+              label="Relation"
+              value={member.relation}
+              onChange={(e) => handleFamilyChange(index, "relation", e.target.value)}
+              error={errors[`pilot_family_members.${index}.relation`] && errors[`pilot_family_members.${index}.relation`][0]}
+            />
           </div>
         ))}
 

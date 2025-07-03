@@ -2,27 +2,59 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Toaster, toast } from 'react-hot-toast';
+// import {Html5QrcodeScanner} from "html5-qrcode";
 
 
 
 /* ── API helper (token-aware) ── */
-const token = localStorage.getItem("access_token");
-
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api",
+  baseURL: "http://localhost:8000/api",
   headers: {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(localStorage.getItem("access_token") && {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    }),
   },
 });
 
 /* ───────────────────────────────────────────────────────── */
 import { useSearchParams } from "react-router-dom";
 export default function LifeJacket() {
+
+
+  // const [scanResult, setScanResult] = useState(null);
+
+  // useEffect(()=>{
+  //   const scanner =  new Html5QrcodeScanner("reader",{
+  //       qebox:{
+  //         width:250,
+  //         height:250,
+  //       },
+  //       fps:5,
+  //     });
+
+  //     scanner.render(success, error);
+
+  //     function success(result){
+  //       scanner.clear();
+  //       setScanResult(result)
+  //     }
+
+  //     function error(){
+  //       console.warn(err)
+  //     }
+
+  // },[])
+
   // const [tab, setTab] = useState("record");
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") === "directory" ? "tracking" : "record";
   const [tab, setTab] = useState(initialTab);
+
+  const storedUser = JSON.parse(localStorage.getItem("user"));
+  const roleId = storedUser?.role_id;
+  const [autoBoatCount, setAutoBoatCount] = useState("");
+
 
   const [reload, setReload] = useState(false);
 
@@ -40,7 +72,14 @@ export default function LifeJacket() {
     (async () => {
       setLoading(true);
       try {
-        const res = await api.get("/life-jackets-tracking");
+        const params = {};
+
+        if (roleId === 1 || roleId === 2) {
+          params.district_id = storedUser.district_id;
+        }
+
+        const res = await api.get("/life-jackets-tracking", { params });
+
         const summary = res.data?.data?.summary ?? {};
         const list = res.data?.data?.data ?? [];
 
@@ -49,6 +88,7 @@ export default function LifeJacket() {
           distributed: summary.total_distributed_jackets ?? 0,
           efficiency: summary.efficiency_percent ?? "0%",
         });
+
         setRows(list);
       } catch (err) {
         console.error(err);
@@ -57,6 +97,7 @@ export default function LifeJacket() {
       }
     })();
   }, [reload]);
+
 
   /* cards config */
   const cards = [
@@ -96,6 +137,33 @@ export default function LifeJacket() {
         ))}
       </section>
 
+      {/* <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-lg border border-gray-200 my-10">
+  <h1 className="text-3xl font-bold text-center text-blue-700 mb-4">📷 Scan the QR Code</h1>
+
+  {scanResult ? (
+    <div className="bg-green-50 border border-green-400 text-green-800 p-4 rounded-lg text-center shadow">
+      <p className="text-lg font-semibold mb-2">✅ Scan Successful!</p>
+      <a
+        href={`http://${scanResult}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 hover:underline break-words whitespace-pre-wrap"
+      >
+        {scanResult}
+      </a>
+    </div>
+  ) : (
+    <div
+      id="reader"
+      className="w-full h-64 border-2 border-dashed border-gray-400 rounded-xl flex items-center justify-center text-gray-500 text-lg"
+    >
+      Camera initializing...
+    </div>
+  )}
+</div> */}
+
+
+
       {/* tab switcher */}
       <nav className="mb-10 flex flex-col sm:flex-row justify-center gap-4">
         {[
@@ -120,7 +188,10 @@ export default function LifeJacket() {
           onSaved={() => {
             setTab("tracking");
             setReload((f) => !f);
+
           }}
+          roleId={roleId}
+          storedUser={storedUser}
         />
       ) : (
         <DistributionTracking rows={rows} stats={stats} loading={loading} />
@@ -130,7 +201,7 @@ export default function LifeJacket() {
 }
 
 /* ───────────────────────────── RecordForm ───────────────────────────── */
-function RecordForm({ onSaved }) {
+function RecordForm({ onSaved, roleId, storedUser }) {
   const inputCls =
     "w-full border border-slate-300 rounded-lg px-4 py-2 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500";
 
@@ -140,7 +211,7 @@ function RecordForm({ onSaved }) {
 
   /* form & validation */
   const [val, setVal] = useState({
-    district: "",
+    district_id: "",
     ghat: "",
     boats: "",
     perBoat: "",
@@ -151,6 +222,44 @@ function RecordForm({ onSaved }) {
     phone: "",
     notes: "",
   });
+
+  const autoBoatCount = async (ghatName = "") => {
+    if (!ghatName) return;
+
+    const selectedGhat = ghaats.find((g) => g.ghaat_name === ghatName);
+    const ghat_id = selectedGhat?.id;
+    const district_id = storedUser?.district_id || val.district_id;
+
+    if (ghat_id && district_id) {
+      try {
+        const res = await api.post("/ghaat-boat-count", { ghat_id, district_id });
+        const data = res.data?.data;
+
+        const boatText = `${data.total_boats} boats (total capacity ${data.total_capacity})`;
+
+setVal((v) => ({
+  ...v,
+  boats: boatText,
+  total: (parseInt(data.total_capacity || 0) + 1).toString(),
+}));
+
+
+      } catch (error) {
+        console.error("Error fetching boat count", error);
+        setVal((v) => ({ ...v, boats: "" }));
+      }
+    }
+  };
+
+
+
+
+  useEffect(() => {
+    if ((roleId === 1 || roleId === 2) && storedUser?.district_id) {
+      setVal((v) => ({ ...v, district_id: storedUser.district_id }));
+    }
+  }, [roleId, storedUser]);
+
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -180,8 +289,31 @@ function RecordForm({ onSaved }) {
   }, []);
 
   /* handlers */
-  const handle = (e) =>
-    setVal((v) => ({ ...v, [e.target.name]: e.target.value }));
+  const handle = async (e) => {
+    const { name, value } = e.target;
+
+    setVal((v) => {
+      const updated = { ...v, [name]: value };
+
+      if (name === "ghat") {
+        const ghat_id = ghaats.find((g) => g.ghaat_name === value)?.id;
+        let district_id = storedUser?.district_id;
+
+        if (!district_id && updated.district_id) {
+          district_id = updated.district_id;
+        }
+
+        if (ghat_id && district_id) {
+          autoBoatCount(value);  // ✅ call only when ghat changes
+        }
+      }
+
+      return updated;
+    });
+  };
+
+
+
 
   const digits = (name) => (e) =>
     setVal((v) => ({
@@ -207,21 +339,22 @@ function RecordForm({ onSaved }) {
     // if (Object.keys(early).length) setErrors(early);   // **do not return** – let backend run too
 
     /* ---------- 2. build payload (use '' when id not found) ---------- */
-    const dist = districts.find((d) => d.district_name === val.district) || {};
+    const dist =
+      districts.find((d) => d.district_name === val.district) ||
+      districts.find((d) => d.id == val.district_id) || {};
+
     const ghat = ghaats.find((g) => g.ghaat_name === val.ghat) || {};
 
     const payload = {
-      district_id: dist.id ?? "",
-      ghaat_id: ghat.id ?? "",
-      no_of_boats: +val.boats,
-      jackets_per_boat: +val.perBoat,
-      total_jackets: +val.total,
-      total_allocated_jackets: +val.allocated,
-      distribution_date: val.date,
-      received_by: val.received,
-      phone: val.phone,
-      distribution_notes: val.notes,
-    };
+  district_id: dist.id ?? "",
+  ghaat_id: ghat.id ?? "",
+  no_of_boats: parseInt(val.boats), // send just the number
+  total_jackets: parseInt(val.total),
+  distribution_date: val.date,
+  received_by: val.received,
+  distribution_notes: val.notes,
+};
+
 
     /* ---------- 3. send request & handle errors ---------- */
     try {
@@ -229,9 +362,10 @@ function RecordForm({ onSaved }) {
 
       toast.success("Distribution saved!");
       setVal({
-        district: "", ghat: "", boats: "", perBoat: "", total: "",
+        district: "", district_id: "", ghat: "", boats: "", perBoat: "", total: "",
         allocated: "", date: "", received: "", phone: "", notes: "",
       });
+
       onSaved();
     } catch (err) {
       const apiErr =
@@ -271,33 +405,37 @@ function RecordForm({ onSaved }) {
 
   /* ghat options filtered by district */
   const filteredGhaats = ghaats.filter(
-    (g) => g.district_record?.district_name === val.district
+    (g) => g.district_id === parseInt(val.district_id)
   );
-
-
-
-
   return (
     <form onSubmit={submit} className="bg-white shadow p-8 rounded-xl">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* District */}
-        <div>
-          <label className="block text-sm font-medium mb-1">District *</label>
-          <select
-            name="district"
-            value={val.district}
-            onChange={handle}
-            className={inputCls}
-          >
-            <option value="">Select District</option>
-            {districts.map((d) => (
-              <option key={d.id}>{d.district_name}</option>
-            ))}
-          </select>
-          {errors.district && (
-            <p className="text-xs text-red-600 mt-1">{errors.district}</p>
-          )}
-        </div>
+        {roleId !== 1 && roleId !== 2 && (
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              District *
+            </label>
+            <select
+              name="district_id"
+              value={val.district_id}
+              onChange={handle}
+              className={inputCls}
+            >
+              <option value="">Select District</option>
+              {districts.map((district) => (
+                <option key={district.id} value={district.id}>
+                  {district.district_name}
+                </option>
+              ))}
+            </select>
+            {errors.district_id && (
+              <p className="text-xs text-red-600 mt-1">{errors.district_id}</p>
+            )}
+          </div>
+        )}
+
+
 
         {/* Ghaat */}
         <div>
@@ -324,69 +462,39 @@ function RecordForm({ onSaved }) {
           <input
             name="boats"
             value={val.boats}
-            onChange={digits("boats")}
+            readOnly
             placeholder={ph.boats}
-            className={inputCls}
-            inputMode="numeric"
+            className={`${inputCls} bg-gray-100 cursor-not-allowed`}
           />
+
+
           {errors.boats && (
             <p className="text-xs text-red-600 mt-1">{errors.boats}</p>
           )}
         </div>
 
-        {/* Jackets per boat */}
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Jackets / Boat *
-          </label>
-          <input
-            name="perBoat"
-            value={val.perBoat}
-            onChange={digits("perBoat")}
-            placeholder={ph.perBoat}
-            className={inputCls}
-            inputMode="numeric"
-          />
-          {errors.perBoat && (
-            <p className="text-xs text-red-600 mt-1">{errors.perBoat}</p>
-          )}
-        </div>
-
-        {/* Total distributed */}
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Total Jackets *
-          </label>
-          <input
-            name="total"
-            value={val.total}
-            onChange={digits("total")}
-            placeholder={ph.total}
-            className={inputCls}
-            inputMode="numeric"
-          />
-          {errors.total && (
-            <p className="text-xs text-red-600 mt-1">{errors.total}</p>
-          )}
-        </div>
-
         {/* Total allocated */}
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Total Allocated *
-          </label>
-          <input
-            name="allocated"
-            value={val.allocated}
-            onChange={digits("allocated")}
-            placeholder={ph.allocated}
-            className={inputCls}
-            inputMode="numeric"
-          />
-          {errors.allocated && (
-            <p className="text-xs text-red-600 mt-1">{errors.allocated}</p>
-          )}
-        </div>
+{/* Total jackets distributed */}
+<div>
+  <label className="block text-sm font-medium mb-1">Total Jackets *</label>
+ <input
+  name="total"
+  value={val.total}
+  readOnly
+  placeholder={ph.total}
+  className={`${inputCls} bg-gray-100 cursor-not-allowed`}
+/>
+
+  {errors.total && (
+    <p className="text-xs text-red-600 mt-1">{errors.total}</p>
+  )}
+  {/* {val.boats && (
+    <p className="text-xs text-gray-500 mt-1 italic">
+      Auto-filled as capacity + 1. You can change if needed.
+    </p>
+  )} */}
+</div>
+
 
         {/* Date */}
         <div>
@@ -412,25 +520,9 @@ function RecordForm({ onSaved }) {
             name="received"
             value={val.received}
             onChange={handle}
-            placeholder="Name of receiving officer"
+            placeholder="Received by boat officer"
             className={inputCls}
           />
-        </div>
-
-        {/* Phone */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Phone</label>
-          <input
-            name="phone"
-            value={val.phone}
-            onChange={digits("phone")}
-            placeholder={ph.phone}
-            className={inputCls}
-            inputMode="numeric"
-          />
-          {errors.phone && (
-            <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
-          )}
         </div>
 
         {/* Notes */}
@@ -527,13 +619,13 @@ function DistributionTracking({ rows, stats, loading }) {
           <table className="min-w-full text-sm text-left">
             <thead className="bg-slate-100 text-slate-700">
               <tr>
-                <th className="px-4 py-3 font-medium text-center">District</th>
-                <th className="px-4 py-3 font-medium text-center">Ghaat</th>
-                <th className="px-4 py-3 font-medium text-center">Boats</th>
-                <th className="px-4 py-3 font-medium text-center">Allocated</th>
-                <th className="px-4 py-3 font-medium text-center">Distributed</th>
-                <th className="px-4 py-3 font-medium text-center">Date</th>
-                <th className="px-4 py-3 font-medium text-center">Status</th>
+                <th className="px-4 py-3 font-medium">District</th>
+                <th className="px-4 py-3 font-medium">Ghaat</th>
+                <th className="px-4 py-3 font-medium">Boats</th>
+                <th className="px-4 py-3 font-medium">Allocated</th>
+                <th className="px-4 py-3 font-medium">Distributed</th>
+                <th className="px-4 py-3 font-medium">Date</th>
+                <th className="px-4 py-3 font-medium">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -542,10 +634,10 @@ function DistributionTracking({ rows, stats, loading }) {
                   {/* Always show first row */}
                   {/* Always show first row */}
                   <tr className="border-t border-slate-200">
-                    <td className="px-4 py-3 font-semibold text-center">
+                    <td className="px-4 py-3 font-semibold">
                       {distRows.length > 1 ? (
                         <span
-                          className="cursor-pointer "
+                          className="cursor-pointer"
                           onClick={() => toggle(district)}
                         >
                           {open[district] ? "−" : "+"} {district}
@@ -554,14 +646,14 @@ function DistributionTracking({ rows, stats, loading }) {
                         district
                       )}
                     </td>
-                    <td className="px-4 py-3 text-center">{distRows[0].ghaat}</td>
-                    <td className="px-4 py-3 text-center">{distRows[0].boats}</td>
-                    <td className="px-4 py-3 text-center">{distRows[0].total_allocated}</td>
-                    <td className="px-4 py-3 text-center">{distRows[0].total_distributed}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3">{distRows[0].ghaat}</td>
+                    <td className="px-4 py-3">{distRows[0].boats}</td>
+                    <td className="px-4 py-3">{distRows[0].total_allocated}</td>
+                    <td className="px-4 py-3">{distRows[0].total_distributed}</td>
+                    <td className="px-4 py-3">
                       {distRows[0].children?.[0]?.distribution_date || 'N/A'}
                     </td>
-                    <td className="px-4 py-3 text-center">{distRows[0].status}</td>
+                    <td className="px-4 py-3">{distRows[0].status}</td>
                   </tr>
 
                   {/* Show additional rows only when expanded */}
@@ -569,13 +661,13 @@ function DistributionTracking({ rows, stats, loading }) {
                   {open[district] && distRows.flatMap(r =>
                     r.children?.map((child, idx) => (
                       <tr key={idx} className="border-t border-slate-200">
-                        <td className="px-6 py-3 text-center">{r.district}</td>
-                        <td className="px-4 py-3 text-center">{r.ghaat}</td>
-                        <td className="px-4 py-3 text-center">{child.boats}</td>
-                        <td className="px-4 py-3 text-center">{child.total_allocated}</td>
-                        <td className="px-4 py-3 text-center">{child.total_distributed}</td>
-                        <td className="px-4 py-3 text-center">{child.distribution_date}</td>
-                        <td className="px-4 py-3 text-center ">{child.status}</td>
+                        <td className="px-6 py-3">{r.district}</td>
+                        <td className="px-4 py-3">{r.ghaat}</td>
+                        <td className="px-4 py-3">{child.boats}</td>
+                        <td className="px-4 py-3">{child.total_allocated}</td>
+                        <td className="px-4 py-3">{child.total_distributed}</td>
+                        <td className="px-4 py-3">{child.distribution_date}</td>
+                        <td className="px-4 py-3 ">{child.status}</td>
                       </tr>
                     )) || []
                   )}

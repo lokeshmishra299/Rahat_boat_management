@@ -1,8 +1,8 @@
 // src/components/BoatOwner.jsx
 import React, { useEffect, useState } from 'react';
-import { FaUserTie, FaListAlt, FaPlusCircle, FaDownload } from 'react-icons/fa';
+import { FaUserTie, FaListAlt, FaEdit, FaPlusCircle, FaDownload } from 'react-icons/fa';
 import axios from 'axios';
-import {Toaster, toast} from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { FaEye, FaPen } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
@@ -121,7 +121,7 @@ const BoatOwner = () => {
       if (response.data.status === 'success') {
         toast.success('Boat owner and family details saved successfully!');
         setActiveTab('directory');
-         fetchOwners();
+        fetchOwners();
         setFormData({
           name: '',
           number: '',
@@ -175,33 +175,33 @@ const BoatOwner = () => {
     }
   };
 
-const [owners, setOwners] = useState([]);
-const [loadingOwners, setLoadingOwners] = useState(false);
+  const [owners, setOwners] = useState([]);
+  const [loadingOwners, setLoadingOwners] = useState(false);
 
-const fetchOwners = () => {
-  setLoadingOwners(true); // loading start
-  api.get('/boat-owner-list')
-    .then((res) => {
-      if (res.data.status === 'success') {
-        setOwners(res.data.data); // owners set ho gaye
-      }
-    })
-    .catch((err) => {
-      console.error('Failed to fetch boat owners:', err);
-    })
-    .finally(() => {
-      setLoadingOwners(false); // loading khatam
-    });
-};
+  const fetchOwners = () => {
+    setLoadingOwners(true); // loading start
+    api.get('/boat-owner-list')
+      .then((res) => {
+        if (res.data.status === 'success') {
+          setOwners(res.data.data); // owners set ho gaye
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to fetch boat owners:', err);
+      })
+      .finally(() => {
+        setLoadingOwners(false); // loading khatam
+      });
+  };
 
 
-useEffect(() => {
-  fetchOwners();
-}, []);
+  useEffect(() => {
+    fetchOwners();
+  }, []);
 
   return (
     <div className="max-w-[1200px] mx-auto p-6 mt-10 pb-2">
-            <Toaster position="top-right" reverseOrder={false} />
+      <Toaster position="top-right" reverseOrder={false} />
 
       {/* Header & Tabs */}
       <div className="text-center mb-10">
@@ -288,80 +288,80 @@ useEffect(() => {
           <div className="mb-8">
             <label className="block text-gray-700 font-medium mb-2">Family Members </label>
             {formData.family.map((member, index) => (
-            <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-  {/* Name */}
-  <div>
-    <input
-      type="text"
-      placeholder="Name"
-      value={member.name}
-      onChange={(e) =>
-        handleFamilyChange(index, 'name', e.target.value.replace(/[^a-zA-Z\s]/g, ''))
-      }
-      className="px-4 py-2 border border-gray-300 rounded-md w-full"
-    />
-    {errors.family?.[index]?.name && (
-      <p className="text-red-500 text-sm">{errors.family[index].name}</p>
-    )}
-  </div>
+              <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                {/* Name */}
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Name"
+                    value={member.name}
+                    onChange={(e) =>
+                      handleFamilyChange(index, 'name', e.target.value.replace(/[^a-zA-Z\s]/g, ''))
+                    }
+                    className="px-4 py-2 border border-gray-300 rounded-md w-full"
+                  />
+                  {errors.family?.[index]?.name && (
+                    <p className="text-red-500 text-sm">{errors.family[index].name}</p>
+                  )}
+                </div>
 
-  {/* Mobile */}
-  <div>
-    <input
-      type="text"
-      placeholder="Mobile Number"
-      value={member.mobile}
-      onChange={(e) =>
-        handleFamilyChange(index, 'mobile', e.target.value.replace(/\D/g, '').slice(0, 10))
-      }
-      className="px-4 py-2 border border-gray-300 rounded-md w-full"
-    />
-    {errors.family?.[index]?.mobile && (
-      <p className="text-red-500 text-sm">{errors.family[index].mobile}</p>
-    )}
-  </div>
+                {/* Mobile */}
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Mobile Number"
+                    value={member.mobile}
+                    onChange={(e) =>
+                      handleFamilyChange(index, 'mobile', e.target.value.replace(/\D/g, '').slice(0, 10))
+                    }
+                    className="px-4 py-2 border border-gray-300 rounded-md w-full"
+                  />
+                  {errors.family?.[index]?.mobile && (
+                    <p className="text-red-500 text-sm">{errors.family[index].mobile}</p>
+                  )}
+                </div>
 
-  {/* Aadhar */}
-  <div>
-    <input
-      type="text"
-      placeholder="Aadhar Number"
-      value={member.aadhar}
-      onChange={(e) =>
-        handleFamilyChange(index, 'aadhar', e.target.value.replace(/\D/g, '').slice(0, 12))
-      }
-      className="px-4 py-2 border border-gray-300 rounded-md w-full"
-    />
-    {errors.family?.[index]?.adhar && (
-      <p className="text-red-500 text-sm">{errors.family[index].adhar}</p>
-    )}
-  </div>
+                {/* Aadhar */}
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Aadhar Number"
+                    value={member.aadhar}
+                    onChange={(e) =>
+                      handleFamilyChange(index, 'aadhar', e.target.value.replace(/\D/g, '').slice(0, 12))
+                    }
+                    className="px-4 py-2 border border-gray-300 rounded-md w-full"
+                  />
+                  {errors.family?.[index]?.adhar && (
+                    <p className="text-red-500 text-sm">{errors.family[index].adhar}</p>
+                  )}
+                </div>
 
-  {/* Relation */}
-  <div>
-    <input
-      type="text"
-      placeholder="Relation with Owner"
-      value={member.relation}
-      onChange={(e) => handleFamilyChange(index, 'relation', e.target.value)}
-      className="px-4 py-2 border border-gray-300 rounded-md w-full"
-    />
-    {errors.family?.[index]?.relation && (
-      <p className="text-red-500 text-sm">{errors.family[index].relation}</p>
-    )}
-  </div>
+                {/* Relation */}
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Relation with Owner"
+                    value={member.relation}
+                    onChange={(e) => handleFamilyChange(index, 'relation', e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-md w-full"
+                  />
+                  {errors.family?.[index]?.relation && (
+                    <p className="text-red-500 text-sm">{errors.family[index].relation}</p>
+                  )}
+                </div>
 
-  {/* Remove Button */}
-  {index > 0 && (
-    <button
-      type="button"
-      onClick={() => removeFamilyMember(index)}
-      className="text-red-600 hover:underline text-sm col-span-full"
-    >
-      Remove
-    </button>
-  )}
-</div>
+                {/* Remove Button */}
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => removeFamilyMember(index)}
+                    className="text-red-600 hover:underline text-sm col-span-full"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
 
             ))}
 
@@ -384,59 +384,100 @@ useEffect(() => {
       ) : (
         <div className="bg-white shadow-md rounded-lg p-6">
           <div className="bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-blue-700">Registered Boat Owners</h2>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2">
-                <FaDownload /> Export Report
+
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+              <h3 className="text-xl sm:text-2xl font-bold text-sky-700 text-center sm:text-left">
+                Registered Boats Owners
+              </h3>
+              <button
+                className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-md transition-colors w-full sm:w-auto justify-center"
+                onClick={() => {
+                  const headers = [
+                    "Sr.No",
+                    "Name",
+                    "District",
+                    "Pincode",
+                    "No Of Boat Owned",
+                    "Mobile No"
+                  ];
+
+                  const rows = owners.map((owner, index) => [
+                    index + 1,
+                    `"${owner.name}"`,
+                    `"${owner.district?.district_name || 'N/A'}"`,
+                    `"${owner.pincode || ''}"`,
+                    `"${owner.boat_owned || ''}"`,
+                    `"${owner.number || ''}"`
+                  ]);
+
+                  const csvContent = [
+                    headers.join(","),
+                    ...rows.map(row => row.join(","))
+                  ].join("\n");
+
+                  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.setAttribute("href", url);
+                  link.setAttribute("download", `boat_owner_report_${new Date().toISOString().slice(0, 10)}.csv`);
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                <FaDownload className="text-sm sm:text-base" />
+                <span className="text-sm sm:text-base">Export Report</span>
               </button>
+
             </div>
-            {/* Static sample table */}
-<div className="overflow-x-auto mt-4">
 
-{loadingOwners ? (  <p className="text-center text-blue-600 font-semibold py-4">Loading boat owners...</p>) 
-:(
+            <div className="overflow-x-auto mt-4">
 
-  <table className="w-full border text-sm text-left text-gray-600">
-    <thead className="bg-gray-100 text-gray-700 font-semibold">
-      <tr>
-        <th className="px-4 py-2">Sr.No</th>
-        <th className="px-4 py-2">Name</th>
-        <th className="px-4 py-2">District</th>
-        <th className="px-4 py-2">Pincode</th>
-        <th className="px-4 py-2">No Of Boat Owned</th>
-        <th className="px-4 py-2">Mobile No</th>
-        <th className="px-4 py-2">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {owners.map((owner, index) => (
-        <tr key={owner.id} className="border-b hover:bg-gray-50">
-          <td className="px-4 py-2">{index + 1}</td>
-          <td className="px-4 py-2 font-bold capitalize">{owner.name}</td>
-          <td className="px-4 py-2">{owner.district?.district_name || 'N/A'}</td>
-          <td className="px-4 py-2">{owner.pincode}</td>
-          <td className="px-4 py-2">{owner.boat_owned}</td>
-          <td className="px-4 py-2">{owner.number}</td>
-          <td className="px-4 py-2 space-x-3">
-            <button title="View" className="text-blue-600 hover:text-blue-800 text-lg">
-              <FaEye onClick={()=>{
-                navigate(`/dashboard/boatowner/boatownerview/${owner.id}`);
-              }} />
-            </button>
-            <button title="Edit" className="text-green-600 hover:text-green-800 text-lg">
-              <FaPen onClick={()=>{
-                navigate(`/dashboard/boatowner/boatowneredit/${owner.id}`);
-              }} />
-            </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-)
+              {loadingOwners ? (<p className="text-center text-blue-600 font-semibold py-4">Loading boat owners...</p>)
+                : (
 
-}
-</div>
+                  <table className="w-full border text-sm text-left text-gray-600">
+                    <thead className="bg-gray-100 text-gray-700 font-semibold">
+                      <tr>
+                        <th className="px-4 py-2">Sr.No</th>
+                        <th className="px-4 py-2">Name</th>
+                        <th className="px-4 py-2">District</th>
+                        <th className="px-4 py-2">Pincode</th>
+                        <th className="px-4 py-2">No Of Boat Owned</th>
+                        <th className="px-4 py-2">Mobile No</th>
+                        <th className="px-4 py-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {owners.map((owner, index) => (
+                        <tr key={owner.id} className="border-b hover:bg-gray-50">
+                          <td className="px-4 py-2">{index + 1}</td>
+                          <td className="px-4 py-2 font-bold capitalize">{owner.name}</td>
+                          <td className="px-4 py-2">{owner.district?.district_name || 'N/A'}</td>
+                          <td className="px-4 py-2">{owner.pincode}</td>
+                          <td className="px-4 py-2">{owner.boat_owned}</td>
+                          <td className="px-4 py-2">{owner.number}</td>
+                          <td className="px-4 py-2 space-x-3">
+                            <button title="View" className="text-blue-600 hover:text-blue-800 text-lg">
+                              <FaEye onClick={() => {
+                                navigate(`/dashboard/boatowner/boatownerview/${owner.id}`);
+                              }} />
+                            </button>
+                            <button title="Edit" className="text-green-600 hover:text-green-800 text-lg">
+                              <FaEdit onClick={() => {
+                                navigate(`/dashboard/boatowner/boatowneredit/${owner.id}`);
+                              }} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )
+
+              }
+            </div>
 
 
 
