@@ -28,7 +28,8 @@ class Ghaat extends Model
         'nearest_hospital',
         'available_facilities',
         'additional_info',
-        'status'
+        'status',
+        'user_id'
     ];
 
     protected static function booted()

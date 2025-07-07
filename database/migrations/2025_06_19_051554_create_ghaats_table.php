@@ -26,13 +26,14 @@ return new class extends Migration
             $table->foreignId('river_id')->constrained('rivers')->onDelete('cascade');
 
             $table->unsignedInteger('boat_capacity');
-            $table->string('road_accessibility');
+            $table->string('road_accessibility')->nullable();
 
-            $table->string('contact_person');
-            $table->string('contact_number');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            // $table->string('contact_person');
+            // $table->string('contact_number');
 
             $table->string('nearest_hospital');
-            $table->text('available_facilities');
+            $table->text('available_facilities')->nullable();
             $table->text('additional_info')->nullable();
            $table->enum('status', ['0', '1', '2', '3'])->default('0')->comment('0=Operational, 1=Not operational, 2=Under maintenance, 3=Closed');
 

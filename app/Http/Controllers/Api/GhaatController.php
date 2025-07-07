@@ -33,11 +33,11 @@ class GhaatController extends Controller
             'district_id' => 'required|string',
             'river_id' => 'required|exists:rivers,id',
             'boat_capacity' => 'required|integer',
-            'road_accessibility' => 'required|string',
-            'contact_person' => 'required|string',
-            'contact_number' => 'required|string',
+            'road_accessibility' => 'nullable|string',
+            // 'contact_person' => 'required|string',
+            // 'contact_number' => 'required|string',
             'nearest_hospital' => 'required|string',
-            'available_facilities' => 'required|string',
+            'available_facilities' => 'nullable|string',
             'additional_info' => 'nullable|string',
             'location' => 'nullable|string',
         ], [
@@ -52,26 +52,14 @@ class GhaatController extends Controller
             'river_id.exists' => 'Selected river is invalid.',
             'boat_capacity.required' => 'Boat capacity is required.',
             'boat_capacity.integer' => 'Boat capacity must be a number.',
-
-            'road_accessibility.required' => 'Please select road accessibility.',
-            'contact_person.required' => 'Contact person name is required.',
-            'contact_number.required' => 'Contact number is required.',
+            // 'contact_person.required' => 'Contact person name is required.',
+            // 'contact_number.required' => 'Contact number is required.',
             'nearest_hospital.required' => 'Please provide nearest hospital details.',
-            'available_facilities.required' => 'Mention at least one facility.',
+            
         ]);
 
         $image = $request->file('photo_path');
         $photoPath = $image->store('photos', 'public');
-
-        // $exif = @exif_read_data($image->getRealPath());
-
-        // $latitude = null;
-        // $longitude = null;
-
-        // if ($exif && isset($exif['GPSLatitude'], $exif['GPSLongitude'])) {
-        //     $latitude = $this->getGps($exif['GPSLatitude'], $exif['GPSLatitudeRef']);
-        //     $longitude = $this->getGps($exif['GPSLongitude'], $exif['GPSLongitudeRef']);
-        // }
 
         $ghaat = Ghaat::create([
             'photo_path' => $photoPath,
@@ -84,13 +72,14 @@ class GhaatController extends Controller
             'river_id' => $request->river_id,
             'boat_capacity' => $request->boat_capacity,
             'road_accessibility' => $request->road_accessibility,
-            'contact_person' => $request->contact_person,
-            'contact_number' => $request->contact_number,
+            // 'contact_person' => $request->contact_person,
+            // 'contact_number' => $request->contact_number,
             'nearest_hospital' => $request->nearest_hospital,
             'available_facilities' => $request->available_facilities,
             'additional_info' => $request->additional_info,
+            'user_id'=> auth()->id(),
         ]);
-
+        // dd($ghaat);
         return ApiResponse::generateResponse(
             'success',
             'Ghaat registered successfully',

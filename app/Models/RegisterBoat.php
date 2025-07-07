@@ -30,6 +30,17 @@ class RegisterBoat extends Model
         'ghaat_id',
         'registration_authority',
         'remarks',
+
+        'owner_name',
+        'owner_email',
+        'owner_number',
+        'owner_adhar_no',
+        'owner_boat_owned',
+        'owner_address',
+        'owner_pincode',
+        'owner_relation',
+        'owner_dob',
+        'owner_family_name',
     ];
 
     protected static function booted()
@@ -51,4 +62,10 @@ class RegisterBoat extends Model
     {
         return $this->hasMany(BoatInspection::class, 'register_boat_id');
     }
+
+//     public function boatFamilyMembers()
+// {
+//     return $this->hasMany(BoatFamilyMember::class, 'register_boat_id');
+// }
+
 }

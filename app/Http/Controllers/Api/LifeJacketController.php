@@ -184,23 +184,17 @@ public function getBoatCountByGhat(Request $request)
         return ApiResponse::generateResponse('error', 'Missing ghat or district information.', []);
     }
 
-   $totalBoats = DB::table('register_boats')
-    ->where('ghaat_id', $ghaat_id)
-    ->where('district_id', $district_id)
-    ->count();
-    // dd( $totalBoats);
 
 $totalCapacity = (int)DB::table('register_boats')
     ->where('ghaat_id', $ghaat_id)
     ->where('district_id', $district_id)
     ->sum('passenger_capacity');
 
-// dd( $totalCapacity,$totalBoats );
+dd( $totalCapacity);
 
     return ApiResponse::generateResponse('success', 'Boat count fetched', [
         'district_id' => $district_id,
         'ghaat_id'    => $ghaat_id,
-        'total_boats' => $totalBoats,
          'total_capacity'    => $totalCapacity
     ]);
 }
