@@ -56,17 +56,17 @@ export default function Usermanagment() {
 
   const location = useLocation();
 
-useEffect(() => {
-  if (location.state?.tab === "manage") {
-    setView("manage");
-  }
-}, [location]);
+  useEffect(() => {
+    if (location.state?.tab === "manage") {
+      setView("manage");
+    }
+  }, [location]);
 
 
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
-  const [view, setView] = useState("role");           // default tab
+  const [view, setView] = useState("create");           // default tab
   const [errors, setErrors] = useState({});
 
 
@@ -98,10 +98,7 @@ useEffect(() => {
   useEffect(() => {
     const fetchDistricts = async () => {
       try {
-        const token = localStorage.getItem("access_token");
-        const { data } = await axios.get("http://localhost:8000/api/district-list", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const { data } = await api.get("/district-list");
         if (data?.data) setDistricts(data.data);
       } catch (err) {
         console.error("Failed to fetch districts:", err);
@@ -115,24 +112,22 @@ useEffect(() => {
   useEffect(() => {
     const fetchDesignation = async () => {
       try {
-        const token = localStorage.getItem("access_token");
-        const { data } = await axios.get("http://localhost:8000/api/designation", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const { data } = await api.get("/designation");
         if (data?.data) setDesignation(data.data);
       } catch (err) {
-        console.error("Failed to fetch designation :", err);
+        console.error("Failed to fetch designation:", err);
       }
     };
 
     fetchDesignation();
   }, []);
 
+
   useEffect(() => {
     const fetchRoles = async () => {
       try {
         const { data } = await api.get("/roles");
-        if (data?.data) setRoles(data.data);  
+        if (data?.data) setRoles(data.data);
       } catch (err) {
         console.error("Failed to load roles:", err);
       }
@@ -147,7 +142,12 @@ useEffect(() => {
   const onRoleChange = (e) => setForm({ roleName: e.target.value });
 
 
+  const [authUser, setAuthUser] = useState(null);
 
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user")); // assume login pe yeh save hota h
+    setAuthUser(user);
+  }, []);
 
   const addRole = async () => {
     const name = form.roleName.trim();
@@ -225,23 +225,23 @@ useEffect(() => {
   };
 
   const [userLoading, setUserLoading] = useState(false);
-const [userList, setUserList] = useState([]);
+  const [userList, setUserList] = useState([]);
 
-useEffect(() => {
-  if (view === "manage") {
-    setUserLoading(true);
-    api.get("/user-list")
-      .then(res => {
-        setUserList(res.data?.data || []);
-      })
-      .catch(err => {
-        console.error("Failed to fetch users", err);
-      })
-      .finally(() => {
-        setUserLoading(false);
-      });
-  }
-}, [view]);
+  useEffect(() => {
+    if (view === "manage") {
+      setUserLoading(true);
+      api.get("/user-list")
+        .then(res => {
+          setUserList(res.data?.data || []);
+        })
+        .catch(err => {
+          console.error("Failed to fetch users", err);
+        })
+        .finally(() => {
+          setUserLoading(false);
+        });
+    }
+  }, [view]);
 
 
   /* ====================================== JSX ====================================== */
@@ -252,27 +252,31 @@ useEffect(() => {
 
 
       {/* ---------- top nav ---------- */}
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-        <button onClick={() => setView("role")} className={pill(view === "role")}>
+      <div className="grid sm:grid-cols-2 md:grid-cols-2 items-center text-center gap-4 mb-8">
+        {/* <button onClick={() => setView("role")} className={pill(view === "role")}>
           <IconWrap><FaUserTag /></IconWrap> Role
-        </button>
+        </button> */}
         <button onClick={() => setView("create")} className={pill(view === "create")}>
-          <IconWrap><FaUserPlus /></IconWrap> Create User
+          <IconWrap><FaUserPlus /></IconWrap>
+          {authUser?.role_id === 1 ? "Create Ghaat Nodal" : "Create User"}
         </button>
+
         <button onClick={() => setView("manage")} className={pill(view === "manage")}>
-          <IconWrap><FaUsers /></IconWrap> User List
+          <IconWrap><FaUsers /></IconWrap>
+          {authUser?.role_id === 1 ? "Ghaat Nodal List" : "User List"}
         </button>
+
       </div>
 
       {/* ================= ROLE TAB ================= */}
-      {view === "role" && (
+      {/* {view === "role" && (
        <div className="border rounded p-6 shadow-md bg-white mt-28">
   <button onClick={() => setView(null)} className="flex items-center gap-1 text-sm mb-4 text-green-700 hover:text-green-900">
-    {/* <IconWrap><FaArrowLeft /></IconWrap> Back */}
+    <IconWrap><FaArrowLeft /></IconWrap> Back
   </button>
 
-  {/* add role */}
-  {/*  <div className="flex flex-col sm:flex-row items-center justify-between">
+
+   <div className="flex flex-col sm:flex-row items-center justify-between">
         <div className="w-full sm:w-1/2">
           <label className="text-sm font-semibold block mb-1">Role Name</label>
           <input
@@ -285,9 +289,8 @@ useEffect(() => {
         <button onClick={addRole} className="px-6 py-2 bg-green-600 text-white rounded mt-2 sm:mt-6">
           Register Role
         </button>
-      </div>  */}
-
-  {/* role table */}
+      </div> 
+=
  <div className="overflow-x-auto mt-6">
   <table className="min-w-full text-sm border border-gray-200 shadow-sm rounded overflow-hidden">
     <thead className="bg-green-100 text-green-800 font-semibold">
@@ -323,7 +326,7 @@ useEffect(() => {
 
 </div>
 
-      )}
+      )} */}
 
       {editModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -368,330 +371,350 @@ useEffect(() => {
 
 
 
-{/* <ToastContainer /> */}
-<div>
-  {view === "create" && (
-    <div className="border rounded p-4">
-      <button onClick={() => setView(null)} className="flex items-center gap-1 text-sm mb-4">
-        {/* <IconWrap><FaArrowLeft /></IconWrap> Back */}
-      </button>
-
-   <div className="grid md:grid-cols-2 gap-4">
-  {[["fullName", "Full Name *"], ["email", "Email *"]].map(([name, label]) => (
-    <div key={name}>
-      <label className="text-sm font-semibold block mb-1">{label}</label>
-      <input
-        name={name}
-        value={userForm[name]}
-        placeholder={`Enter ${label.replace(" *", "")}`}
-        onChange={(e) => {
-          const value = e.target.value;
-          if (name === "fullName") {
-            // Only letters and space for fullName
-            if (/^[a-zA-Z\s]*$/.test(value)) {
-              onUserChange(e);
-            }
-          } else {
-            // Allow full input for email and others
-            onUserChange(e);
-          }
-        }}
-        className={input}
-      />
-      {name === "fullName" && errors.name && (
-        <p className="text-red-500 text-sm mt-1">{errors.name[0]}</p>
-      )}
-      {name === "email" && errors.email && (
-        <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>
-      )}
-    </div>
-))}
-
-        <div>
-          <label className="text-sm font-semibold block mb-1">District *</label>
-          <select name="district" value={userForm.district} onChange={onUserChange} className={input}>
-            <option value="">Select district</option>
-            {districts.map((d) => (
-              <option key={d.id} value={d.district_name}>{d.district_name}</option>
-            ))}
-          </select>
-          {errors.district_id && <p className="text-red-500 text-sm mt-1">{errors.district_id[0]}</p>}
-        </div>
-
-        <div>
-          <label className="text-sm font-semibold block mb-1">Designation *</label>
-          <select name="designation" value={userForm.designation} onChange={onUserChange} className={input}>
-            <option value="">Select designation</option>
-            {designation.map((d) => (
-              <option key={d.id} value={d.name}>{d.name}</option>
-            ))}
-          </select>
-          {errors.designation_id && <p className="text-red-500 text-sm mt-1">{errors.designation_id[0]}</p>}
-        </div>
-
-        <div>
-          <label className="text-sm font-semibold block mb-1">Assign Role *</label>
-         <select name="role" value={userForm.role} onChange={onUserChange} className={input}>
-  <option value="">Select role</option>
-  {roles.filter(r => r && r.name).map((r, i) => (
-    <option key={i} value={r.name}>
-      {r.name
-        .split("_")
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ")}
-    </option>
-  ))}
-</select>
-
-          {errors.role_id && <p className="text-red-500 text-sm mt-1">{errors.role_id[0]}</p>}
-        </div>
-
-        <div>
-          <label className="text-sm font-semibold block mb-1">Contact No *</label>
-          <input
-  type="text"
-  name="contact"
-  value={userForm.contact}
-  onChange={(e) => {
-    const value = e.target.value;
-    if (/^\d*$/.test(value) && value.length <= 10) {
-      onUserChange(e);
-    }
-  }}
-  className={input}
-  placeholder="Enter contact number"
-/>
-          {errors.number && <p className="text-red-500 text-sm mt-1">{errors.number[0]}</p>}
-        </div>
-
-        <div>
-          <label className="text-sm font-semibold block mb-1">New Password *</label>
-          <div className="relative">
-            <input
-              type={showPass ? "text" : "password"}
-              name="password"
-              value={userForm.password}
-              onChange={onUserChange}
-              className={input}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPass(!showPass)}
-              className="absolute top-2 right-3 text-lg text-gray-600 hover:text-indigo-600"
-            >
-              {showPass ? <FaEyeSlash /> : <FaEye />}
+      {/* <ToastContainer /> */}
+      <div>
+        {view === "create" && (
+          <div className="border rounded p-4">
+            <button onClick={() => setView(null)} className="flex items-center gap-1 text-sm mb-4">
+              {/* <IconWrap><FaArrowLeft /></IconWrap> Back */}
             </button>
-          </div>
-          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password[0]}</p>}
-        </div>
 
-        <div>
-          <label className="text-sm font-semibold block mb-1">Confirm Password *</label>
-          <div className="relative">
-            <input
-              type={showConfirm ? "text" : "password"}
-              name="confirmPassword"
-              value={userForm.confirmPassword}
-              onChange={onUserChange}
-              className={input}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute top-2 right-3 text-lg text-gray-600 hover:text-indigo-600"
-            >
-              {showConfirm ? <FaEyeSlash /> : <FaEye />}
-            </button>
+            <div className="grid md:grid-cols-2 gap-4">
+              {[["fullName", "Full Name *"], ["email", "Email *"]].map(([name, label]) => (
+                <div key={name}>
+                  <label className="text-sm font-semibold block mb-1">{label}</label>
+                  <input
+                    name={name}
+                    value={userForm[name]}
+                    placeholder={`Enter ${label.replace(" *", "")}`}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (name === "fullName") {
+                        // Only letters and space for fullName
+                        if (/^[a-zA-Z\s]*$/.test(value)) {
+                          onUserChange(e);
+                        }
+                      } else {
+                        // Allow full input for email and others
+                        onUserChange(e);
+                      }
+                    }}
+                    className={input}
+                  />
+                  {name === "fullName" && errors.name && (
+                    <p className="text-red-500 text-sm mt-1">{errors.name[0]}</p>
+                  )}
+                  {name === "email" && errors.email && (
+                    <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>
+                  )}
+                </div>
+              ))}
+
+              {authUser?.role_id !== 1 && (
+                <div>
+                  <label className="text-sm font-semibold block mb-1">District *</label>
+                  <select name="district" value={userForm.district} onChange={onUserChange} className={input}>
+                    <option value="">Select district</option>
+                    {districts.map((d) => (
+                      <option key={d.id} value={d.district_name}>{d.district_name}</option>
+                    ))}
+                  </select>
+                  {errors.district_id && <p className="text-red-500 text-sm mt-1">{errors.district_id[0]}</p>}
+                </div>
+              )}
+
+
+              {authUser?.role_id !== 1 && (
+                <div>
+                  <label className="text-sm font-semibold block mb-1">Designation *</label>
+                  <select name="designation" value={userForm.designation} onChange={onUserChange} className={input}>
+                    <option value="">Select designation</option>
+                    {designation.map((d) => (
+                      <option key={d.id} value={d.name}>{d.name}</option>
+                    ))}
+                  </select>
+                  {errors.designation_id && <p className="text-red-500 text-sm mt-1">{errors.designation_id[0]}</p>}
+                </div>
+              )}
+
+
+              {authUser?.role_id !== 1 && (
+                <div>
+                  <label className="text-sm font-semibold block mb-1">Assign Role *</label>
+                  <select name="role" value={userForm.role} onChange={onUserChange} className={input}>
+                    <option value="">Select role</option>
+                    {roles.filter(r => r && r.name).map((r, i) => (
+                      <option key={i} value={r.name}>
+                        {r.name
+                          .split("_")
+                          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(" ")}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.role_id && <p className="text-red-500 text-sm mt-1">{errors.role_id[0]}</p>}
+                </div>
+              )}
+
+              <div>
+                <label className="text-sm font-semibold block mb-1">Contact No *</label>
+                <input
+                  type="text"
+                  name="contact"
+                  value={userForm.contact}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d*$/.test(value) && value.length <= 10) {
+                      onUserChange(e);
+                    }
+                  }}
+                  className={input}
+                  placeholder="Enter contact number"
+                />
+                {errors.number && <p className="text-red-500 text-sm mt-1">{errors.number[0]}</p>}
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold block mb-1">New Password *</label>
+                <div className="relative">
+                  <input
+                    type={showPass ? "text" : "password"}
+                    name="password"
+                    value={userForm.password}
+                    onChange={onUserChange}
+                    className={input}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute top-2 right-3 text-lg text-gray-600 hover:text-indigo-600"
+                  >
+                    {showPass ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password[0]}</p>}
+              </div>
+
+
+              <div>
+                <label className="text-sm font-semibold block mb-1">Confirm Password *</label>
+                <div className="relative">
+                  <input
+                    type={showConfirm ? "text" : "password"}
+                    name="confirmPassword"
+                    value={userForm.confirmPassword}
+                    onChange={onUserChange}
+                    className={input}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute top-2 right-3 text-lg text-gray-600 hover:text-indigo-600"
+                  >
+                    {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+                {errors.password_confirmation && (
+                  <p className="text-red-500 text-sm mt-1">{errors.password_confirmation[0]}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                disabled={loading}
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    const isDistrictNodal = authUser?.role_id === 1;
+
+                    const roleId = isDistrictNodal
+                      ? roles.find(r => r.name === "ghaat_nodal")?.id
+                      : roles.find(r => r.name === userForm.role)?.id;
+
+                    const districtId = isDistrictNodal
+                      ? authUser?.district_id
+                      : districts.find(d => d.district_name === userForm.district)?.id;
+
+                    const designationId = isDistrictNodal
+                      ? authUser?.designation_id
+                      : designation.find(d => d.name === userForm.designation)?.id;
+
+                    const payload = {
+                      name: userForm.fullName,
+                      email: userForm.email,
+                      password: userForm.password,
+                      password_confirmation: userForm.confirmPassword,
+                      role_id: roleId,
+                      district_id: districtId,
+                      designation_id: designationId,
+                      number: userForm.contact,
+                    };
+
+                    console.log("PAYLOAD",payload);
+
+                    await api.post("/users", payload);
+
+                    toast.success("User created successfully ✅");
+
+                    setUserForm({
+                      fullName: "",
+                      email: "",
+                      password: "",
+                      confirmPassword: "",
+                      role: "",
+                      district: "",
+                      designation: "",
+                      contact: "",
+                    });
+
+                    setErrors({});
+                    setView("manage");
+                  } catch (error) {
+                    const apiErrors = error.response?.data?.errors || {};
+                    setErrors(apiErrors);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className={`mt-6 px-8 py-2 font-semibold text-white rounded ${loading ? "bg-gray-400" : "bg-yellow-400"}`}
+              >
+                {loading ? "Creating..." : "Create User"}
+              </button>
+            </div>
+
           </div>
-          {errors.password_confirmation && (
-            <p className="text-red-500 text-sm mt-1">{errors.password_confirmation[0]}</p>
-          )}
-        </div>
+        )}
       </div>
-
-     <div className="flex justify-center">
-  <button
-    disabled={loading}
-    onClick={async () => {
-      setLoading(true);
-      try {
-        const roleId = roles.find(r => r.name === userForm.role)?.id;
-        const districtId = districts.find(d => d.district_name === userForm.district)?.id;
-        const designationId = designation.find(d => d.name === userForm.designation)?.id;
-
-        const payload = {
-          name: userForm.fullName,
-          email: userForm.email,
-          password: userForm.password,
-          password_confirmation: userForm.confirmPassword,
-          role_id: roleId,
-          district_id: districtId,
-          designation_id: designationId,
-          number: userForm.contact,
-        };
-
-        await api.post("/users", payload);
-
-        toast.success("User created successfully ✅");
-
-        setUserForm({
-          fullName: "",
-          email: "",
-          password: "",
-          confirmPassword: "",
-          role: "",
-          district: "",
-          designation: "",
-          contact: "",
-        });
-
-        setErrors({});
-        setView("manage");
-      } catch (error) {
-        const apiErrors = error.response?.data?.errors || {};
-        setErrors(apiErrors);
-      } finally {
-        setLoading(false);
-      }
-    }}
-    className={`mt-6 px-8 py-2 font-semibold text-white rounded ${loading ? "bg-gray-400" : "bg-yellow-400"}`}
-  >
-    {loading ? "Creating..." : "Create User"}
-  </button>
-</div>
-
-    </div>
-  )}
-</div>
 
 
 
       {/* =============== MANAGE USERS TAB =============== */}
-{view === "manage" && (
-  <div className="border rounded p-4">
-    <button
-      onClick={() => setView(null)}
-      className="flex items-center gap-1 text-sm mb-4"
-    >
-      {/* <IconWrap><FaArrowLeft /></IconWrap> Back */}
-    </button>
+      {view === "manage" && (
+        <div className="border rounded p-4">
+          <button
+            onClick={() => setView(null)}
+            className="flex items-center gap-1 text-sm mb-4"
+          >
+            {/* <IconWrap><FaArrowLeft /></IconWrap> Back */}
+          </button>
 
-    <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-        <h3 className="text-xl sm:text-2xl font-bold text-blue-800 text-center sm:text-left">
-          Registered User Lists
-        </h3>
-        <button 
-  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-md transition-colors w-full sm:w-auto justify-center sm:justify-end"
-  onClick={() => {
-    if (!userList || userList.length === 0) {
-      alert("No users to export.");
-      return;
-    }
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h3 className="text-xl sm:text-2xl font-bold text-blue-800 text-center sm:text-left">
+              Registered User Lists
+            </h3>
+            <button
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-md transition-colors w-full sm:w-auto justify-center sm:justify-end"
+              onClick={() => {
+                if (!userList || userList.length === 0) {
+                  alert("No users to export.");
+                  return;
+                }
 
-    // CSV Headers
-    const headers = [
-      "Sr.No",
-      "Full Name",
-      "Email",
-      "District",
-      "Designation",
-      "Role"
-    ];
+                // CSV Headers
+                const headers = [
+                  "Sr.No",
+                  "Full Name",
+                  "Email",
+                  "District",
+                  "Designation",
+                  "Role"
+                ];
 
-    // CSV Rows
-    const rows = userList.map((u, idx) => [
-      idx + 1,
-      `"${u.name}"`,
-      `"${u.email}"`,
-      `"${u.district?.district_name || "N/A"}"`,
-      `"${u.designation?.name || "N/A"}"`,
-      `"${u.role?.name === "ghaat_nodal" ? "Ghaat Nodal" : u.role?.name === "district_nodal" ? "District Nodal" : (u.role?.name || "N/A")}"`
-    ]);
+                // CSV Rows
+                const rows = userList.map((u, idx) => [
+                  idx + 1,
+                  `"${u.name}"`,
+                  `"${u.email}"`,
+                  `"${u.district?.district_name || "N/A"}"`,
+                  `"${u.designation?.name || "N/A"}"`,
+                  `"${u.role?.name === "ghaat_nodal" ? "Ghaat Nodal" : u.role?.name === "district_nodal" ? "District Nodal" : (u.role?.name || "N/A")}"`
+                ]);
 
-    // Combine headers + rows
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.join(","))
-    ].join("\n");
+                // Combine headers + rows
+                const csvContent = [
+                  headers.join(","),
+                  ...rows.map(row => row.join(","))
+                ].join("\n");
 
-    // Trigger download
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `user_report_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }}
->
-  <FaDownload className="text-sm sm:text-base" /> 
-  <span className="text-sm sm:text-base">Export Report</span>
-</button>
+                // Trigger download
+                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                link.setAttribute("download", `user_report_${new Date().toISOString().slice(0, 10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+            >
+              <FaDownload className="text-sm sm:text-base" />
+              <span className="text-sm sm:text-base">Export Report</span>
+            </button>
 
-      </div>
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-sm border border-gray-200">
-        <thead className="bg-gray-100 text-center">
-          <tr>
-            {["S.No", "Full Name", "Email", "District", "Designation", "Role", "Actions"].map(h => (
-              <Th key={h} className="px-4 py-2 text-sm font-semibold text-gray-700 border">
-                {h}
-              </Th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="text-center">
-          {userLoading ? (
-            <tr>
-              <Td colSpan={7} className="py-3 text-slate-500">Loading users...</Td>
-            </tr>
-          ) : userList.length === 0 ? (
-            <tr>
-              <Td colSpan={7} className="py-3">No users</Td>
-            </tr>
-          ) : (
-            userList.map((u, i) => {
-              let roleLabel = "N/A";
-              if (u.role?.name === "ghaat_nodal") roleLabel = "Ghaat Nodal";
-              else if (u.role?.name === "district_nodal") roleLabel = "District Nodal";
-              else if (u.role?.name) roleLabel = u.role.name;
-
-              return (
-                <tr key={u.id || i} className="border-t hover:bg-gray-50">
-                  <Td className="px-4 py-2">{i + 1}</Td>
-                  <Td className="px-4 py-2">{u.name}</Td>
-                  <Td className="px-4 py-2">{u.email}</Td>
-                  <Td className="px-4 py-2">{u.district?.district_name || "N/A"}</Td>
-                  <Td className="px-4 py-2">{u.designation?.name || "N/A"}</Td>
-                  <Td className="px-4 py-2">{roleLabel}</Td>
-                  <Td className="px-4 py-2">
-                    <div className="flex justify-center gap-3">
-                      <button onClick={()=>{
-                        navigate(`/dashboard/usermanagment/userlistview/${u.id}`);
-                      }} className="text-blue-600 hover:text-blue-800" title="View">
-                        <FaEye />
-                      </button>
-                      <button
-                        onClick={()=>{
-                          navigate(`/dashboard/usermanagment/userlistedit/${u.id}`)
-                        }}
-                        className="text-green-600 hover:text-green-800"
-                        title="Edit"
-                      >
-                        <FaEdit />
-                      </button>
-                    </div>
-                  </Td>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm border border-gray-200">
+              <thead className="bg-gray-100 text-center">
+                <tr>
+                  {["S.No", "Full Name", "Email", "District", "Designation", "Role", "Actions"].map(h => (
+                    <Th key={h} className="px-4 py-2 text-sm font-semibold text-gray-700 border">
+                      {h}
+                    </Th>
+                  ))}
                 </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
+              </thead>
+              <tbody className="text-center">
+                {userLoading ? (
+                  <tr>
+                    <Td colSpan={7} className="py-3 text-slate-500">Loading users...</Td>
+                  </tr>
+                ) : userList.length === 0 ? (
+                  <tr>
+                    <Td colSpan={7} className="py-3">No users</Td>
+                  </tr>
+                ) : (
+                  userList.map((u, i) => {
+                    let roleLabel = "N/A";
+                    if (u.role?.name === "ghaat_nodal") roleLabel = "Ghaat Nodal";
+                    else if (u.role?.name === "district_nodal") roleLabel = "District Nodal";
+                    else if (u.role?.name) roleLabel = u.role.name;
+
+                    return (
+                      <tr key={u.id || i} className="border-t hover:bg-gray-50">
+                        <Td className="px-4 py-2">{i + 1}</Td>
+                        <Td className="px-4 py-2">{u.name}</Td>
+                        <Td className="px-4 py-2">{u.email}</Td>
+                        <Td className="px-4 py-2">{u.district?.district_name || "N/A"}</Td>
+                        <Td className="px-4 py-2">{u.designation?.name || "N/A"}</Td>
+                        <Td className="px-4 py-2">{roleLabel}</Td>
+                        <Td className="px-4 py-2">
+                          <div className="flex justify-center gap-3">
+                            <button onClick={() => {
+                              navigate(`/dashboard/usermanagment/userlistview/${u.id}`);
+                            }} className="text-blue-600 hover:text-blue-800" title="View">
+                              <FaEye />
+                            </button>
+                            <button
+                              onClick={() => {
+                                navigate(`/dashboard/usermanagment/userlistedit/${u.id}`)
+                              }}
+                              className="text-green-600 hover:text-green-800"
+                              title="Edit"
+                            >
+                              <FaEdit />
+                            </button>
+                          </div>
+                        </Td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
 
 

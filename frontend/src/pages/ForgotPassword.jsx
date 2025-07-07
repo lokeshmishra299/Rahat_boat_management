@@ -1,23 +1,23 @@
 // src/pages/ForgotPassword.jsx
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { FaEnvelope, FaArrowLeft } from "react-icons/fa"; // ← added
+import { FaEnvelope, FaArrowLeft } from "react-icons/fa";
 import Footer from "../components/Footer";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
-const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
-
 const token = localStorage.getItem("access_token");
 
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api",
   headers: {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(token && { Authorization: `Bearer ${token}` }), // dynamically add token if available
   },
+  withCredentials: true, // only required if your Laravel Sanctum setup uses cookies
 });
+
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -25,52 +25,51 @@ const ForgotPassword = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
-const handleReset = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setErrorMessage("");
+  const handleReset = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMessage("");
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (!email.trim()) {
-    setErrorMessage("Email is required.");
-    setLoading(false);
-    return;
-  }
-
-  if (!emailRegex.test(email)) {
-    setErrorMessage("Please enter a valid email address.");
-    setLoading(false);
-    return;
-  }
-
-  try {
-    const checkRes = await api.post("/forgot-password-check", { email });
-    if (checkRes.data.status === "success") {
-      const otpRes = await api.post("/send-otp", { email });
-      if (otpRes.data.status === "success") {
-        setEmail("");
-        toast.success("OTP sent successfully");
-        navigate("/send-otp", { state: { email } });
-      } else {
-        setErrorMessage(otpRes.data.message || "Failed to send OTP.");
-      }
-    } else {
-      setErrorMessage(checkRes.data.message || "Email check failed.");
+    if (!email.trim()) {
+      setErrorMessage("Email is required.");
+      setLoading(false);
+      return;
     }
-  } catch (err) {
-    if (err.response?.status === 422) {
-      const errors = err.response.data.data;
-      if (errors?.email) setErrorMessage(errors.email);
-      else setErrorMessage("Validation failed. Check input.");
-    } else if (err.response?.data?.message) {
-      setErrorMessage(err.response.data.message);
-    } else setErrorMessage("Something went wrong.");
-  } finally {
-    setLoading(false);
-  }
-};
 
+    if (!emailRegex.test(email)) {
+      setErrorMessage("Please enter a valid email address.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const checkRes = await api.post("/forgot-password-check", { email });
+      if (checkRes.data.status === "success") {
+        const otpRes = await api.post("/send-otp", { email });
+        if (otpRes.data.status === "success") {
+          setEmail("");
+          toast.success("OTP sent successfully");
+          navigate("/send-otp", { state: { email } });
+        } else {
+          setErrorMessage(otpRes.data.message || "Failed to send OTP.");
+        }
+      } else {
+        setErrorMessage(checkRes.data.message || "Email check failed.");
+      }
+    } catch (err) {
+      if (err.response?.status === 422) {
+        const errors = err.response.data.data;
+        if (errors?.email) setErrorMessage(errors.email);
+        else setErrorMessage("Validation failed. Check input.");
+      } else if (err.response?.data?.message) {
+        setErrorMessage(err.response.data.message);
+      } else setErrorMessage("Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const container = {
     hidden: { opacity: 0, scale: 0.9, y: 40 },
@@ -83,8 +82,16 @@ const handleReset = async (e) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#e3a5b6] via-[#d1a4cb] to-[#5782c4] text-gray-900">
-      <div className="flex-grow flex items-center mt-10 justify-center px-4">
+    <div className="relative min-h-screen flex flex-col text-gray-900 bg-gradient-to-br from-[#e3a5b6] via-[#d1a4cb] to-[#5782c4]">
+      {/* Overlay Layers similar to Login */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url('/images/boat3.jpg')` }}
+      />
+      <div className="absolute inset-0 bg-black/20" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#000000]/15" />
+
+      <div className="relative flex-grow flex items-center mt-10 justify-center px-4">
         <motion.div
           variants={container}
           initial="hidden"
@@ -111,11 +118,11 @@ const handleReset = async (e) => {
             Enter your registered email to reset your password
           </p>
 
-          <form onSubmit={handleReset} className="space-y-4">
+          <form onSubmit={handleReset} className="space-y-3">
             <div className="relative">
               <input
                 type="text"
-                required
+                
                 placeholder="Email ID"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -125,7 +132,7 @@ const handleReset = async (e) => {
             </div>
 
             {errorMessage && (
-              <p className="text-sm text-red-600">{errorMessage}</p>
+              <p className="text-sm text-red-600 mt-1">{errorMessage}</p>
             )}
 
             <motion.button
@@ -142,19 +149,16 @@ const handleReset = async (e) => {
               {loading ? "Sending…" : "SEND OTP CODE"}
             </motion.button>
 
-            {/* ⬅️ Back to login below OTP button */}
-            {/* ⬅️ Back to login centered below button */}
-<div className="text-center mt-3">
-  <button
-    type="button"
-    onClick={() => navigate("/login")}
-    className="text-sm text-[#163358] hover:underline font-semibold inline-flex items-center gap-2 justify-center"
-  >
-    <FaArrowLeft />
-    Back to Login
-  </button>
-</div>
-
+            <div className="text-center mt-3">
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="text-sm text-[#163358] hover:underline font-semibold inline-flex items-center gap-2 justify-center"
+              >
+                <FaArrowLeft />
+                Back to Login
+              </button>
+            </div>
           </form>
         </motion.div>
       </div>

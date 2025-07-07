@@ -7,29 +7,29 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Toaster, toast } from "react-hot-toast";
 import Footer from "../components/Footer";
 
-const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
-
 const token = localStorage.getItem("access_token");
 
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api",
   headers: {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(token && { Authorization: `Bearer ${token}` }), // dynamically add token if available
   },
+  withCredentials: true, // only required if your Laravel Sanctum setup uses cookies
 });
 
-const ResetPassword = () => {
-  const navigate   = useNavigate();
-  const { state }  = useLocation();
-  const email      = state?.email ?? "";
-  const otp        = state?.otp ?? "";
 
-  const [password, setPassword]             = useState("");
-  const [confirmPassword, setConfirmPwd]    = useState("");
-  const [showPwd, setShowPwd]               = useState(false);
-  const [loading, setLoading]               = useState(false);
-  const [errors, setErrors]                 = useState({});
+const ResetPassword = () => {
+  const navigate = useNavigate();
+  const { state } = useLocation();
+  const email = state?.email ?? "";
+  const otp = state?.otp ?? "";
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPwd] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const handleReset = async (e) => {
     e.preventDefault();
@@ -53,7 +53,9 @@ const ResetPassword = () => {
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.data || {});
-      } else toast.error(err.response?.data?.message || "Something went wrong.");
+      } else {
+        toast.error(err.response?.data?.message || "Something went wrong.");
+      }
     } finally {
       setLoading(false);
     }
@@ -77,11 +79,19 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#e3a5b6] via-[#d1a4cb] to-[#5782c4] text-gray-900">
+    <div className="relative min-h-screen flex flex-col text-gray-900 bg-gradient-to-br from-[#e3a5b6] via-[#d1a4cb] to-[#5782c4]">
       <Toaster position="top-right" />
 
+      {/* Background Layers */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url('/images/boat3.jpg')` }}
+      />
+      <div className="absolute inset-0 bg-black/20" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#000000]/15" />
+
       {/* Centered Card */}
-      <div className="flex-grow flex items-center mt-10 justify-center px-4">
+      <div className="relative flex-grow flex items-center mt-10 justify-center px-4">
         <motion.div
           variants={container}
           initial="hidden"
@@ -99,41 +109,45 @@ const ResetPassword = () => {
             </div>
           </div>
 
+          {/* Heading */}
           <h1 className="text-center text-lg font-bold text-[#1f4068] tracking-wide mb-1">
             Rahat Boat Management
           </h1>
+          <h2 className="text-center text-2xl font-extrabold text-white mb-1">
+            Reset Password
+          </h2>
           <p className="text-center text-sm text-white/80 mb-4">
             Please set your new password
           </p>
 
           <form onSubmit={handleReset} className="space-y-4">
-            {/* New password */}
+            {/* New Password */}
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium text-white mb-1">
                 New Password
               </label>
-              <span className="relative">
+              <div className="relative">
                 <input
                   type={showPwd ? "text" : "password"}
                   placeholder="Enter new password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-md bg-[#1f4068] px-4 py-3 pr-10 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white"
+                  className="w-full px-4 py-3 pr-10 rounded-md bg-[#1f4068] text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPwd((v) => !v)}
+                  onClick={() => setShowPwd((prev) => !prev)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80"
                 >
                   {showPwd ? <FaEyeSlash /> : <FaEye />}
                 </button>
-              </span>
+              </div>
               {renderErrors("password")}
             </div>
 
-            {/* Confirm password */}
+            {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium text-white mb-1">
                 Confirm Password
               </label>
               <input
@@ -141,7 +155,7 @@ const ResetPassword = () => {
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPwd(e.target.value)}
-                className="w-full rounded-md bg-[#1f4068] px-4 py-3 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white"
+                className="w-full px-4 py-3 rounded-md bg-[#1f4068] text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white"
               />
               {renderErrors("confirm_password")}
             </div>

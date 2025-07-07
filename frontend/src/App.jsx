@@ -27,19 +27,64 @@ import PiloteEdit from "./pages/PiloteEdit";
 import InspectionView from "./pages/InspectionView";
 import UserListEdit from "./pages/UserListEdit";
 import UserListView from "./pages/UserListView";
+import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
 
 const App = () => (
   <Routes>
     {/* public routes */}
-    <Route path="/" element={<Login />} />
-    <Route path="/login" element={<Login />} />
-  <Route path="/forgot-password" element={<ForgotPassword />} />
-   <Route path="/send-otp" element={<SendOtp />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
+   <Route
+      path="/"
+      element={
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      }
+    />
+    <Route
+      path="/login"
+      element={
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      }
+    />
+    <Route
+      path="/forgot-password"
+      element={
+        <PublicRoute>
+          <ForgotPassword />
+        </PublicRoute>
+      }
+    />
+    <Route
+      path="/send-otp"
+      element={
+        <PublicRoute>
+          <SendOtp />
+        </PublicRoute>
+      }
+    />
+    <Route
+      path="/reset-password"
+      element={
+        <PublicRoute>
+          <ResetPassword />
+        </PublicRoute>
+      }
+    />
 
 
     {/* protected dashboard area */}
-    <Route path="/dashboard" element={<Dashboard />}>
+    {/* Protected Routes */}
+    <Route
+      path="/dashboard"
+      element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      }
+    >
       <Route index element={<></>} />
       <Route path="boats/boatdetails/:id" element={<BoatDetail />} />
       <Route path="boats/boatdetailsone/:id" element={<BoatDetailone/>} />
@@ -48,9 +93,9 @@ const App = () => (
       <Route path="boats" element={<Boats />} />
     
 {/* id added */}
-      <Route path="ghaats" element={<Ghaat />} />
-      <Route path="ghaats/ghaatdetails/:id" element={<GhaatDetail />}/>
-      <Route path="ghaats/ghaatdetailsview/:id" element={<GhaatDetailView />}/>
+      <Route path="ghats" element={<Ghaat />} />
+      <Route path="ghats/ghatdetails/:id" element={<GhaatDetail />}/>
+      <Route path="ghats/ghatdetailsview/:id" element={<GhaatDetailView />}/>
 
       <Route path="boatOwner" element={<BoatOwner />} />
 <Route path="boatowner/boatownerview/:id" element={<BoatOwnerView />} />

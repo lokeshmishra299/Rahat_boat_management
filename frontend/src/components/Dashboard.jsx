@@ -96,7 +96,7 @@ const user = JSON.parse(localStorage.getItem("user"));
       {/* nav bar */}
       <div className="w-full sm:w-[97%] mx-auto flex justify-center mt-5 px-2">
         <nav className="flex overflow-x-auto scroll-smooth whitespace-nowrap py-3 bg-white shadow-md rounded-full w-full hide-scrollbar">
-          <div className="flex flex-nowrap gap-2 sm:gap-4 px-4 mx-auto">
+          <div className="flex flex-nowrap gap-2 sm:gap-8 px-4 mx-auto">
             <Link to="." className={linkCls(".", "bg-blue-600")}>
               <MdSpaceDashboard className="inline-block mr-2 text-xl" />
               Dashboard
@@ -105,16 +105,17 @@ const user = JSON.parse(localStorage.getItem("user"));
               <FaShip className="inline-block mr-2 text-lg" />
               Boats
             </Link>
-            {user && user.role_id !== 2 && (
-            <Link to="ghaats" className={linkCls("ghaats", "bg-sky-500")}>
+            <Link to="ghats" className={linkCls("ghaats", "bg-sky-500")}>
               <FaWater className="inline-block mr-2 text-lg" />
-              Ghaats
+              Ghats
             </Link>
-             )}
+             
+             {user && user.role_id !== 2 && (
             <Link to="districts" className={linkCls("districts", "bg-red-500")}>
               <FaMapMarkedAlt className="inline-block mr-2 text-lg" />
               Districts
             </Link>
+             )}
             <Link to="life-jackets" className={linkCls("life-jackets", "bg-orange-400")}>
               <FaShieldAlt className="inline-block mr-2 text-lg" />
               Life Jackets
@@ -136,14 +137,14 @@ const user = JSON.parse(localStorage.getItem("user"));
             )}
 
 
-            <Link to="boatowner" className={linkCls("boatowner", "bg-rose-500")}>
+            {/* <Link to="boatowner" className={linkCls("boatowner", "bg-rose-500")}>
               <FaUserTie className="inline-block mr-2 text-lg" />
               Boat Owner
             </Link>
             <Link to="poilet" className={linkCls("poilet", "bg-[#008080]")}>
               <FaUserShield className="inline-block mr-2 text-lg" />
               Pilot
-            </Link>
+            </Link> */}
           </div>
         </nav>
 

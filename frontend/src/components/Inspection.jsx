@@ -53,7 +53,7 @@ const Inspection = () => {
   </div>
 
   {/* 👇 Tab Content */}
-  {activeTab === "conduct" && <ConductForm />}
+{activeTab === "conduct" && <ConductForm setActiveTab={setActiveTab} />}
   {activeTab === "records" && <Records />}
   {activeTab === "schedule" && <Schedule />}
   {activeTab === "analytics" && <Analytics />}
@@ -82,7 +82,7 @@ const checklistItems = [
   "Steering",
 ];
 
-const ConductForm = () => {
+const ConductForm = ({ setActiveTab }) => {
   const [form, setForm] = useState({
     register_boat_id: "",
     inspection_date: "",
@@ -111,14 +111,49 @@ const ConductForm = () => {
         : [...f.inspection_checklist, item],
     }));
 
+
+    const validateForm = () => {
+  const errors = {};
+
+  if (!form.inspection_date) {
+    errors.inspection_date = "Inspection date is required";
+  }
+
+  if (!form.inspector_name.trim()) {
+    errors.inspector_name = "Inspector name is required";
+  }
+
+  return errors;
+};
+
 const handleSubmit = async (e) => {
   e.preventDefault();
   setAlert(null);
   setFormErrors({});
+
+  const errors = {};
+
+  if (!form.inspection_date) {
+    errors.inspection_date = "Inspection date is required.";
+  }
+
+  if (!form.inspector_name.trim()) {
+    errors.inspector_name = "Inspector name is required.";
+  }
+
+  if (!form.register_boat_id) {
+    errors.register_boat_id = "Please select a boat registration number.";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    setFormErrors(errors);
+    return;
+  }
+
   setLoading(true);
 
   try {
-    // 🔎 Boat-ID Lookup
+    // 🔎 Step 2: Lookup boat ID from registration number
     const { data: lookupRes } = await api.post("/boat-id-lookup", {
       registration_no: form.register_boat_id,
     });
@@ -126,7 +161,6 @@ const handleSubmit = async (e) => {
     const boatId = lookupRes?.data?.id;
 
     if (!boatId) {
-      // 🛑 Custom error if boat not found
       setFormErrors({
         register_boat_id: "Boat not found. Please enter a valid registration number.",
       });
@@ -134,13 +168,14 @@ const handleSubmit = async (e) => {
       return;
     }
 
-    // ✅ Submit to backend (no client-side validation)
+    // ✅ Step 3: Submit final inspection form
     await api.post("/conduct-inspection", {
       ...form,
       register_boat_id: boatId,
     });
 
     toast.success("Inspection saved successfully!");
+    setActiveTab("records");
 
     // 🔄 Reset form
     setForm({
@@ -158,21 +193,18 @@ const handleSubmit = async (e) => {
     });
 
   } catch (err) {
-    // 🧹 Handle backend errors cleanly
+    // 🧹 Step 4: Handle backend validation errors
     let apiErr = err.response?.data?.errors || {};
 
-    // ⚠️ If only `message` returned (e.g., Boat not found)
     if (!Object.keys(apiErr).length && err.response?.data?.message) {
       apiErr.register_boat_id = err.response.data.message;
     }
 
-    // 🔄 Map Laravel's `registration_no` → frontend `register_boat_id`
     if (apiErr.registration_no) {
       apiErr.register_boat_id = apiErr.registration_no;
       delete apiErr.registration_no;
     }
 
-    // 🔤 Convert array errors to string
     apiErr = Object.fromEntries(
       Object.entries(apiErr).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
     );

@@ -63,7 +63,7 @@ export default function InspectionView() {
       {/* Header */}
       <div className="border-b pb-4">
         <h1 className="text-3xl font-bold text-center text-blue-700">
-          📝 Inspection Details – #{inspection.inspector_id}
+          📝 Inspection Details – {inspection.boat?.registration_no}
         </h1>
       </div>
 
@@ -72,7 +72,7 @@ export default function InspectionView() {
         <h2 className="text-xl font-semibold mb-4">General Information</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           <Info label="Boat Registration" value={inspection.boat?.registration_no} />
-          <Info label="Inspection ID" value={inspection.inspector_id} />
+          <Info label="Inspector ID" value={inspection.inspector_id} />
           <Info label="Inspection Date" value={inspection.inspection_date} />
 
           <Info label="Inspector" value={inspection.inspector_name} />

@@ -6,6 +6,7 @@ import ReactWebcam from "react-webcam";
 import { Toaster, toast } from 'react-hot-toast';
 
 
+
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
 
 const token = localStorage.getItem("access_token");
@@ -29,12 +30,15 @@ export default function GhaatDetail() {
   const { id } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
+
 
   const [ghaat, setGhaat] = useState(state || null);
   const [draft, setDraft] = useState(state || null);
   const [loading, setLoading] = useState(!state);
   const [districts, setDistricts] = useState([]);
   const [rivers, setRivers] = useState([]);
+  
 
   const [error, setError] = useState("");
   const [errors, setErrors] = useState({});
@@ -124,7 +128,7 @@ export default function GhaatDetail() {
           setGhaat(r.data.data);
           setDraft(r.data.data);
         } else {
-          setError("Ghaat not found.");
+          setError("Ghat not found.");
         }
       })
       .catch(() => setError("Could not load ghat details."))
@@ -213,7 +217,7 @@ export default function GhaatDetail() {
 
         if (r.data?.status === "success") {
           setGhaat(r.data.data);
-                toast.success("Ghaat details updated successfully!");
+                toast.success("Ghat details updated successfully!");
           navigate("/dashboard/ghaats");
         } else if (r.data?.errors) {
               console.log("Validation errors:", r.data.errors);
@@ -227,157 +231,209 @@ export default function GhaatDetail() {
       .finally(() => setSaving(false));
   };
 
-  const EditableCell = ({ k, label, value, districts, rivers, editing, temp, setTemp, startEdit, commit, errors }) => {
-    const isReadOnly = ["location", "pincode", "registered_boats_count"].includes(k);
-    const isNumberOnly = k === "boat_capacity" || k === "contact_number";
-    const isStringOnly = k === "contact_person";
+const EditableCell = ({ k, label, value, districts, rivers, editing, temp, setTemp, startEdit, commit, errors }) => {
+  const isReadOnly = ["location", "pincode", "registered_boats_count"].includes(k);
+  const isNumberOnly = k === "boat_capacity" || k === "contact_number";
+  const isStringOnly = k === "contact_person";
 
-    // District dropdown
-    if (k === "district_id") {
-      return (
-        <div>
-          <p className="text-xs text-gray-500 font-semibold mb-1">{label}</p>
-          {editing === k ? (
-            <>
-              <select
-                value={temp}
-                onChange={(e) => setTemp(e.target.value)}
-                onBlur={() => commit(k)}
-                className="w-full bg-white border border-indigo-400 rounded px-3 py-2 text-sm"
-                autoFocus
-              >
-                <option value="">Select District</option>
-                {districts.map(d => (
-                  <option key={d.id} value={d.id}>{d.district_name}</option>
-                ))}
-              </select>
-              {errors[k] && <p className="text-xs text-red-500">{errors[k][0]}</p>}
-            </>
-          ) : (
-            <div
-              onClick={() => startEdit(k)}
-              className="bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-800 border cursor-pointer"
+  // District dropdown
+  if (k === "district_id") {
+    return (
+      <div>
+        <p className="text-xs text-gray-500 font-semibold mb-1">{label}</p>
+        {editing === k ? (
+          <>
+            <select
+              value={temp}
+              onChange={(e) => setTemp(e.target.value)}
+              onBlur={() => commit(k)}
+              className="w-full bg-white border border-indigo-400 rounded px-3 py-2 text-sm"
+              autoFocus
             >
-              {districts.find(d => d.id === value)?.district_name || "—"}
-            </div>
-          )}
-        </div>
-      );
-    }
+              <option value="">Select District</option>
+              {districts.map(d => (
+                <option key={d.id} value={d.id}>{d.district_name}</option>
+              ))}
+            </select>
+            {errors[k] && <p className="text-xs text-red-500">{errors[k][0]}</p>}
+          </>
+        ) : (
+          <div
+            onClick={() => startEdit(k)}
+            className="bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-800 border cursor-pointer"
+          >
+            {districts.find(d => d.id === value)?.district_name || "—"}
+          </div>
+        )}
+      </div>
+    );
+  }
 
-    // River dropdown
-    if (k === "river_id") {
-      return (
-        <div>
-          <p className="text-xs text-gray-500 font-semibold mb-1">{label}</p>
-          {editing === k ? (
-            <>
-              <select
-                value={temp}
-                onChange={(e) => setTemp(e.target.value)}
-                onBlur={() => commit(k)}
-                className="w-full bg-white border border-indigo-400 rounded px-3 py-2 text-sm"
-                autoFocus
-              >
-                <option value="">Select River</option>
-                {rivers.map(r => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
-              {errors[k] && <p className="text-xs text-red-500">{errors[k][0]}</p>}
-            </>
-          ) : (
-            <div
-              onClick={() => startEdit(k)}
-              className="bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-800 border cursor-pointer"
+  // Road Accessibility dropdown
+  if (k === "road_accessibility") {
+    const options = [
+      "Excellent(Paved Road)",
+      "Good(Metalled Road)",
+      "FairGravel Road)",
+      "Poor(Kutcha Road)"
+    ];
+
+    return (
+      <div>
+        <p className="text-xs text-gray-500 font-semibold mb-1">{label}</p>
+        {editing === k ? (
+          <>
+            <select
+              value={temp}
+              onChange={(e) => setTemp(e.target.value)}
+              onBlur={() => commit(k)}
+              className="w-full bg-white border border-indigo-400 rounded px-3 py-2 text-sm"
+              autoFocus
             >
-              {rivers.find(r => r.id === value)?.name || "—"}
-            </div>
-          )}
-        </div>
-      );
-    }
+              <option value="">Select Accessibility</option>
+              {options.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            {errors[k] && <p className="text-xs text-red-500">{errors[k][0]}</p>}
+          </>
+        ) : (
+          <div
+            onClick={() => startEdit(k)}
+            className="bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-800 border cursor-pointer"
+          >
+            {value || "—"}
+          </div>
+        )}
+      </div>
+    );
+  }
 
-// Existing input for other fields
-return (
-  <div>
-    <p className="text-xs text-gray-500 font-semibold mb-1">{label}</p>
-    {editing === k && !isReadOnly ? (
-      <input
-        type={isNumberOnly ? "number" : "text"}
-        value={temp}
-        onChange={(e) => {
-          const val = e.target.value;
-          if (isNumberOnly) {
-            if (val === "" || /^[0-9\b]+$/.test(val)) {
+  // River dropdown
+  if (k === "river_id") {
+    return (
+      <div>
+        <p className="text-xs text-gray-500 font-semibold mb-1">{label}</p>
+        {editing === k ? (
+          <>
+            <select
+              value={temp}
+              onChange={(e) => setTemp(e.target.value)}
+              onBlur={() => commit(k)}
+              className="w-full bg-white border border-indigo-400 rounded px-3 py-2 text-sm"
+              autoFocus
+            >
+              <option value="">Select River</option>
+              {rivers.map(r => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+            {errors[k] && <p className="text-xs text-red-500">{errors[k][0]}</p>}
+          </>
+        ) : (
+          <div
+            onClick={() => startEdit(k)}
+            className="bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-800 border cursor-pointer"
+          >
+            {rivers.find(r => r.id === value)?.name || "—"}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Default Input (Text or Number)
+  return (
+    <div>
+      <p className="text-xs text-gray-500 font-semibold mb-1">{label}</p>
+      {editing === k && !isReadOnly ? (
+        <input
+          type={isNumberOnly ? "number" : "text"}
+          value={temp}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (isNumberOnly) {
+              if (val === "" || /^[0-9\b]+$/.test(val)) {
+                setTemp(val);
+              }
+            } else if (isStringOnly) {
+              if (val === "" || /^[a-zA-Z\s\b]+$/.test(val)) {
+                setTemp(val);
+              }
+            } else if (k === "ghaat_name") {
+              if (val === "" || /^[a-zA-Z\s]+$/.test(val)) {
+                setTemp(val);
+              }
+            } else {
               setTemp(val);
             }
-          } else if (isStringOnly) {
-            if (val === "" || /^[a-zA-Z\s\b]+$/.test(val)) {
-              setTemp(val);
-            }
-          } else if (k === "ghaat_name") {
-    if (val === "" || /^[a-zA-Z\s]+$/.test(val)) {
-      setTemp(val);
-    }
-  }else {
-            setTemp(val);
-          }
-        }}
-        onBlur={() => commit(k)}
-        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commit(k))}
-        className={`w-full bg-white rounded px-3 py-2 text-sm border ${
-          errors[k] ? "border-red-500" : "border-indigo-400"
-        }`}
-        autoFocus
-      />
-    ) : (
-<div
-  onClick={() => !isReadOnly && startEdit(k)}
-  className={`bg-gray-100 rounded-md px-3 py-2 text-sm border ${
-    isReadOnly ? "cursor-default" : "cursor-pointer"
-  } ${!value ? "text-gray-400 " : "text-gray-800"}`}
-  style={{ minHeight: "2.5rem" }}
->
-  {value || `Enter ${toTitleCase(label)}`}
-</div>
+          }}
+          onBlur={() => commit(k)}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commit(k))}
+          className={`w-full bg-white rounded px-3 py-2 text-sm border ${
+            errors[k] ? "border-red-500" : "border-indigo-400"
+          }`}
+          autoFocus
+        />
+      ) : (
+        <div
+          onClick={() => !isReadOnly && startEdit(k)}
+          className={`bg-gray-100 rounded-md px-3 py-2 text-sm border ${
+            isReadOnly ? "cursor-default" : "cursor-pointer"
+          } ${!value ? "text-gray-400 " : "text-gray-800"}`}
+          style={{ minHeight: "2.5rem" }}
+        >
+          {value || `Enter ${toTitleCase(label)}`}
+        </div>
+      )}
+      {errors[k] && <p className="text-xs text-red-500 mt-1">{errors[k][0]}</p>}
+    </div>
+  );
+};
 
-
-    )}
-    {/* Error message always shown if exists */}
-    {errors[k] && <p className="text-xs text-red-500 mt-1">{errors[k][0]}</p>}
-  </div>
-);
-
-  };
 
   return (
     <div className="max-w-5xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md border space-y-10">
       <div className="border-b pb-4">
         <h1 className="text-3xl font-bold text-indigo-700 mb-1">
-          🏜️ Ghaat Details – {draft.ghaat_name}
+          🏜️ Ghat Details – {draft.ghaat_name}
         </h1>
-        <p className="text-sm text-gray-500">Unique ID: {draft.id}</p>
+        {/* <p className="text-sm text-gray-500">Unique ID: {draft.id}</p> */}
       </div>
 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-  <EditableCell k="ghaat_name" label="Ghaat Name" value={draft.ghaat_name} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="ghaat_name" label="Ghat Name" value={draft.ghaat_name} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
   {/* <EditableCell k="location" label="Location" value={draft.location} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
   {/* <EditableCell k="pincode" label="Pincode" value={draft.pincode} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
   <EditableCell k="boat_capacity" label="Boat Capacity" value={draft.boat_capacity} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
   <EditableCell k="road_accessibility" label="Road Accessibility" value={draft.road_accessibility} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-  <EditableCell k="contact_person" label="Contact Person" value={draft.contact_person} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-  <EditableCell k="contact_number" label="Contact Number" value={draft.contact_number} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  {/* <EditableCell k="contact_person" label="Contact Person" value={draft.contact_person} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="contact_number" label="Contact Number" value={draft.contact_number} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
   <EditableCell k="nearest_hospital" label="Nearest Hospital" value={draft.nearest_hospital} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
   <EditableCell k="available_facilities" label="Available Facilities" value={draft.available_facilities} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
   <EditableCell k="additional_info" label="Additional Info" value={draft.additional_info} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
   <EditableCell k="registered_boats_count" label="Registered Boats" value={draft.registered_boats_count} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-  <EditableCell k="district_id" label="District" value={draft.district_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  {user?.role_id !== 2 && (
+  <EditableCell
+    k="district_id"
+    label="District"
+    value={draft.district_id}
+    districts={districts}
+    rivers={rivers}
+    editing={editing}
+    temp={temp}
+    setTemp={setTemp}
+    startEdit={startEdit}
+    commit={commit}
+    errors={errors}
+  />
+)}
+
   <EditableCell k="river_id" label="River" value={draft.river_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
 </div>
 
 <div className="mt-8">
   <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">
-    Ghaat Photo
+    Ghat Photo
   </h2>
 
   {showCamera && (

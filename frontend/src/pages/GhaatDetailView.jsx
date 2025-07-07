@@ -4,6 +4,8 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+  const user = JSON.parse(localStorage.getItem("user"));
+
 
 const token = localStorage.getItem("access_token");
 
@@ -44,7 +46,7 @@ export default function GhaatDetailView() {
       .then((r) =>
         r.data?.status === "success"
           ? setGhaat(r.data.data)
-          : setError("Ghaat not found.")
+          : setError("Ghat not found.")
       )
       .catch(() => setError("Could not load ghat details."))
       .finally(() => setLoading(false));
@@ -79,24 +81,26 @@ export default function GhaatDetailView() {
     <div className="max-w-5xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md border space-y-10">
       <div className="border-b pb-4">
         <h1 className="text-3xl font-bold text-indigo-700 mb-1">
-          🏜️ Ghaat Details – {ghaat.ghaat_name}
+          🏜️ Ghat Details – {ghaat.ghaat_name}
         </h1>
-        <p className="text-sm text-gray-500">Unique ID: {ghaat.id}</p>
+        {/* <p className="text-sm text-gray-500">Unique ID: {ghaat.id}</p> */}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        <Field label="Ghaat Name" value={ghaat.ghaat_name} />
+        <Field label="Ghat Name" value={ghaat.ghaat_name} />
         <Field label="Location" value={ghaat.location} />
         <Field label="Pincode" value={ghaat.pincode} />
         <Field label="Boat Capacity" value={ghaat.boat_capacity} />
         <Field label="Road Accessibility" value={ghaat.road_accessibility} />
-        <Field label="Contact Person" value={ghaat.contact_person} />
-        <Field label="Contact Number" value={ghaat.contact_number} />
+        {/* <Field label="Contact Person" value={ghaat.contact_person} />
+        <Field label="Contact Number" value={ghaat.contact_number} /> */}
         <Field label="Nearest Hospital" value={ghaat.nearest_hospital} />
         <Field label="Available Facilities" value={ghaat.available_facilities} />
         <Field label="Additional Info" value={ghaat.additional_info} />
         <Field label="Registered Boats" value={ghaat.registered_boats_count} />
+        {user?.role_id !== 2 && (
         <Field label="District" value={districtName} />
+        )}
         <Field label="River" value={riverName} />
         {/* <Field label="Latitude" value={ghaat.latitude} />
         <Field label="Longitude" value={ghaat.longitude} /> */}
@@ -104,7 +108,7 @@ export default function GhaatDetailView() {
 
      <div>
   <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">
-    Ghaat Photo
+    Ghat Photo
   </h2>
 
   <div className="w-full flex flex-col items-center justify-center">

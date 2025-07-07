@@ -21,6 +21,18 @@ const Header = () => {
 
   const navigate = useNavigate();
 
+  const token = localStorage.getItem("access_token");
+
+  const api = axios.create({
+    baseURL: import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    withCredentials: true,
+  });
+
+
   /* ───────── dropdown outside‑click close */
   useEffect(() => {
     if (!openMenu) return;
@@ -47,17 +59,21 @@ const Header = () => {
     setErrorProf('');
     try {
       const token = localStorage.getItem('access_token');
-      const { data } = await axios.get('http://localhost:8000/api/user-profile', {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
+      const { data } = await api.get("/user-profile");
+
 
       const user = data.data;
-      setProfile({
-        name: user.name || '',
-        email: user.email || '',
-        designation: user.designation || '',
-      });
+     setProfile({
+  name: user.name || '',
+  email: user.email || '',
+  designation:
+    user.role_id === 1
+      ? 'District Nodal'
+      : user.role_id === 2
+      ? 'Ghat Nodal'
+      : 'Admin',
+});
+
     } catch (err) {
       console.error(err);
       setErrorProf('Could not load profile.');
@@ -67,25 +83,18 @@ const Header = () => {
   };
 
   /* ───────── sign‑out */
-  const handleSignOut = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      await axios.post(
-        'http://localhost:8000/api/logout',
-        {},
-        { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
-      );
-    } catch (err) {
-      console.error('Logout error:', err?.response || err);
-    } finally {
-      localStorage.removeItem('access_token');
-      toast.success('Logout Successfully');
-      setTimeout(() => {
-        navigate('/login', { replace: true });
-      }, 100);
+const handleSignOut = async () => {
+  try {
+    await api.post("/logout");
+  } catch (err) {
+    console.error("Logout error:", err?.response || err);
+  } finally {
+    localStorage.removeItem("access_token");
+    toast.success("Logout Successfully");
+    navigate("/login", { replace: true }); 
+  }
+};
 
-    }
-  };
 
   return (
     <>
@@ -132,7 +141,16 @@ const Header = () => {
                 className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-purple-50 transition"
               >
                 <FiUser className="text-purple-600" size={18} />
-                <span>My Profile</span>
+                {/* <span>My Profile</span> */}
+                <span>
+                  {(() => {
+                    const user = JSON.parse(localStorage.getItem("user"));
+                    if (user?.role_id === 1) return "District Nodal";
+                    if (user?.role_id === 2) return "Ghat Nodal";
+                    return "My Profile";
+                  })()}
+                </span>
+
               </button>
               <button
                 onClick={handleSignOut}

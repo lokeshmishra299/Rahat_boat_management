@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaCamera } from "react-icons/fa";
+import { FaCamera, FaTrash } from "react-icons/fa";
 import Webcam from "react-webcam";
 
 /* ---------- API ---------- */
@@ -18,11 +18,89 @@ const api = axios.create({
   },
 });
 
+const Editable = ({ label, field, error, value, onChange }) => {
+  const isNumberOnly = ["support_staff", "passenger_capacity", "year_of_manufacture", "owner_boat_owned"].includes(field);
+  const isSelect = field === "registration_authority";
+  const isTextOnly = field === "pilot_name" || field === "owner_name";
+  const isAadhar = field === "owner_adhar_no";
+  const isPhone = field === "owner_number";
+
+  const handleChange = (e) => {
+    let val = e.target.value;
+
+    if (isTextOnly) {
+      val = val.replace(/[^a-zA-Z\s]/g, "");
+    }
+
+    if (isNumberOnly) {
+      val = val.replace(/\D/g, "");
+    }
+
+    if (isAadhar) {
+      val = val.replace(/\D/g, "").slice(0, 12);
+    }
+
+    if (isPhone) {
+      val = val.replace(/\D/g, "").slice(0, 10);
+    }
+
+    onChange(field, val);
+  };
+
+  return (
+    <div>
+      <label className="text-sm font-medium mb-1 block">{label}</label>
+
+      {isSelect ? (
+        <select
+          value={value || ""}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          <option value="">Select</option>
+          {[
+            "District Collector",
+            "Sub-Divisional Magistrate",
+            "Circle Officer",
+            "Block Development Officer",
+          ].map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      ) : field === "owner_dob" ? (
+        <input
+          type="date"
+          value={value || ""}
+          onChange={(e) => onChange(field, e.target.value)}
+          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+      ) : (
+        <input
+          type={isNumberOnly ? "number" : "text"}
+          value={value || ""}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+      )}
+
+      {error && (
+        <p className="text-red-500 text-sm mt-1">
+          {Array.isArray(error) ? error[0] : error}
+        </p>
+      )}
+    </div>
+
+  );
+};
+
 export default function BoatDetail() {
   const { id } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
   const webcamRef = useRef(null);
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const [boat, setBoat] = useState(state || null);
   const [draft, setDraft] = useState(state || {});
@@ -160,59 +238,6 @@ export default function BoatDetail() {
       .finally(() => setSaving(false));
   };
 
-  const Editable = ({ label, field, error }) => {
-    const isNumberOnly = ["support_staff", "passenger_capacity", "year_of_manufacture"].includes(field);
-    const isSelect = field === "registration_authority";
-    const isTextOnly = field === "pilot_name";
-
-    const handleChange = (e) => {
-      let value = e.target.value;
-
-      if (isTextOnly && /[^a-zA-Z\s]/.test(value)) return; // only letters and spaces
-
-      setDraft((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    };
-
-    return (
-      <div>
-        <label className="text-sm font-medium mb-1 block">{label}</label>
-
-        {isSelect ? (
-          <select
-            name={field}
-            value={draft[field] || ""}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="">Select</option>
-            {[
-              "District Collector",
-              "Sub-Divisional Magistrate",
-              "Circle Officer",
-              "Block Development Officer",
-            ].map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        ) : (
-          <input
-            type={isNumberOnly ? "number" : "text"}
-            name={field}
-            value={draft[field] || ""}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        )}
-
-        {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-      </div>
-    );
-  };
-
-
   /* ─── static field helper ─── */
   const Info = ({ label, value }) => (
     <div className="space-y-1">
@@ -238,7 +263,6 @@ export default function BoatDetail() {
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
                 className="rounded-lg shadow sm:w-96 w-full aspect-video object-cover"
-
                 videoConstraints={{ facingMode: "environment" }}
               />
             </div>
@@ -258,11 +282,10 @@ export default function BoatDetail() {
         </div>
       )}
 
-
       {/* Header */}
       <div className="border-b pb-4">
         <h1 className="text-3xl font-bold text-blue-700 mb-1">
-          🚤 Boat Detail – #{boat.registration_no}
+          🚤 Boat Detail –{boat.registration_no}
         </h1>
       </div>
 
@@ -275,51 +298,77 @@ export default function BoatDetail() {
         </div>
       )}
 
-      {/* Editable Grid */}
+      {/* General Information Section */}
       <div>
         <h2 className="text-xl font-semibold mb-4">General Information</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {/* Boat Type Dropdown */}
-          <div className="space-y-1">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Boat Type</p>
-            <select
-              value={draft.boat_type ?? ""}
-              onChange={(e) =>
-                setDraft((prev) => ({ ...prev, boat_type: e.target.value }))
-              }
-              className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm"
-            >
-              <option value="">Select Boat Type</option>
-              <option value="Hybrid">Hybrid</option>
-              <option value="Engine Driven">Engine Driven</option>
-              <option value="Manual (Paddle/Oar)">Manual (Paddle/Oar)</option>
-            </select>
-            {errors.boat_type && (
-              <p className="text-sm text-red-500">{errors.boat_type[0]}</p>
-            )}
-          </div>
 
-          {/* District Dropdown */}
-          <div className="space-y-1">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">District</p>
-            <select
-              value={draft.district_id ?? ""}
-              onChange={(e) =>
-                setDraft((prev) => ({ ...prev, district_id: e.target.value }))
-              }
-              className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm"
-            >
-              <option value="">Select District</option>
-              {districts.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.district_name}
-                </option>
-              ))}
-            </select>
-            {errors.district_id && (
-              <p className="text-sm text-red-500">{errors.district_id[0]}</p>
-            )}
-          </div>
+          <Editable
+            label="Pilot Name"
+            field="pilot_name"
+            value={draft.pilot_name}
+            error={errors.pilot_name}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
+
+
+        <div className="space-y-1">
+  <p className="text-xs text-gray-500 uppercase tracking-wide">Boat Type</p>
+  <select
+    value={draft.boat_type ?? ""}
+    onChange={(e) =>
+      setDraft((prev) => ({ ...prev, boat_type: e.target.value }))
+    }
+    className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm"
+  >
+    <option value="">Select Boat Type</option>
+    <option value="Hybrid">Hybrid</option>
+    <option value="Engine Driven">Engine Driven</option>
+    <option value="Manual (Paddle/Oar)">Manual (Paddle/Oar)</option>
+  </select>
+  {errors.boat_type && (
+    <p className="text-sm text-red-500">{errors.boat_type[0]}</p>
+  )}
+</div>
+
+{/* Conditionally show Editable only for specific types */}
+{(draft.boat_type === "Hybrid" || draft.boat_type === "Engine Driven") && (
+  <Editable
+    label="Engine Details"
+    field="engine_details"
+    value={draft.engine_details}
+    error={errors.engine_details}
+    onChange={(field, value) =>
+      setDraft((prev) => ({ ...prev, [field]: value }))
+    }
+  />
+)}
+
+
+          {/* District Dropdown — only visible to Admin (no role_id) */}
+          {!user?.role_id && (
+            <div className="space-y-1">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">District</p>
+              <select
+                value={draft.district_id ?? ""}
+                onChange={(e) =>
+                  setDraft((prev) => ({ ...prev, district_id: e.target.value }))
+                }
+                className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm"
+              >
+                <option value="">Select District</option>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.district_name}
+                  </option>
+                ))}
+              </select>
+              {errors.district_id && (
+                <p className="text-sm text-red-500">{errors.district_id[0]}</p>
+              )}
+            </div>
+          )}
 
           {/* Ghat Dropdown */}
           <div className="space-y-1">
@@ -343,32 +392,181 @@ export default function BoatDetail() {
             )}
           </div>
 
-          {/* Text Inputs */}
-          <Editable label="Pilot Name" field="pilot_name" error={errors.pilot_name} />
-          <Editable label="Pilot License No." field="pilot_license_no" error={errors.pilot_license_no} />
-          <Editable label="Support Staff" field="support_staff" error={errors.support_staff} />
-          <Editable label="Engine Details" field="engine_details" error={errors.engine_details} />
-          <Editable label="Passenger Capacity" field="passenger_capacity" error={errors.passenger_capacity} />
-          <Editable label="Year of Manufacture" field="year_of_manufacture" error={errors.year_of_manufacture} />
-          <Editable label="Registration Authority" field="registration_authority" error={errors.registration_authority} />
-          <Editable label="Additional Remarks" field="remarks" error={errors.remarks} />
+          <Editable
+            label="Pilot License No."
+            field="pilot_license_no"
+            value={draft.pilot_license_no}
+            error={errors.pilot_license_no}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
 
+          <Editable
+            label="Support Staff"
+            field="support_staff"
+            value={draft.support_staff}
+            error={errors.support_staff}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
 
+          <Editable
+            label="Passenger Capacity"
+            field="passenger_capacity"
+            value={draft.passenger_capacity}
+            error={errors.passenger_capacity}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
+
+          <Editable
+            label="Year of Manufacture"
+            field="year_of_manufacture"
+            value={draft.year_of_manufacture}
+            error={errors.year_of_manufacture}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
+
+          <Editable
+            label="Registration Authority"
+            field="registration_authority"
+            value={draft.registration_authority}
+            error={errors.registration_authority}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
+
+          <Editable
+            label="Additional Remarks"
+            field="remarks"
+            value={draft.remarks}
+            error={errors.remarks}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
         </div>
       </div>
 
-      {/* remarks */}
-      {/* <div>
-        <h2 className="text-xl font-semibold mb-2">Additional Remarks</h2>
-        <input
-          value={draft.remarks ?? ""}
-          onChange={(e) => setDraft({ ...draft, remarks: e.target.value })}
-          className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm"
-          placeholder="Add remarks…"
-        />
-      </div> */}
+      {/* Boat Owner Details Section */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Details</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <Editable
+            label="Name"
+            field="owner_name"
+            value={draft.owner_name}
+            error={errors.owner_name}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
 
-      {/* image */}
+          <Editable
+            label="Email"
+            field="owner_email"
+            value={draft.owner_email}
+            error={errors.owner_email}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
+
+          <Editable
+            label="Contact"
+            field="owner_number"
+            value={draft.owner_number}
+            error={errors.owner_number}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
+
+          <Editable
+            label="Aadhar No"
+            field="owner_adhar_no"
+            value={draft.owner_adhar_no}
+            error={errors.owner_adhar_no}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
+
+          <Editable className="cursor-pointer"
+            label="DOB"
+            field="owner_dob"
+            value={draft.owner_dob}
+            error={errors.owner_dob}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
+
+          <Editable
+            label="Pincode"
+            field="owner_pincode"
+            value={draft.owner_pincode}
+            error={errors.owner_pincode}
+            onChange={(field, value) => {
+              const clean = value.replace(/\D/g, "").slice(0, 6); // only digits, max 6
+              setDraft((prev) => ({ ...prev, [field]: clean }));
+            }}
+          />
+
+
+          <Editable
+            label="No. of Boats Owned"
+            field="owner_boat_owned"
+            value={draft.owner_boat_owned}
+            error={errors.owner_boat_owned}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
+        </div>
+      </div>
+
+      {/* Owner Family Members */}
+     {/* Owner Family Members */}
+{draft.owner_family_name && (
+  <div className="md:col-span-2 mt-8">
+    <h2 className="text-xl font-semibold mb-4 text-green-600">Family Members</h2>
+    
+    <div className="space-y-4">
+      {draft.owner_family_name.split(",").map((member, idx) => (
+        <div key={idx} className="bg-gray-50 border p-4 rounded shadow-sm flex items-center gap-4">
+          <input
+            type="text"
+            value={member.trim()}
+            onChange={(e) => {
+              const updated = draft.owner_family_name.split(",");
+              updated[idx] = e.target.value;
+              setDraft((prev) => ({
+                ...prev,
+                owner_family_name: updated.join(","),
+              }));
+            }}
+            className="w-full border px-3 py-2 rounded"
+          />
+          <button
+            type="button"
+            className="text-red-600 hover:text-red-800"
+            onClick={() => {
+              const updated = draft.owner_family_name.split(",");
+              updated.splice(idx, 1);
+              setDraft((prev) => ({
+                ...prev,
+                owner_family_name: updated.join(","),
+              }));
+            }}
+          >
+            <FaTrash />
+          </button>
+        </div>
+      ))}
+    </div>
+
+    <button
+      type="button"
+      onClick={() => {
+        const updated = draft.owner_family_name
+          ? [...draft.owner_family_name.split(","), ""]
+          : [""];
+        setDraft((prev) => ({
+          ...prev,
+          owner_family_name: updated.join(","),
+        }));
+      }}
+      className="mt-4 px-4 py-2 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700"
+    >
+      Add Family Member
+    </button>
+  </div>
+)}
+
+      {/* Image Section */}
       <div>
         <h2 className="text-xl font-semibold mb-4 text-center">Boat Image</h2>
 
@@ -398,7 +596,6 @@ export default function BoatDetail() {
                 )}
               </div>
             </div>
-
           </>
         ) : (
           <>
@@ -410,7 +607,7 @@ export default function BoatDetail() {
                     src={
                       boat.image.startsWith("blob:")
                         ? boat.image
-                        : `http://localhost:8000/storage/${boat.image}`
+                        : `${BASE_URL.replace('/api', '')}/storage/${boat.image}`
                     }
                     alt="Boat"
                     className="w-full h-64 object-cover"
@@ -426,8 +623,12 @@ export default function BoatDetail() {
               <div className="mt-4 text-sm text-gray-700 space-y-1 text-center">
                 <p><strong>Location:</strong> {draft.location || boat.location || "N/A"}</p>
                 <p><strong>Pincode:</strong> {draft.pincode || boat.pincode || "N/A"}</p>
-                {/* <p><strong>Latitude:</strong> {draft.latitude || boat.latitude || "N/A"}</p> */}
-                {/* <p><strong>Longitude:</strong> {draft.longitude || boat.longitude || "N/A"}</p> */}
+                {boat.latitude && boat.longitude && (
+                  <>
+                    {/* <p><strong>Latitude:</strong> {boat.latitude}</p>
+                    <p><strong>Longitude:</strong> {boat.longitude}</p> */}
+                  </>
+                )}
               </div>
 
               {/* Buttons (Capture & Upload) */}
@@ -438,24 +639,13 @@ export default function BoatDetail() {
                 >
                   <FaCamera /> Update Photo
                 </button>
-
-                <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition">
-                  <FaCamera /> Upload Photo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => e.target.files[0] && setImgDraft(e.target.files[0])}
-                  />
-                </label>
               </div>
             </div>
-
           </>
         )}
       </div>
 
-      {/* save button */}
+      {/* Save Button */}
       <div className="pt-4 border-t flex justify-center">
         <button
           type="button"

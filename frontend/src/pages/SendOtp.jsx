@@ -5,17 +5,17 @@ import Footer from "../components/Footer";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
-
 const token = localStorage.getItem("access_token");
 
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api",
   headers: {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(token && { Authorization: `Bearer ${token}` }), 
   },
+  withCredentials: true, 
 });
+
 
 const SendOtp = () => {
   const { state } = useLocation();
@@ -60,9 +60,17 @@ const SendOtp = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#e3a5b6] via-[#d1a4cb] to-[#5782c4] text-gray-900">
-      {/* Centered Card */}
-      <div className="flex-grow flex items-center mt-10 justify-center px-4">
+    <div className="relative min-h-screen flex flex-col text-gray-900 bg-gradient-to-br from-[#e3a5b6] via-[#d1a4cb] to-[#5782c4]">
+      {/* Background layers */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url('/images/boat3.jpg')` }}
+      />
+      <div className="absolute inset-0 bg-black/20" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#000000]/15" />
+
+      {/* Centered card */}
+      <div className="relative flex-grow flex items-center mt-10 justify-center px-4">
         <motion.div
           variants={container}
           initial="hidden"
@@ -80,6 +88,7 @@ const SendOtp = () => {
             </div>
           </div>
 
+          {/* Headings */}
           <h1 className="text-center text-lg font-bold text-[#1f4068] tracking-wide mb-1">
             Rahat Boat Management
           </h1>
@@ -90,8 +99,9 @@ const SendOtp = () => {
             5‑digit OTP sent to your registered email
           </p>
 
-          <form onSubmit={handleVerifyOtp} className="space-y-6">
-            {/* OTP boxes */}
+          {/* OTP form */}
+          <form onSubmit={handleVerifyOtp} noValidate className="space-y-6">
+            {/* OTP Boxes */}
             <div className="flex justify-between gap-2">
               {[0, 1, 2, 3, 4].map((i) => (
                 <input
@@ -120,11 +130,12 @@ const SendOtp = () => {
               ))}
             </div>
 
+            {/* Error message */}
             {errorMessage && (
-              <p className="text-sm text-red-600">{errorMessage}</p>
+              <p className="text-sm text-red-600 text-center">{errorMessage}</p>
             )}
 
-            {/* Submit */}
+            {/* Submit Button */}
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}

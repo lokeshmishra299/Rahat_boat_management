@@ -7,10 +7,10 @@ import Webcam from "react-webcam";
 import { Toaster, toast } from 'react-hot-toast';
 import { useSearchParams } from "react-router-dom";
 import { FaDownload } from "react-icons/fa";
+import { FaTrash } from "react-icons/fa";
 
 
-
-const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+const BASE_URL = import.meta.env.VlITE_API_BASE ?? "http://localhost:8000/api";
 
 const token = localStorage.getItem("access_token");
 
@@ -25,6 +25,8 @@ const api = axios.create({
 const Boats = () => {
   const navigate = useNavigate();
   const [vieww, setVieww] = useState("register");
+  const user = JSON.parse(localStorage.getItem("user"));
+
 
   // Webcam and geolocation states
   const webcamRef = useRef(null);
@@ -51,7 +53,7 @@ const Boats = () => {
   // Form
   const emptyForm = {
     regNumber: "",
-    district: "",
+    district: user?.district_id || "",
     type: "",
     pilotName: "",
     license: "",
@@ -208,23 +210,38 @@ const Boats = () => {
     setSaving(true);
 
     const fd = new FormData();
-    fd.append("registration_no", form.regNumber);
-    fd.append("district_id", form.district);
-    fd.append("boat_type", form.type);
-    fd.append("pilot_name", form.pilotName);
-    fd.append("pilot_license_no", form.license);
-    fd.append("support_staff", form.staffCount);
-    fd.append("engine_details", form.engine);
-    fd.append("passenger_capacity", form.capacity);
-    fd.append("year_of_manufacture", form.year);
-    fd.append("ghaat_id", form.ghat);
-    fd.append("registration_authority", form.authority);
-    fd.append("remarks", form.additionalInfo);
-    fd.append("latitude", coords.lat);
-    fd.append("longitude", coords.lon);
-    fd.append("pincode", pincode);
-    fd.append("location", locationName);
+    fd.append("registration_no", form.regNumber || "");
+    fd.append("district_id", form.district || "");
+    fd.append("boat_type", form.type || "");
+    fd.append("pilot_name", form.pilotName || "");
+    fd.append("pilot_license_no", form.license || "");
+    fd.append("support_staff", form.staffCount || "");
+    fd.append("engine_details", form.engine || "");
+    fd.append("passenger_capacity", form.capacity || "");
+    fd.append("year_of_manufacture", form.year || "");
+    fd.append("ghaat_id", form.ghat || "");
+    fd.append("registration_authority", form.authority || "");
+    fd.append("remarks", form.additionalInfo || "");
+    fd.append("latitude", coords.lat || "");
+    fd.append("longitude", coords.lon || "");
+    fd.append("pincode", pincode || "");
+    fd.append("location", locationName || "");
     if (photoFile) fd.append("image", photoFile);
+
+    // Boat Owner details (with null fallback)
+    fd.append("owner_name", form.name || "");
+    fd.append("owner_email", form.email || "");
+    fd.append("owner_adhar_no", form.adhar || "");
+    fd.append("owner_number", form.contact || "");
+    fd.append("owner_boat_owned", form.no_of_boats || "");
+    fd.append("owner_dob", form.dob || "");
+    fd.append("owner_pincode", form.pincode || "");
+
+
+    const familyNames = members.map((m) => m.name).filter(Boolean);
+    fd.append("owner_family_name", familyNames.length ? familyNames.join(",") : "");
+
+
 
     try {
       const { data } = await axios.post(`${BASE_URL}/boats`, fd, {
@@ -238,6 +255,7 @@ const Boats = () => {
       setPhotoFile(null);
       setCoords({ lat: "", lon: "" });
       setPincode("");
+      setMembers([]);
       setTimeout(() => setView("directory"), 1000);
     } catch (err) {
       const v = err.response?.data;
@@ -252,11 +270,19 @@ const Boats = () => {
   const initialView = searchParams.get("tab") === "directory" ? "directory" : "register";
   const [view, setView] = useState(initialView); // ✅ yahi sahi hai
 
-  // optional, url se live update:
+
   useEffect(() => {
-    const tab = searchParams.get("tab");
-    setView(tab === "directory" ? "directory" : "register");
-  }, [searchParams]);
+    if (user?.role_id !== 1 && user?.district_id) {
+      setForm((prev) => {
+        if (prev.district !== user.district_id) {
+          return { ...prev, district: user.district_id };
+        }
+        return prev;
+      });
+    }
+  }, [user]);
+
+
 
 
   //   const [view, setView] = useState("register");
@@ -269,6 +295,23 @@ const Boats = () => {
   //     loadBoats(); // call only if you have this function
   //   }
   // }, [searchParams]);
+
+  const [members, setMembers] = useState([]);
+
+  const addMember = () => {
+    setMembers([...members, { name: "" }]);
+  };
+
+  const handleChange = (index, value) => {
+    const updated = [...members];
+    updated[index].name = value;
+    setMembers(updated);
+  };
+
+  const removeMember = (index) => {
+    const updated = members.filter((_, i) => i !== index);
+    setMembers(updated);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50 to-white px-4 sm:px-10 py-10">
@@ -287,19 +330,24 @@ const Boats = () => {
 
 
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10">
-        <button
-          onClick={() => setView("register")}
-          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "register"
-            ? "bg-green-600 text-white"
-            : "bg-white text-green-700 hover:bg-green-50 shadow"
-            }`}
-        >
-          <FaPlusCircle /> Register New Boat
-        </button>
+        {/* Show only for non-admins */}
+        {user?.role_id !== 1 && (
+          <button
+            onClick={() => setView("register")}
+            className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "register"
+              ? "bg-green-600 text-white"
+              : "bg-white text-green-700 hover:bg-green-50 shadow"
+              }`}
+          >
+            <FaPlusCircle /> Register New Boat
+          </button>
+        )}
+
+        {/* Always show directory button */}
         <button
           onClick={() => {
             setView("directory");
-            loadBoats();
+            loadBoats(); // Ensure this is defined and fetching properly
           }}
           className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "directory"
             ? "bg-sky-600 text-white"
@@ -324,8 +372,8 @@ const Boats = () => {
             onUserMediaError={(err) => {
               console.error("Camera permission error", err);
               toast.error("Camera access denied. Please allow camera permission in your browser settings.", {
-  id: "camera-error",
-});
+                id: "camera-error",
+              });
             }}
 
             onUserMedia={() => {
@@ -348,7 +396,7 @@ const Boats = () => {
         </div>
       )}
 
-      {view === "register" ? (
+      {view === "register" && user?.role_id !== 1 ? (
         <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border">
           {/* Photo Upload Section */}
           <div className="bg-green-50 border border-dashed border-green-300 rounded-lg p-6 text-center mb-8">
@@ -372,7 +420,7 @@ const Boats = () => {
                 <FaCamera className="inline mr-2" /> Capture Photo
               </button>
 
-              <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition inline-block text-center">
+              {/* <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition inline-block text-center">
                 <input
                   type="file"
                   accept="image/*"
@@ -386,7 +434,7 @@ const Boats = () => {
                   }}
                 />
                 Choose Photo
-              </label>
+              </label> */}
             </div>
 
             {photoName && (
@@ -394,8 +442,8 @@ const Boats = () => {
             )}
 
             {errors.image && (
-  <p className="text-red-500 text-sm text-center mt-2">{errors.image}</p>
-)}
+              <p className="text-red-500 text-sm text-center mt-2">{errors.image}</p>
+            )}
           </div>
 
           {/* Location Info */}
@@ -403,7 +451,7 @@ const Boats = () => {
             <div className="mb-6 p-3 bg-blue-50 rounded-lg text-center">
               <p className="font-medium text-blue-800">
                 {/* Location: {coords.lat}, {coords.lon} | Pincode: {pincode} | {locationName} */}
-                 Pincode: {pincode} | {locationName}
+                Pincode: {pincode} | {locationName}
               </p>
             </div>
           )}
@@ -430,34 +478,44 @@ const Boats = () => {
               placeholder="Enter Registration Number"
             />
 
-            <div>
-              <label className="text-sm font-medium mb-1">District *</label>
-              <select
-                name="district"
-                value={form.district}
-                onChange={field("district")}
-                error={errors.district_id}
-                className={inputClass}
-              >
-                {loadingDistricts ? (
-                  <option>Loading...</option>
-                ) : districtError ? (
-                  <option>{districtError}</option>
-                ) : (
-                  <>
-                    <option value="">Select District</option>
-                    {districts.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.district_name}
-                      </option>
-                    ))}
-                  </>
+            {!user?.role_id && (
+              <div>
+                <label className="text-sm font-medium mb-1">District *</label>
+                <select
+                  name="district"
+                  value={form.district}
+                  onChange={field("district")}
+                  className={inputClass}
+                >
+                  {loadingDistricts ? (
+                    <option>Loading...</option>
+                  ) : districtError ? (
+                    <option>{districtError}</option>
+                  ) : (
+                    <>
+                      <option value="">Select District</option>
+                      {districts.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.district_name}
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
+                {errors.district_id && (
+                  <p className="text-red-500 text-sm mt-1">{errors.district_id}</p>
                 )}
-              </select>
-              {errors.district_id && (
-                <p className="text-red-500 text-sm mt-1">{errors.district_id}</p>
-              )}
-            </div>
+              </div>
+            )}
+
+            <Input
+              label="Pilot Name *"
+              name="pilotName"
+              value={form.pilotName}
+              onChange={field("pilotName")}
+              error={errors.pilot_name}
+              placeholder="Enter Pilot Name"
+            />
 
             <Select
               label="Boat Type *"
@@ -468,14 +526,18 @@ const Boats = () => {
               error={errors.boat_type}
             />
 
-            <Input
-              label="Pilot Name *"
-              name="pilotName"
-              value={form.pilotName}
-              onChange={field("pilotName")}
-              error={errors.pilot_name}
-              placeholder="Enter Pilot Name"
-            />
+            {(form.type === "Hybrid" || form.type === "Engine Driven") && (
+              <Input
+                label="Engine Details"
+                name="engine"
+                value={form.engine}
+                onChange={field("engine")}
+                // error={errors.engine_details}
+                placeholder="Enter Engine Details"
+              />
+            )}
+
+
 
             <Input
               label="Pilot License Number *"
@@ -497,14 +559,6 @@ const Boats = () => {
               placeholder="Enter Staff Count"
             />
 
-            <Input
-              label="Engine Details"
-              name="engine"
-              value={form.engine}
-              onChange={field("engine")}
-              // error={errors.engine_details}
-              placeholder="Enter Engine Details"
-            />
 
             <Input
               label="Passenger Capacity *"
@@ -575,6 +629,131 @@ const Boats = () => {
               ]}
               error={errors.registration_authority}
             />
+
+            {/*  Boat Owner */}
+            <h1 className="text-2xl font-bold mb-6 text-green-500  mt-10">Boat Owner Details</h1>
+            {/* <div className="grid grid-cols-1 md:grid-cols-1 gap-6"> */}
+
+            {/* Inputs Grid */}
+            <h1 className="hidden md:block text-white">.</h1>
+
+
+            <Input
+              label="Name *"
+              value={form.name}
+              onChange={field("name")}
+              error={errors.owner_name}
+            />
+
+
+
+
+
+
+            <Input
+              label="Email *"
+              type="email"
+              value={form.email}
+              onChange={field("email")}
+              error={errors.owner_email}
+              placeholder="Enter Email Address"
+            />
+
+            <Input
+              label="Contact No *"
+              type="number"
+              value={form.contact}
+              onChange={fieldNum("contact")}
+              error={errors.owner_number}
+              placeholder="Enter Contact Number"
+            />
+
+
+            <Input
+              label="Aadhar No"
+              type="number"
+              value={form.adhar}
+              onChange={fieldNum("adhar")}
+              error={errors.owner_adhar_no}
+              placeholder="Enter Aadhar Number"
+            />
+
+            <Input
+              label="No of Boats Owned"
+              type="number"
+              value={form.no_of_boats}
+              onChange={fieldNum("no_of_boats")}
+              error={errors.owner_boat_owned}
+              placeholder="Enter Number of Boats"
+            />
+
+            <Input
+              label="Date of Birth *"
+              type="date"
+              value={form.dob}
+              onChange={field("dob")}
+              error={errors.owner_dob}
+              placeholder="Select Date of Birth"
+            />
+
+            <Input
+              label="Pincode "
+              type="number"
+              value={form.pincode}
+              onChange={fieldNum("pincode")}
+              error={errors.owner_pincode}
+              placeholder="Enter Pincode"
+            />
+            <h1 className="hidden md:block text-white">.</h1>
+
+
+
+            {/* Add Family  */}
+            <div className="mt-6 col-span-1">
+              <label className="font-medium text-lg block mb-4 text-sky-700">
+                Family Members
+              </label>
+
+              {members.map((member, index) => (
+                <div
+                  key={index}
+                  className="grid md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded border mb-4 items-center"
+                >
+                  <div className="col-span-1">
+                    <input
+                      type="text"
+                      placeholder="Name"
+                      value={member.name}
+                      onChange={(e) => handleChange(index, e.target.value)}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+
+                  {/* Remove Button */}
+                  <button
+                    type="button"
+                    onClick={() => removeMember(index)}
+                    className="text-red-600 hover:text-red-800"
+                    title="Remove"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addMember}
+                className="mt-2 px-4 py-2 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700"
+              >
+                Add Family Member
+              </button>
+            </div>
+
+
+
+
+
 
             <div className="md:col-span-2">
               <label className="text-sm font-medium mb-1">Additional Remarks</label>
@@ -668,6 +847,7 @@ const Boats = () => {
                     <th className="px-4 py-3">Type</th>
                     <th className="px-4 py-3">District</th>
                     <th className="px-4 py-3">Status</th>
+
                     <th className="px-4 py-3">Action</th>
                   </tr>
                 </thead>
@@ -686,37 +866,41 @@ const Boats = () => {
                       <td className="px-4 py-2">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${boat.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
                             }`}
                         >
                           {boat.status || "Active"}
                         </span>
                       </td>
                       <td className="px-4 py-2 flex gap-3">
+                        {/* View button (always visible) */}
                         <button
                           onClick={() =>
                             navigate(`/dashboard/boats/boatdetailsone/${boat.id}`, {
                               state: { ...boat, readOnly: true },
                             })
                           }
-                          className="text-sky-600 hover:text-sky-800"
+                          className="text-sky-600 hover:text-sky-800 ml-1"
                           title="View"
                         >
                           <FaEye className="text-lg" />
                         </button>
-                        <button
-                          onClick={() =>
-                            navigate(`/dashboard/boats/boatdetails/${boat.id}`, {
-                              state: boat,
-                            })
-                          }
-                          className="text-green-600 hover:text-green-800"
-                          title="Edit"
-                        >
-                          <FaEdit className="text-lg" />
-                        </button>
+                        {user?.role_id !== 1 && (
+                          <button
+                            onClick={() =>
+                              navigate(`/dashboard/boats/boatdetails/${boat.id}`, {
+                                state: boat,
+                              })
+                            }
+                            className="text-green-600 hover:text-green-800"
+                            title="Edit"
+                          >
+                            <FaEdit className="text-lg" />
+                          </button>
+                        )}
                       </td>
+
                     </tr>
                   ))}
                 </tbody>

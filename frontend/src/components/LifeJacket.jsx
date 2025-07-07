@@ -1,8 +1,13 @@
 // src/components/LifeJacket.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef } from "react";
 import axios from "axios";
 import { Toaster, toast } from 'react-hot-toast';
 // import {Html5QrcodeScanner} from "html5-qrcode";
+// import { Html5Qrcode } from "html5-qrcode";
+import { MdQrCodeScanner } from "react-icons/md";
+import { IoBanOutline } from "react-icons/io5";
+import Select from "react-select";
+import QRCode from "react-qr-code"
 
 
 
@@ -15,42 +20,60 @@ const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
-    skip_zrok_interstitial: "true",
     ...(token && { Authorization: `Bearer ${token}` }),
   },
 });
-
 
 /* ───────────────────────────────────────────────────────── */
 import { useSearchParams } from "react-router-dom";
 export default function LifeJacket() {
 
+  // Scaner
+  const qrCodeRegionId = "qr-reader";
+const qrInstanceRef = useRef(null);
+ const [scannedData, setScannedData] = useState("");
+const [scanning, setScanning] = useState(false);
+const [startScanTrigger, setStartScanTrigger] = useState(false); 
 
-  // const [scanResult, setScanResult] = useState(null);
+useEffect(() => {
+  if (!startScanTrigger) return;
 
-  // useEffect(()=>{
-  //   const scanner =  new Html5QrcodeScanner("reader",{
-  //       qebox:{
-  //         width:250,
-  //         height:250,
-  //       },
-  //       fps:5,
-  //     });
+  const html5QrCode = new Html5Qrcode(qrCodeRegionId);
+  qrInstanceRef.current = html5QrCode; // store reference
 
-  //     scanner.render(success, error);
+  const config = { fps: 10, qrbox: 250 };
 
-  //     function success(result){
-  //       scanner.clear();
-  //       setScanResult(result)
-  //     }
+  html5QrCode.start(
+    { facingMode: "environment" },
+    config,
+    (decodedText) => {
+      setScannedData(decodedText);
+      html5QrCode.stop().then(() => {
+        html5QrCode.clear();
+        qrInstanceRef.current = null;
+        setScanning(false);
+        setStartScanTrigger(false);
+      });
+    },
+    (errorMessage) => {
+      console.warn("QR error", errorMessage);
+    }
+  ).catch((err) => {
+    console.error("Unable to start scanning", err);
+    qrInstanceRef.current = null;
+    setScanning(false);
+    setStartScanTrigger(false);
+  });
 
-  //     function error(){
-  //       console.warn(err)
-  //     }
+}, [startScanTrigger]);
 
-  // },[])
+const startScanning = () => {
+  setScannedData("");
+  setScanning(true);
+  setStartScanTrigger(true); // trigger scanner after div is in DOM
+};
 
-  // const [tab, setTab] = useState("record");
+
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") === "directory" ? "tracking" : "record";
   const [tab, setTab] = useState(initialTab);
@@ -62,6 +85,8 @@ export default function LifeJacket() {
 
   const [reload, setReload] = useState(false);
 
+  
+ 
   /* headline stats & rows for tracking */
   const [stats, setStats] = useState({
     allocated: 0,
@@ -116,6 +141,25 @@ export default function LifeJacket() {
     },
   ];
 
+
+  const stopScanning = () => {
+  const instance = qrInstanceRef.current;
+
+  if (instance) {
+    instance.stop()
+      .then(() => {
+        instance.clear();
+        qrInstanceRef.current = null;
+        setScanning(false);
+        setStartScanTrigger(false);
+      })
+      .catch((err) => {
+        console.error("Stop failed", err);
+      });
+  }
+};
+
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 px-6 py-10">
       <Toaster position="top-right" reverseOrder={false} />
@@ -141,33 +185,6 @@ export default function LifeJacket() {
           </article>
         ))}
       </section>
-
-      {/* <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-lg border border-gray-200 my-10">
-  <h1 className="text-3xl font-bold text-center text-blue-700 mb-4">📷 Scan the QR Code</h1>
-
-  {scanResult ? (
-    <div className="bg-green-50 border border-green-400 text-green-800 p-4 rounded-lg text-center shadow">
-      <p className="text-lg font-semibold mb-2">✅ Scan Successful!</p>
-      <a
-        href={`http://${scanResult}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-blue-600 hover:underline break-words whitespace-pre-wrap"
-      >
-        {scanResult}
-      </a>
-    </div>
-  ) : (
-    <div
-      id="reader"
-      className="w-full h-64 border-2 border-dashed border-gray-400 rounded-xl flex items-center justify-center text-gray-500 text-lg"
-    >
-      Camera initializing...
-    </div>
-  )}
-</div> */}
-
-
 
       {/* tab switcher */}
       <nav className="mb-10 flex flex-col sm:flex-row justify-center gap-4">
@@ -207,6 +224,9 @@ export default function LifeJacket() {
 
 /* ───────────────────────────── RecordForm ───────────────────────────── */
 function RecordForm({ onSaved, roleId, storedUser }) {
+  const [show, setshow] = useState(false);
+   const [showQR, setShowQR] = useState(false);
+  //  const handleGenerate = () => setShowQR(true);
   const inputCls =
     "w-full border border-slate-300 rounded-lg px-4 py-2 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500";
 
@@ -464,14 +484,14 @@ setVal((v) => ({
 
         {/* Ghaat */}
         <div>
-          <label className="block text-sm font-medium mb-1">Ghaat *</label>
+          <label className="block text-sm font-medium mb-1">Ghat *</label>
           <select
             name="ghat"
             value={val.ghat}
             onChange={handle}
             className={inputCls}
           >
-            <option value="">Select Ghaat</option>
+            <option value="">Select Ghat</option>
             {filteredGhaats.map((g) => (
               <option key={g.id}>{g.ghaat_name}</option>
             ))}
@@ -482,29 +502,52 @@ setVal((v) => ({
         </div>
 
         {/* Boats */}
+
+
+{/* // Inside your component: */}
 <div>
   <label className="block text-sm font-medium mb-1">Boats *</label>
-  <select
-    className={`${inputCls} bg-gray-100 cursor-pointer`}
-    value={val.boats}
-    onChange={(e) => {
-      // Prevent changing value
-      alert("This value is auto-filled and cannot be changed.");
+  <Select
+    className="react-select-container"
+    classNamePrefix="react-select"
+    options={boats.map((boat) => ({
+      value: boat,
+      label: boat,
+    }))}
+    value={
+      boats
+        .map((boat) => ({ value: boat, label: boat }))
+        .find((opt) => opt.value === val.boats) || null
+    }
+    onChange={(selectedOption) =>
+      setVal({ ...val, boats: selectedOption?.value || "" })
+    }
+    isSearchable
+    placeholder={boats.length === 0 ? "Loading..." : "Select Boat"}
+    styles={{
+      control: (base) => ({
+        ...base,
+        backgroundColor: "#f3f4f6", // Tailwind's gray-100
+        borderColor: "#d1d5db", // Tailwind's gray-300
+        minHeight: "42px",
+        fontSize: "14px",
+        cursor: "pointer",
+      }),
+      option: (base, { isFocused }) => ({
+        ...base,
+        backgroundColor: isFocused ? "#e0f2fe" : "white", // light blue on hover
+        color: "#1e3a8a",
+        fontSize: "14px",
+      }),
     }}
-  >
-    <option value="">{boats.length === 0 ? "Loading..." : "Select Boat"}</option>
-    {boats.map((boat, idx) => (
-      <option key={idx} value={boat}>
-        {boat}
-      </option>
-    ))}
-  </select>
+  />
 
   {errors?.boats && (
     <p className="text-xs text-red-600 mt-1">{errors.boats}</p>
   )}
 </div>
 
+{/* import Select from "react-select"; */}
         {/* Total allocated */}
 {/* Total jackets distributed */}
 <div>
@@ -556,6 +599,35 @@ setVal((v) => ({
             className={inputCls}
           />
         </div>
+
+{/* QR Scaneer */}
+    <div className="p-4">
+  <button
+    type="button"
+    onClick={() => {
+      setShowQR((prev) => !prev);
+    }}
+    className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg transition duration-300 hover:bg-blue-700"
+  >
+    {showQR ? "Hide QR Code" : "Show QR Code"}
+  </button>
+
+  <div
+    className={`transition-all duration-500 ease-in-out overflow-hidden ${
+      showQR ? "opacity-100 max-h-[500px] mt-4" : "opacity-0 max-h-0"
+    }`}
+  >
+    <div className="flex ">
+      <QRCode
+        size={200}
+        bgColor="white"
+        fgColor="black"
+        value="krishna"
+      />
+    </div>
+  </div>
+</div>
+
 
         {/* Notes */}
         <div className="md:col-span-3">
@@ -612,7 +684,7 @@ function DistributionTracking({ rows, stats, loading }) {
           Distribution Tracking
         </h2>
         <p className="text-slate-600 text-sm">
-          Monitor life jacket distribution across all districts and ghaats
+          Monitor life jacket distribution across all districts and ghats
         </p>
       </section>
 
@@ -652,7 +724,7 @@ function DistributionTracking({ rows, stats, loading }) {
             <thead className="bg-slate-100 text-slate-700">
               <tr>
                 <th className="px-4 py-3 font-medium">District</th>
-                <th className="px-4 py-3 font-medium">Ghaat</th>
+                <th className="px-4 py-3 font-medium">Ghat</th>
                 <th className="px-4 py-3 font-medium">Boats</th>
                 <th className="px-4 py-3 font-medium">Allocated</th>
                 <th className="px-4 py-3 font-medium">Distributed</th>
