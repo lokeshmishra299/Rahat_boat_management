@@ -419,22 +419,6 @@ const Boats = () => {
               >
                 <FaCamera className="inline mr-2" /> Capture Photo
               </button>
-
-              {/* <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition inline-block text-center">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setPhotoName(file.name);
-                      setPhotoFile(file);
-                    }
-                  }}
-                />
-                Choose Photo
-              </label> */}
             </div>
 
             {photoName && (
@@ -527,15 +511,16 @@ const Boats = () => {
             />
 
             {(form.type === "Hybrid" || form.type === "Engine Driven") && (
-              <Input
-                label="Engine Details"
-                name="engine"
-                value={form.engine}
-                onChange={field("engine")}
-                // error={errors.engine_details}
-                placeholder="Enter Engine Details"
-              />
-            )}
+  <div className="sm:col-span-2 md:col-span-2">
+    <Input
+      label="Engine Details"
+      name="engine"
+      value={form.engine}
+      onChange={field("engine")}
+      placeholder="Enter Engine Details"
+    />
+  </div>
+)}
 
 
 
