@@ -39,7 +39,7 @@ return new class extends Migration
             $table->text('owner_address')->nullable();
             $table->string('owner_pincode')->nullable();
             $table->string('owner_family')->nullable();
-            $table->string('owner_relation')->nullable();
+            // $table->string('owner_relation')->nullable();
             $table->date('owner_dob')->nullable();
             $table->string('owner_family_name');
             $table->string('remarks')->nullable();

@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class District extends Model
 {
-    protected $table = 'districts'; 
+    protected $table = 'district_master'; 
 
-    protected $fillable = ['district_name'];
+    protected $fillable = ['district_name','district_code'];
 
       protected static function booted()
     {

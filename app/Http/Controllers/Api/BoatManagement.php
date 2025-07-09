@@ -6,28 +6,48 @@ use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\District;
 use App\Models\RegisterBoat;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 
 class BoatManagement extends Controller
 {
-    public function district_list(Request $request)
-    {
-        $user = auth()->user();
-        if ($user && $user->role && $user->role->name === 'district_nodal') {
-            $districts = District::where('id', $user->district_id)
-                ->select('id', 'district_name')
-                ->orderBy('district_name', 'asc')
-                ->get();
-        } else {
-            $districts = District::select('id', 'district_name')
-                ->orderBy('district_name', 'asc')
-                ->get();
+public function district_list(Request $request)
+{
+    // dd("ko");
+    $user = auth()->user();
+    $excludeAssigned = $request->query('excludeAssigned', false); 
+
+    if ($user && $user->role && $user->role->name === 'district_nodal') {
+        // For district_nodal, return only their assigned district
+        $districts = District::where('district_code', $user->district_code)
+            ->select('district_code as id', 'district_name')
+            ->orderBy('district_name', 'asc')
+            ->get();
+    } else {
+        $query = District::query();
+
+        if ($excludeAssigned) {
+            $assignedDistricts = User::whereNotNull('district_id')
+                ->pluck('district_id')
+                ->toArray();
+                // dd($assignedDistricts);
+
+            $query->whereNotIn('district_code', $assignedDistricts);
         }
 
-        return ApiResponse::generateResponse('success', 'District list fetched successfully', $districts);
+        $districts = $query->select('district_code as id', 'district_name')
+            ->orderBy('district_name', 'asc')
+            ->get();
     }
+
+    return ApiResponse::generateResponse('success', 'District list fetched successfully', $districts);
+}
+
+
+
+
 
     public function store(Request $request)
     {
@@ -56,7 +76,7 @@ class BoatManagement extends Controller
                 'owner_address'          => 'nullable|string',
                 'owner_pincode'          => 'nullable|string|max:10',
                 'owner_family_name'      => 'nullable|string|max:100',
-                'owner_relation'         => 'nullable|string|max:100',
+                // 'owner_relation'         => 'nullable|string|max:100',
                 'owner_dob'              => 'nullable|date',
             ],
             [
@@ -172,7 +192,7 @@ class BoatManagement extends Controller
                 ? implode(',', $request->owner_family_name)
                 : $request->owner_family_name,
 
-            'owner_relation'         => $request->owner_relation,
+            // 'owner_relation'         => $request->owner_relation,
             'owner_dob'              => $request->owner_dob,
         ]);
 
@@ -181,7 +201,9 @@ class BoatManagement extends Controller
 
     public function index()
     {
-        $boats = RegisterBoat::with(['district', 'ghaat'])->get();
+        $boats = RegisterBoat::with(['district', 'ghaat'])
+        ->orderBy('id','desc')
+        ->get();
 
         return ApiResponse::generateResponse('success', 'Boat list fetched successfully.', $boats);
     }
@@ -234,7 +256,7 @@ class BoatManagement extends Controller
             'owner_address'          => 'nullable|string',
             'owner_pincode'          => 'nullable|string|max:10',
             'owner_family_name'      => 'nullable',
-            'owner_relation'         => 'nullable',
+            // 'owner_relation'         => 'nullable',
             'owner_dob'              => 'nullable',
         ]
     );

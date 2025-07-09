@@ -38,7 +38,7 @@ class RegisterBoat extends Model
         'owner_boat_owned',
         'owner_address',
         'owner_pincode',
-        'owner_relation',
+        // 'owner_relation',
         'owner_dob',
         'owner_family_name',
     ];

@@ -22,7 +22,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name', 'email', 'district_id', 'designation_id', 'role_id','password1','password','otp','number',
+        'name', 'email', 'district_id', 'designation_id', 'role_id','password1','password','otp','number','user_name',
     ];
 
     /**
@@ -48,10 +48,16 @@ class User extends Authenticatable
         ];
     }
 
+    // public function district()
+    // {
+    //     return $this->belongsTo(District::class);
+    // }
+
     public function district()
-    {
-        return $this->belongsTo(District::class);
-    }
+{
+    return $this->belongsTo(DistrictMaster::class, 'district_id', 'district_code');
+}
+
 
     
 
