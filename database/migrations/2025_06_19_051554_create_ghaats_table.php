@@ -21,7 +21,7 @@ return new class extends Migration
             $table->integer('pincode')->nullable();
 
             $table->string('ghaat_name');
-            $table->foreignId('district_id')->constrained('districts')->onDelete('cascade');
+            $table->foreignId('district_id')->constrained('district_master')->onDelete('cascade');
 
             $table->foreignId('river_id')->constrained('rivers')->onDelete('cascade');
 

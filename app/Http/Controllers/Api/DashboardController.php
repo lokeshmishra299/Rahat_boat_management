@@ -92,15 +92,15 @@ class DashboardController extends Controller
             ];
         }
 
-        $latestInspection = BoatInspection::with('boat.district')->latest()->first();
-        if ($latestInspection) {
-            $activities[] = [
-                'title' => 'Inspection completed',
-                'location' => $latestInspection->boat->district->district_name ?? 'Unknown District',
-                'status' => 'completed',
-                'time_ago' => Carbon::parse($latestInspection->created_at)->diffForHumans(),
-            ];
-        }
+        // $latestInspection = BoatInspection::with('boat.district')->latest()->first();
+        // if ($latestInspection) {
+        //     $activities[] = [
+        //         'title' => 'Inspection completed',
+        //         'location' => $latestInspection->boat->district->district_name ?? 'Unknown District',
+        //         'status' => 'completed',
+        //         'time_ago' => Carbon::parse($latestInspection->created_at)->diffForHumans(),
+        //     ];
+        // }
 
         $latestDistribution = LifeJacket::with('ghaat')->latest()->first();
         if ($latestDistribution) {

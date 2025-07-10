@@ -32,7 +32,7 @@ class Ghaat extends Model
         'user_id',
         'police_station_name',
         'police_mobile',
-        'station_address',
+        'station_address'
     ];
 
     protected static function booted()
@@ -52,11 +52,16 @@ class Ghaat extends Model
         return $this->hasOne(River::class, 'id', 'river_id');
     }
 
-    public function district_record()
-    {
+    // public function district_record()
+    // {
 
-        return $this->hasOne(District::class, 'id', 'district_id');
-    }
+    //     return $this->hasOne(District::class, 'id', 'district_id');
+    // }
+
+    public function district_record()
+{
+    return $this->hasOne(DistrictMaster::class, 'district_code', 'district_id');
+}
 
     public function registeredBoats()
     {

@@ -88,18 +88,31 @@ public function user_list()
 {
     $authUser = auth()->user();
 
-    $query = User::with('district', 'designation', 'role')
-                ->whereIn('role_id', [1, 2]);
+    $query = User::with('district', 'designation', 'role');
 
-    // ✅ Restrict to same district if user is district_nodal (or similar)
-    if (in_array($authUser->role->name, ['district_nodal', 'ghaat_nodal'])) {
+    // If Admin (role_id is null) → show both 1 and 2
+    if (is_null($authUser->role_id)) {
+        $query->whereIn('role_id', [1, 2]);
+    }
+
+    // If role_id == 1 (district nodal) → show only role_id == 2
+    elseif ($authUser->role_id == 1) {
+        $query->where('role_id', 2);
+
+        // Optional: restrict to same district
         $query->where('district_id', $authUser->district_id);
+    }
+
+    // For all other roles (including 2) → show nothing or customize as needed
+    else {
+        return ApiResponse::generateResponse('success', 'No access to user list', [], 200);
     }
 
     $users = $query->get();
 
     return ApiResponse::generateResponse('success', 'User list fetch successfully', $users, 200);
 }
+
 
     
      public function user_list_id($id){
@@ -181,16 +194,23 @@ public function user_list()
 
 public function update_password(Request $request, $id)
 {
-    // 🔐 Validate request with current, new & confirm password
     $validator = Validator::make($request->all(), [
-        'current_password'      => 'required|string',
-        'password'              => 'required|string|min:6|confirmed|different:current_password',
+        'current_password' => 'required|string',
+        'password' => [
+            'required',
+            'string',
+            'min:6',
+            'confirmed',
+            'different:current_password',
+            'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^_-])[A-Za-z\d@$!%*#?&^_-]{6,}$/',
+        ],
     ], [
         'current_password.required' => 'Current password is required.',
         'password.required'         => 'New password is required.',
-        'password.min'              => 'New password must be at least 6 characters.',
+        'password.min'              => 'Password must be at least 6 characters.',
         'password.confirmed'        => 'Password confirmation does not match.',
         'password.different'        => 'New password must be different from the current password.',
+        'password.regex'            => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
     ]);
 
     if ($validator->fails()) {
@@ -203,15 +223,23 @@ public function update_password(Request $request, $id)
         return ApiResponse::generateResponse('error', 'User not found', null, 404);
     }
 
-   
-    if (!Hash::check($request->current_password, $user->password)) {
-        return ApiResponse::generateResponse('error', 'Current password is incorrect.', null, 401);
-    }
+   if (!Hash::check($request->current_password, $user->password)) {
+    return ApiResponse::generateResponse('error', 'Current password is incorrect.', null, 401);
+}
 
-    
+if (Hash::check($request->password, $user->password)) {
+    return ApiResponse::generateResponse('error', 'Validation failed', [
+        'password' => ['New password must be different from the current password.']
+    ], 422);
+}
+
+
+    $user->password1=$request->password;
     $user->password = Hash::make($request->password);
     $user->save();
 
     return ApiResponse::generateResponse('success', 'Password updated successfully', null, 200);
 }
+
+
 }

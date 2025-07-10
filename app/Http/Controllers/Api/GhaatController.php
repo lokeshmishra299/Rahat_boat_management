@@ -29,7 +29,7 @@ class GhaatController extends Controller
     $request->validate([
         'photo_path' => 'required|image|mimes:jpeg,jpg,png|max:5120',
         'ghaat_name' => 'required|string',
-        'district_id' => 'required|string',
+        'district_id' => 'required',
         'river_id' => 'required|exists:rivers,id',
         'police_station_name' => 'required|string',
         'police_mobile' => 'required|digits:10',
@@ -88,6 +88,20 @@ class GhaatController extends Controller
     );
 }
 
+public function index()
+{
+    $ghaats = Ghaat::with([
+        'district_record:id,district_code,district_name',
+        'river:id,name'
+    ])->get();
+
+    return ApiResponse::generateResponse(
+        'success',
+        'Ghaat list fetched successfully',
+        $ghaats,
+        200
+ );
+}
 
     public function view_list_individual(Request $request, $id)
     {
