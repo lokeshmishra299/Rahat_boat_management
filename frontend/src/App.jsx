@@ -30,6 +30,7 @@ import UserListView from "./pages/UserListView";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import AddBoatOwner from "./components/AddBoatOwner";
+import BoatOwners from "./components/BoatOwners";
 
 const App = () => (
   <Routes>
@@ -93,7 +94,7 @@ const App = () => (
 
       <Route path="addboatowner/boats" element={<Boats />} />
       <Route path="addboatowner" element={<AddBoatOwner />} />
-      <Route path="addboatowner/boat-owners" element={<BoatOwner />} />
+      <Route path="addboatowner/boat-owners" element={<BoatOwners />} />
     
 {/* id added */}
       <Route path="ghats" element={<Ghaat />} />

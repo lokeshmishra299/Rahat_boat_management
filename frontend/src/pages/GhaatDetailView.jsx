@@ -4,10 +4,8 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
-  const user = JSON.parse(localStorage.getItem("user"));
-
-
 const token = localStorage.getItem("access_token");
+const user = JSON.parse(localStorage.getItem("user"));
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -19,9 +17,7 @@ const api = axios.create({
 
 const Field = ({ label, value }) => (
   <div>
-    <p className="text-xs  text-gray-500 font-semibold mb-1">
-      {label}
-    </p>
+    <p className="text-xs text-gray-500 font-semibold mb-1">{label}</p>
     <div className="bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-800 border">
       {value ?? "—"}
     </div>
@@ -53,15 +49,13 @@ export default function GhaatDetailView() {
   }, [id, state]);
 
   useEffect(() => {
-    api
-      .get("/district-list")
+    api.get("/district-list")
       .then((res) => {
         if (res.data?.status === "success") setDistricts(res.data.data);
       })
       .catch(() => {});
 
-    api
-      .get("/river-list")
+    api.get("/river-list")
       .then((res) => {
         if (res.data?.status === "success") setRivers(res.data.data);
       })
@@ -83,55 +77,50 @@ export default function GhaatDetailView() {
         <h1 className="text-3xl font-bold text-indigo-700 mb-1">
           🏜️ Ghat Details – {ghaat.ghaat_name}
         </h1>
-        {/* <p className="text-sm text-gray-500">Unique ID: {ghaat.id}</p> */}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <Field label="Ghat Name" value={ghaat.ghaat_name} />
-        {/* <Field label="Location" value={ghaat.location} /> */}
-        {/* <Field label="Pincode" value={ghaat.pincode} /> */}
-        {/* <Field label="Boat Capacity" value={ghaat.boat_capacity} /> */}
         <Field label="Road Accessibility" value={ghaat.road_accessibility} />
-        {/* <Field label="Contact Person" value={ghaat.contact_person} />
-        <Field label="Contact Number" value={ghaat.contact_number} /> */}
         <Field label="Nearest Hospital" value={ghaat.nearest_hospital} />
         <Field label="Available Facilities" value={ghaat.available_facilities} />
         <Field label="Additional Info" value={ghaat.additional_info} />
-        <Field label="Registered Boats" value={ghaat.registered_boats_count} />
+        {/* <Field label="Registered Boats" value={ghaat.registered_boats_count} /> */}
         {user?.role_id !== 2 && (
-        <Field label="District" value={districtName} />
+          <Field label="District" value={districtName} />
         )}
         <Field label="River" value={riverName} />
-        {/* <Field label="Latitude" value={ghaat.latitude} />
-        <Field label="Longitude" value={ghaat.longitude} /> */}
       </div>
 
-     <div>
-  <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">
-    Ghat Photo
-  </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-4 border-t">
+        <h2 className="col-span-full text-xl font-semibold text-gray-700 mt-2">
+          🚨 Nearest Police Station
+        </h2>
+        <Field label="Police Station Name" value={ghaat.police_station_name} />
+        <Field label="Police Mobile Number" value={ghaat.police_mobile} />
+        <Field label="Station Address" value={ghaat.station_address} />
+      </div>
 
-  <div className="w-full flex flex-col items-center justify-center">
-    {ghaat.photo_path ? (
-      <img
-        src={`http://localhost:8000/storage/${ghaat.photo_path}`}
-        alt="Ghaat"
-        className="w-full sm:w-80 h-64 object-cover rounded shadow border"
-      />
-    ) : (
-      <p className="italic text-gray-400 text-center">No image available</p>
-    )}
-
-    {/* Location Info Below Image */}
-    <div className="mt-4 text-sm text-gray-700 space-y-1 text-center">
-      <p><strong>Location:</strong> {ghaat.location || "N/A"}</p>
-      <p><strong>Pincode:</strong> {ghaat.pincode || "N/A"}</p>
-      {/* <p><strong>Latitude:</strong> {ghaat.latitude || "N/A"}</p>
-      <p><strong>Longitude:</strong> {ghaat.longitude || "N/A"}</p> */}
-    </div>
-  </div>
-</div>
-
+      <div>
+        <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">
+          Ghat Photo
+        </h2>
+        <div className="w-full flex flex-col items-center justify-center">
+          {ghaat.photo_path ? (
+            <img
+              src={`http://localhost:8000/storage/${ghaat.photo_path}`}
+              alt="Ghaat"
+              className="w-full sm:w-80 h-64 object-cover rounded shadow border"
+            />
+          ) : (
+            <p className="italic text-gray-400 text-center">No image available</p>
+          )}
+          <div className="mt-4 text-sm text-gray-700 space-y-1 text-center">
+            <p><strong>Location:</strong> {ghaat.location || "N/A"}</p>
+            <p><strong>Pincode:</strong> {ghaat.pincode || "N/A"}</p>
+          </div>
+        </div>
+      </div>
 
       <div className="pt-4 border-t flex justify-center">
         <button
