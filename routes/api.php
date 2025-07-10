@@ -34,7 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-    Route::post('/boats', [BoatManagement::class, 'store']);  
+    Route::post('/boat-owner/{id}/boats', [BoatManagement::class, 'store']);  
     Route::get('/boat-list', [BoatManagement::class, 'index']);  
     Route::get('/boat-list/{id}', [BoatManagement::class, 'view_list']);  
 
@@ -77,6 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user-list',[UserManagementController::class,'user_list']);
         Route::get('/user-list/{id}',[UserManagementController::class,'user_list_id']);
         Route::post('/user-edit/{id}',[UserManagementController::class,'user_edit']);
+        Route::post('/update-password/{id}',[UserManagementController::class,'update_password']);
 
 
 

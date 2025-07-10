@@ -29,7 +29,10 @@ class Ghaat extends Model
         'available_facilities',
         'additional_info',
         'status',
-        'user_id'
+        'user_id',
+        'police_station_name',
+        'police_mobile',
+        'station_address',
     ];
 
     protected static function booted()

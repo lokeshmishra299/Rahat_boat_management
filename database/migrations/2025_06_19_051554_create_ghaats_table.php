@@ -27,6 +27,9 @@ return new class extends Migration
 
             $table->unsignedInteger('boat_capacity');
             $table->string('road_accessibility')->nullable();
+            $table->string('police_station_name')->nullable();
+            $table->string('police_mobile')->nullable();
+            $table->string('station_address')->nullable();
 
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             // $table->string('contact_person');

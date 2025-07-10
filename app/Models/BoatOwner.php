@@ -17,10 +17,10 @@ class BoatOwner extends Model
         'number',
         'adhar_no',
         'boat_owned',
-        'address',
+        // 'address',
         'pincode',
         'family',
-        'relation',
+        'owner_family_name',
         'dob'
     ];
 

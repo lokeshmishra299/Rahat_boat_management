@@ -86,10 +86,17 @@ class UserManagementController extends Controller
 
 public function user_list()
 {
-    $users = User::with('district', 'designation', 'role')
-                ->whereIn('role_id', [1, 2])
-                ->get();
-                // dd($users);
+    $authUser = auth()->user();
+
+    $query = User::with('district', 'designation', 'role')
+                ->whereIn('role_id', [1, 2]);
+
+    // ✅ Restrict to same district if user is district_nodal (or similar)
+    if (in_array($authUser->role->name, ['district_nodal', 'ghaat_nodal'])) {
+        $query->where('district_id', $authUser->district_id);
+    }
+
+    $users = $query->get();
 
     return ApiResponse::generateResponse('success', 'User list fetch successfully', $users, 200);
 }
@@ -170,5 +177,41 @@ public function user_list()
         'data' => $user
     ]);
 }
+
+
+public function update_password(Request $request, $id)
+{
+    // 🔐 Validate request with current, new & confirm password
+    $validator = Validator::make($request->all(), [
+        'current_password'      => 'required|string',
+        'password'              => 'required|string|min:6|confirmed|different:current_password',
+    ], [
+        'current_password.required' => 'Current password is required.',
+        'password.required'         => 'New password is required.',
+        'password.min'              => 'New password must be at least 6 characters.',
+        'password.confirmed'        => 'Password confirmation does not match.',
+        'password.different'        => 'New password must be different from the current password.',
+    ]);
+
+    if ($validator->fails()) {
+        return ApiResponse::generateResponse('error', 'Validation failed', $validator->errors(), 422);
+    }
+
+    $user = User::find($id);
+
+    if (!$user) {
+        return ApiResponse::generateResponse('error', 'User not found', null, 404);
+    }
+
+   
+    if (!Hash::check($request->current_password, $user->password)) {
+        return ApiResponse::generateResponse('error', 'Current password is incorrect.', null, 401);
+    }
+
     
+    $user->password = Hash::make($request->password);
+    $user->save();
+
+    return ApiResponse::generateResponse('success', 'Password updated successfully', null, 200);
+}
 }

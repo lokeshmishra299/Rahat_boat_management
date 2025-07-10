@@ -24,108 +24,69 @@ class GhaatController extends Controller
         return ApiResponse::generateResponse('success', 'River list fetched successfully', $rivers);
     }
 
-    public function store(Request $request)
-    {
-        // dd($request->all());
-        $request->validate([
-            'photo_path' => 'required|image|mimes:jpeg,jpg,png|max:5120',
-            'ghaat_name' => 'required|string',
-            'district_id' => 'required|string',
-            'river_id' => 'required|exists:rivers,id',
-            // 'boat_capacity' => 'required|integer',
-            'road_accessibility' => 'nullable|string',
-            // 'contact_person' => 'required|string',
-            // 'contact_number' => 'required|string',
-            'nearest_hospital' => 'required|string',
-            'available_facilities' => 'nullable|string',
-            'additional_info' => 'nullable|string',
-            'location' => 'nullable|string',
-        ], [
-            'photo_path.required' => 'Please upload a photo.',
-            'photo_path.image' => 'Uploaded file must be an image.',
-            'photo_path.mimes' => 'Photo must be a JPEG or PNG file.',
-            'photo_path.max' => 'Photo size should not exceed 5MB.',
+   public function store(Request $request)
+{
+    $request->validate([
+        'photo_path' => 'required|image|mimes:jpeg,jpg,png|max:5120',
+        'ghaat_name' => 'required|string',
+        'district_id' => 'required|string',
+        'river_id' => 'required|exists:rivers,id',
+        'police_station_name' => 'required|string',
+        'police_mobile' => 'required|digits:10',
+        'station_address' => 'required|string',
+        'road_accessibility' => 'nullable|string',
+        'nearest_hospital' => 'required|string',
+        'available_facilities' => 'nullable|string',
+        'additional_info' => 'nullable|string',
+        'location' => 'nullable|string',
+    ], [
+        'photo_path.required' => 'Please upload a photo.',
+        'photo_path.image' => 'Uploaded file must be an image.',
+        'photo_path.mimes' => 'Photo must be a JPEG or PNG file.',
+        'photo_path.max' => 'Photo size should not exceed 5MB.',
+        
+        'ghaat_name.required' => 'Ghaat name is required.',
+        'district_id.required' => 'Please select a district.',
+        'river_id.required' => 'Please select a river.',
+        'river_id.exists' => 'Selected river is invalid.',
 
-            'ghaat_name.required' => 'Ghaat name is required.',
-            'district_id.required' => 'Please select a district.',
-            'river_id.required' => 'Please select a river.',
-            'river_id.exists' => 'Selected river is invalid.',
-            // 'boat_capacity.required' => 'Boat capacity is required.',
-            'boat_capacity.integer' => 'Boat capacity must be a number.',
-            // 'contact_person.required' => 'Contact person name is required.',
-            // 'contact_number.required' => 'Contact number is required.',
-            'nearest_hospital.required' => 'Please provide nearest hospital details.',
-            
-        ]);
+        'police_station_name.required' => 'Police station name is required.',
+        'police_mobile.required' => 'Police mobile number is required.',
+        'police_mobile.digits' => 'Police mobile must be a 10-digit number.',
+        'station_address.required' => 'Police station address is required.',
 
-        $image = $request->file('photo_path');
-        $photoPath = $image->store('photos', 'public');
+        'nearest_hospital.required' => 'Please provide nearest hospital details.',
+    ]);
 
-        $ghaat = Ghaat::create([
-            'photo_path' => $photoPath,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'pincode' => $request->pincode,
-            'location' => $request->location,
-            'ghaat_name' => $request->ghaat_name,
-            'district_id' => $request->district_id,
-            'river_id' => $request->river_id,
-            // 'boat_capacity' => $request->boat_capacity,
-            'road_accessibility' => $request->road_accessibility,
-            // 'contact_person' => $request->contact_person,
-            // 'contact_number' => $request->contact_number,
-            'nearest_hospital' => $request->nearest_hospital,
-            'available_facilities' => $request->available_facilities,
-            'additional_info' => $request->additional_info,
-            'user_id'=> auth()->id(),
-        ]);
-        // dd($ghaat);
-        return ApiResponse::generateResponse(
-            'success',
-            'Ghaat registered successfully',
-            $ghaat,
-            201
-        );
-    }
+    $image = $request->file('photo_path');
+    $photoPath = $image->store('photos', 'public');
 
-    /*
-    private function getGps($exifCoord, $hemi)
-    {
-        $degrees = $this->gps2Num($exifCoord[0]);
-        $minutes = $this->gps2Num($exifCoord[1]);
-        $seconds = $this->gps2Num($exifCoord[2]);
+    $ghaat = Ghaat::create([
+        'photo_path' => $photoPath,
+        'latitude' => $request->latitude,
+        'longitude' => $request->longitude,
+        'pincode' => $request->pincode,
+        'location' => $request->location,
+        'ghaat_name' => $request->ghaat_name,
+        'district_id' => $request->district_id,
+        'river_id' => $request->river_id,
+        'police_station_name' => $request->police_station_name,
+        'police_mobile' => $request->police_mobile,
+        'station_address' => $request->station_address,
+        'road_accessibility' => $request->road_accessibility,
+        'nearest_hospital' => $request->nearest_hospital,
+        'available_facilities' => $request->available_facilities,
+        'additional_info' => $request->additional_info,
+        'user_id' => auth()->id(),
+    ]);
 
-        $flip = ($hemi == 'S' || $hemi == 'W') ? -1 : 1;
-
-        return $flip * ($degrees + ($minutes / 60) + ($seconds / 3600));
-    }
-
-    private function gps2Num($coordPart)
-    {
-        $parts = explode('/', $coordPart);
-        if (count($parts) == 1) return floatval($parts[0]);
-        return floatval($parts[0]) / floatval($parts[1]);
-    } 
-    */
-
-    public function index()
-    {
-
-        $ghats = Ghaat::with('river_record', 'district_record')
-            ->withCount('registeredBoats')
-            ->orderBy('id', 'desc')
-            ->get();
-
-
-        // dd($ghats->toArray());
-
-        return ApiResponse::generateResponse(
-            'success',
-            'Ghaat list fetch successfully',
-            $ghats,
-            201
-        );
-    }
+    return ApiResponse::generateResponse(
+        'success',
+        'Ghaat registered successfully',
+        $ghaat,
+        201
+    );
+}
 
 
     public function view_list_individual(Request $request, $id)

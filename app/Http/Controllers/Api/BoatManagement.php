@@ -188,12 +188,7 @@ public function district_list(Request $request)
             'owner_boat_owned'       => $request->owner_boat_owned,
             'owner_address'          => $request->owner_address,
             'owner_pincode'          => $pincode,
-            'owner_family_name' => is_array($request->owner_family_name)
-                ? implode(',', $request->owner_family_name)
-                : $request->owner_family_name,
-
-            // 'owner_relation'         => $request->owner_relation,
-            'owner_dob'              => $request->owner_dob,
+            
         ]);
 
         return ApiResponse::generateResponse('success', 'Boat registered successfully.', $boat);
