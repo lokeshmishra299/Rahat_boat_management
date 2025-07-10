@@ -282,7 +282,7 @@ export default function Usermanagment() {
           <IconWrap>
             <FaUserPlus />
           </IconWrap>
-          {authUser?.role_id === 1 ? "Create Ghaat Nodal" : "Create User"}
+          {authUser?.role_id === 1 ? "Create Ghat Incharge" : "Create User"}
         </button>
 
         <button
@@ -292,7 +292,7 @@ export default function Usermanagment() {
           <IconWrap>
             <FaUsers />
           </IconWrap>
-          {authUser?.role_id === 1 ? "Ghaat Nodal List" : "User List"}
+          {authUser?.role_id === 1 ? "Ghat Incharge List" : "User List"}
         </button>
       </div>
 
@@ -503,11 +503,18 @@ export default function Usermanagment() {
                     className={input}
                   >
                     <option value="">Select designation</option>
-                    {designation.map((d) => (
-                      <option key={d.id} value={d.name}>
-                        {d.name}
-                      </option>
-                    ))}
+                   {designation
+  .filter((d) => {
+    // If District Nodal, only allow Ghaat Nodal (id = 2)
+    if (authUser?.role_id === 1) return d.id === 2;
+    return true; // For others, show all
+  })
+  .map((d) => (
+    <option key={d.id} value={d.name}>
+      {d.name}
+    </option>
+))}
+
                   </select>
                   {errors.designation_id && (
                     <p className="text-red-500 text-sm mt-1">
@@ -638,31 +645,29 @@ export default function Usermanagment() {
                   try {
                     const isDistrictNodal = authUser?.role_id === 1;
 
-                    const roleId = isDistrictNodal
-                      ? roles.find((r) => r.name === "ghaat_nodal")?.id
-                      : roles.find((r) => r.name === userForm.role)?.id;
+const roleId = isDistrictNodal
+  ? roles.find((r) => r.name === "ghaat_nodal")?.id
+  : roles.find((r) => r.name === userForm.role)?.id;
 
-                    const districtId = isDistrictNodal
-                      ? authUser?.district_id
-                      : districts.find(
-                          (d) => d.district_name === userForm.district
-                        )?.id;
+const districtId = isDistrictNodal
+  ? authUser?.district_id
+  : districts.find((d) => d.district_name === userForm.district)?.id;
 
-                    const designationId = isDistrictNodal
-                      ? authUser?.designation_id
-                      : designation.find((d) => d.name === userForm.designation)
-                          ?.id;
+const designationId = isDistrictNodal
+  ? 2 // ✅ Force designation ID to 2 for ghat nodal
+  : designation.find((d) => d.name === userForm.designation)?.id;
 
-                    const payload = {
-                      name: userForm.fullName,
-                      email: userForm.email,
-                      password: userForm.password,
-                      password_confirmation: userForm.confirmPassword,
-                      role_id: roleId,
-                      district_id: districtId,
-                      designation_id: designationId,
-                      number: userForm.contact,
-                    };
+const payload = {
+  name: userForm.fullName,
+  email: userForm.email,
+  password: userForm.password,
+  password_confirmation: userForm.confirmPassword,
+  role_id: roleId,
+  district_id: districtId,
+  designation_id: designationId,
+  number: userForm.contact,
+};
+
 
                     console.log("PAYLOAD", payload);
 
@@ -742,9 +747,9 @@ export default function Usermanagment() {
                   `"${u.designation?.name || "N/A"}"`,
                   `"${
                     u.role?.name === "ghaat_nodal"
-                      ? "Ghaat Nodal"
+                      ? "Ghaat Incharge"
                       : u.role?.name === "district_nodal"
-                      ? "District Nodal"
+                      ? "Ghat Incharge"
                       : u.role?.name || "N/A"
                   }"`,
                 ]);
@@ -814,9 +819,9 @@ export default function Usermanagment() {
                   currentUsers.map((u, i) => {
                     let roleLabel = "N/A";
                     if (u.role?.name === "ghaat_nodal")
-                      roleLabel = "Ghaat Nodal";
+                      roleLabel = "Ghat Incharge";
                     else if (u.role?.name === "district_nodal")
-                      roleLabel = "District Nodal";
+                      roleLabel = "Ghat Incharge";
                     else if (u.role?.name) roleLabel = u.role.name;
 
                     return (

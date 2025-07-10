@@ -88,9 +88,9 @@ export default function GhaatDetailView() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <Field label="Ghat Name" value={ghaat.ghaat_name} />
-        <Field label="Location" value={ghaat.location} />
-        <Field label="Pincode" value={ghaat.pincode} />
-        <Field label="Boat Capacity" value={ghaat.boat_capacity} />
+        {/* <Field label="Location" value={ghaat.location} /> */}
+        {/* <Field label="Pincode" value={ghaat.pincode} /> */}
+        {/* <Field label="Boat Capacity" value={ghaat.boat_capacity} /> */}
         <Field label="Road Accessibility" value={ghaat.road_accessibility} />
         {/* <Field label="Contact Person" value={ghaat.contact_person} />
         <Field label="Contact Number" value={ghaat.contact_number} /> */}

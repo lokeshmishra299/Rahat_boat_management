@@ -101,7 +101,7 @@ export default function DistrictDashboard() {
       value: counts.total_ghaats || "0",
       subtitle: "River ports operational",
       dot: "bg-purple-500",
-      onClick: () => navigate("/dashboard/ghaats?tab=directory"),
+      onClick: () => navigate("/dashboard/ghats?tab=directory"),
     },
     // {
     //   label: "Avg Completion",

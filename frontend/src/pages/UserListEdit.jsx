@@ -16,6 +16,7 @@ const api = axios.create({
     ...(token && { Authorization: `Bearer ${token}` }),
   },
 });
+const user = JSON.parse(localStorage.getItem("user"));
 
 const InputField = ({ label, value, onChange, type = "text", name, error }) => (
   <div>
@@ -170,8 +171,9 @@ const UserListEdit = () => {
             }}
             error={error.number?.[0]}
           />
-
+{user && user.role_id !== 1 && (
          <div>
+          
   <label className="text-xs font-semibold text-gray-600 block mb-1">
     Role
   </label>
@@ -187,7 +189,7 @@ const UserListEdit = () => {
     {roles.map((role) => {
       let roleLabel = role.name;
       if (roleLabel === "district_nodal") roleLabel = "District Nodal";
-      else if (roleLabel === "ghaat_nodal") roleLabel = "Ghaat Nodal";
+      else if (roleLabel === "ghaat_nodal") roleLabel = "Ghat Incharge";
 
       return (
         <option key={role.id} value={role.id}>
@@ -200,7 +202,8 @@ const UserListEdit = () => {
     <p className="text-red-500 text-xs mt-1">{error.role_id[0]}</p>
   )}
 </div>
-
+)}
+        {user && user.role_id !== 1 && (
           <SelectField
             label="District"
             name="district_id"
@@ -209,6 +212,9 @@ const UserListEdit = () => {
             options={districts}
             error={error.district_id?.[0]}
           />
+           )}
+
+           {user && user.role_id !== 1 && (
           <SelectField
             label="Designation"
             name="designation_id"
@@ -217,6 +223,7 @@ const UserListEdit = () => {
             options={designations}
             error={error.designation_id?.[0]}
           />
+           )}
         </div>
 
         <div className="pt-4 border-t flex justify-center">

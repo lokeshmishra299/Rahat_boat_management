@@ -79,6 +79,9 @@ export default function Ghaat() {
     // contactPerson: "",
     nearestHospital: "",
     additionalInfo: "",
+     policeStationName: "",
+  policeStationMobile: "",
+  policeStationAddress: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -232,6 +235,9 @@ export default function Ghaat() {
       longitude: coords.lon,
       location: locationName,
       pincode: pincode,
+       police_station_name: formData.policeStationName,
+  police_mobile: formData.policeStationMobile,
+  station_address: formData.policeStationAddress,
     }).forEach(([k, v]) => fd.append(k, v));
     if (photoFile) fd.append("photo_path", photoFile);
 
@@ -273,6 +279,9 @@ export default function Ghaat() {
           nearest_hospital: "nearestHospital",
           additional_info: "additionalInfo",
           photo_path: "photoPath",
+          police_station_name: "policeStationName",
+  police_mobile: "policeStationMobile",
+  station_address: "policeStationAddress",
         };
 
         const mappedErrors = {};
@@ -709,9 +718,9 @@ export default function Ghaat() {
                       District
                     </th>
                     <th className="px-6 py-3 font-bold text-center">River</th>
-                    <th className="px-6 py-3 font-bold text-center">
+                    {/* <th className="px-6 py-3 font-bold text-center">
                       Boats Assigned
-                    </th>
+                    </th> */}
                     {/* <th className="px-6 py-3 font-bold text-center">Capacity</th> */}
                     <th className="px-6 py-3 font-bold text-center">Status</th>
                     <th className="px-6 py-3 font-bold text-center">Actions</th>
@@ -729,9 +738,9 @@ export default function Ghaat() {
                       </td>
                       <td className="px-6 py-4 text-center">{g.district}</td>
                       <td className="px-6 py-4 text-center">{g.river}</td>
-                      <td className="px-6 py-4 text-center">
+                      {/* <td className="px-6 py-4 text-center">
                         {g.boatsAssigned}
-                      </td>
+                      </td> */}
                       {/* <td className="px-6 py-4 text-center">{g.capacity}</td> */}
                       <td className="px-6 py-4 text-center">
                         <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-green-700 text-center">
@@ -798,7 +807,7 @@ function Input({
         {label}
       </label>
       <input
-        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
         id={name}
         name={name}
         value={value}
@@ -822,7 +831,7 @@ function Select({ label, name, value, onChange, err, options }) {
         id={name}
         name={name}
         className={`border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ${
-          err ? "border-red-500" : "border-gray-300"
+          err ? "border-gray-500" : "border-gray-300"
         }`}
         value={value}
         onChange={onChange}

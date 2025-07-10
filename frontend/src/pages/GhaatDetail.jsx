@@ -383,7 +383,8 @@ const EditableCell = ({ k, label, value, districts, rivers, editing, temp, setTe
           } ${!value ? "text-gray-400 " : "text-gray-800"}`}
           style={{ minHeight: "2.5rem" }}
         >
-          {value || `Enter ${toTitleCase(label)}`}
+          {value === null || value === undefined || value === "" ? "N/A" : value}
+
         </div>
       )}
       {errors[k] && <p className="text-xs text-red-500 mt-1">{errors[k][0]}</p>}
@@ -404,7 +405,7 @@ const EditableCell = ({ k, label, value, districts, rivers, editing, temp, setTe
   <EditableCell k="ghaat_name" label="Ghat Name" value={draft.ghaat_name} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
   {/* <EditableCell k="location" label="Location" value={draft.location} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
   {/* <EditableCell k="pincode" label="Pincode" value={draft.pincode} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
-  <EditableCell k="boat_capacity" label="Boat Capacity" value={draft.boat_capacity} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  {/* <EditableCell k="boat_capacity" label="Boat Capacity" value={draft.boat_capacity} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
   <EditableCell k="road_accessibility" label="Road Accessibility" value={draft.road_accessibility} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
   {/* <EditableCell k="contact_person" label="Contact Person" value={draft.contact_person} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
   <EditableCell k="contact_number" label="Contact Number" value={draft.contact_number} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}

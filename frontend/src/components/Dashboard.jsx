@@ -90,7 +90,8 @@ const user = JSON.parse(localStorage.getItem("user"));
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50">
+
       <Header />
 
       {/* nav bar */}
@@ -107,7 +108,7 @@ const user = JSON.parse(localStorage.getItem("user"));
               Boats
             </Link>
                  )}
-            <Link to="ghats" className={linkCls("ghaats", "bg-sky-500")}>
+            <Link to="ghats" className={linkCls("ghats", "bg-sky-500")}>
               <FaWater className="inline-block mr-2 text-lg" />
               Ghats
             </Link>
@@ -155,7 +156,7 @@ const user = JSON.parse(localStorage.getItem("user"));
           .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         `}</style>
       </div>
-
+<div className="flex-1">
       {isActive(".") ? (
         <main className="p-6">
           {/* page heading */}
@@ -187,7 +188,7 @@ const user = JSON.parse(localStorage.getItem("user"));
 
             <div
               className="transform transition-transform duration-200 hover:scale-[1.03] hover:shadow-lg cursor-pointer"
-              onClick={() => navigate("/dashboard/ghaats?tab=directory")}
+              onClick={() => navigate("/dashboard/ghats?tab=directory")}
             >
               <StatCard
                 icon="🌊"
@@ -278,7 +279,9 @@ const user = JSON.parse(localStorage.getItem("user"));
       ) : (
         <Outlet />
       )}
+      </div>
       <Footer />
+      
     </div>
   );
 };
