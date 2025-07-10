@@ -147,7 +147,7 @@ const handleSignOut = async () => {
                     const user = JSON.parse(localStorage.getItem("user"));
                     if (user?.role_id === 1) return "District Nodal";
                     if (user?.role_id === 2) return "Ghat Nodal";
-                    return "My Profile";
+                    return "Admin";
                   })()}
                 </span>
 

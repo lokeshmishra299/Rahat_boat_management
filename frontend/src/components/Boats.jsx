@@ -2,13 +2,19 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaShip, FaEdit, FaEye, FaListAlt, FaPlusCircle, FaCamera } from "react-icons/fa";
+import {
+  FaShip,
+  FaEdit,
+  FaEye,
+  FaListAlt,
+  FaPlusCircle,
+  FaCamera,
+} from "react-icons/fa";
 import Webcam from "react-webcam";
-import { Toaster, toast } from 'react-hot-toast';
+import { Toaster, toast } from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
 import { FaDownload } from "react-icons/fa";
 import { FaTrash } from "react-icons/fa";
-
 
 const BASE_URL = import.meta.env.VlITE_API_BASE ?? "http://localhost:8000/api";
 
@@ -26,7 +32,6 @@ const Boats = () => {
   const navigate = useNavigate();
   const [vieww, setVieww] = useState("register");
   const user = JSON.parse(localStorage.getItem("user"));
-
 
   // Webcam and geolocation states
   const webcamRef = useRef(null);
@@ -71,7 +76,8 @@ const Boats = () => {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const inputClass = "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500";
+  const inputClass =
+    "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500";
 
   const field = (k) => (e) => {
     const value = e.target.value;
@@ -84,7 +90,8 @@ const Boats = () => {
   const fieldNum = (k) => (e) =>
     setForm((f) => ({
       ...f,
-      [k]: e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value, 10)),
+      [k]:
+        e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value, 10)),
     }));
 
   // Webcam capture function
@@ -124,19 +131,19 @@ const Boats = () => {
         console.error("Location error", err);
         if (err.code === 1) {
           toast.error("Location permission denied.", { id: "location-error" });
-
         } else {
           toast.error("Failed to get location. Please check GPS access.");
         }
       }
     );
-
   };
 
   // Helper functions for geolocation
   async function getPincode(lat, lon) {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+      );
       const data = await res.json();
       return data.address.postcode || "";
     } catch {
@@ -146,7 +153,9 @@ const Boats = () => {
 
   async function getLocationFromPincode(pincode) {
     try {
-      const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const res = await fetch(
+        `https://api.postalpincode.in/pincode/${pincode}`
+      );
       const data = await res.json();
       if (data[0].Status === "Success" && data[0].PostOffice?.length > 0) {
         return `${data[0].PostOffice[0].Name}, ${data[0].PostOffice[0].District}`;
@@ -237,11 +246,11 @@ const Boats = () => {
     fd.append("owner_dob", form.dob || "");
     fd.append("owner_pincode", form.pincode || "");
 
-
     const familyNames = members.map((m) => m.name).filter(Boolean);
-    fd.append("owner_family_name", familyNames.length ? familyNames.join(",") : "");
-
-
+    fd.append(
+      "owner_family_name",
+      familyNames.length ? familyNames.join(",") : ""
+    );
 
     try {
       const { data } = await axios.post(`${BASE_URL}/boats`, fd, {
@@ -267,9 +276,9 @@ const Boats = () => {
   };
 
   const [searchParams] = useSearchParams();
-  const initialView = searchParams.get("tab") === "directory" ? "directory" : "register";
+  const initialView =
+    searchParams.get("tab") === "directory" ? "directory" : "register";
   const [view, setView] = useState(initialView); // ✅ yahi sahi hai
-
 
   useEffect(() => {
     if (user?.role_id !== 1 && user?.district_id) {
@@ -281,9 +290,6 @@ const Boats = () => {
       });
     }
   }, [user]);
-
-
-
 
   //   const [view, setView] = useState("register");
   // const [searchParams] = useSearchParams();
@@ -328,15 +334,14 @@ const Boats = () => {
         </p>
       </div>
 
-
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10">
         {/* Show only for non-admins */}
         {user?.role_id !== 1 && (
           <button
             onClick={() => setView("register")}
             className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "register"
-              ? "bg-green-600 text-white"
-              : "bg-white text-green-700 hover:bg-green-50 shadow"
+                ? "bg-green-600 text-white"
+                : "bg-white text-green-700 hover:bg-green-50 shadow"
               }`}
           >
             <FaPlusCircle /> Register New Boat
@@ -350,15 +355,13 @@ const Boats = () => {
             loadBoats(); // Ensure this is defined and fetching properly
           }}
           className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "directory"
-            ? "bg-sky-600 text-white"
-            : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
+              ? "bg-sky-600 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
             }`}
         >
           <FaListAlt /> Boat Directory
         </button>
       </div>
-
-
 
       {/* Camera Modal */}
       {showCamera && (
@@ -368,14 +371,15 @@ const Boats = () => {
             screenshotFormat="image/jpeg"
             className="rounded-lg shadow-lg max-w-full w-96"
             videoConstraints={{ facingMode: "environment" }}
-
             onUserMediaError={(err) => {
               console.error("Camera permission error", err);
-              toast.error("Camera access denied. Please allow camera permission in your browser settings.", {
-                id: "camera-error",
-              });
+              toast.error(
+                "Camera access denied. Please allow camera permission in your browser settings.",
+                {
+                  id: "camera-error",
+                }
+              );
             }}
-
             onUserMedia={() => {
               console.log("Camera access granted");
             }}
@@ -419,14 +423,34 @@ const Boats = () => {
               >
                 <FaCamera className="inline mr-2" /> Capture Photo
               </button>
+
+              {/* <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition inline-block text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setPhotoName(file.name);
+                      setPhotoFile(file);
+                    }
+                  }}
+                />
+                Choose Photo
+              </label> */}
             </div>
 
             {photoName && (
-              <p className="text-sm text-green-700 mt-2">Selected: {photoName}</p>
+              <p className="text-sm text-green-700 mt-2">
+                Selected: {photoName}
+              </p>
             )}
 
             {errors.image && (
-              <p className="text-red-500 text-sm text-center mt-2">{errors.image}</p>
+              <p className="text-red-500 text-sm text-center mt-2">
+                {errors.image}
+              </p>
             )}
           </div>
 
@@ -446,302 +470,317 @@ const Boats = () => {
               <img
                 src={URL.createObjectURL(photoFile)}
                 alt="Preview"
-                className="rounded shadow max-w-xs mx-auto"
+                className="rounded shadow w-[90%] max-w-[400px] object-contain"
               />
             </div>
           )}
 
           {/* Boat Registration Form */}
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="Registration Number *"
-              name="regNumber"
-              value={form.regNumber}
-              onChange={field("regNumber")}
-              error={errors.registration_no}
-              placeholder="Enter Registration Number"
-            />
+          <form onSubmit={handleSubmit} className="">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Registration Number *"
+                name="regNumber"
+                value={form.regNumber}
+                onChange={field("regNumber")}
+                error={errors.registration_no}
+                placeholder="Enter Registration Number"
+              />
 
-            {!user?.role_id && (
+              {!user?.role_id && (
+                <div>
+                  <label className="text-sm font-medium mb-1">District *</label>
+                  <select
+                    name="district"
+                    value={form.district}
+                    onChange={field("district")}
+                    className={inputClass}
+                  >
+                    {loadingDistricts ? (
+                      <option>Loading...</option>
+                    ) : districtError ? (
+                      <option>{districtError}</option>
+                    ) : (
+                      <>
+                        <option value="">Select District</option>
+                        {districts.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.district_name}
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                  {errors.district_id && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.district_id}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <Input
+                label="Pilot Name *"
+                name="pilotName"
+                value={form.pilotName}
+                onChange={field("pilotName")}
+                error={errors.pilot_name}
+                placeholder="Enter Pilot Name"
+              />
+
+              <Select
+                label="Boat Type *"
+                name="type"
+                value={form.type}
+                onChange={field("type")}
+                options={["Hybrid", "Engine Driven", "Manual (Paddle/Oar)"]}
+                error={errors.boat_type}
+              />
+
+              {(form.type === "Hybrid" || form.type === "Engine Driven") && (
+                <div className="sm:col-span-2 md:col-span-2">
+                  <Input
+                    label="Engine Details"
+                    name="engine"
+                    value={form.engine}
+                    onChange={field("engine")}
+                    placeholder="Enter Engine Details"
+                  />
+                </div>
+              )}
+
+              <Input
+                label="Pilot License Number *"
+                name="license"
+                value={form.license}
+                onChange={field("license")}
+                error={errors.pilot_license_no}
+                placeholder="Enter License Number"
+              />
+
+              <Input
+                label="Support Staff Count *"
+                name="staffCount"
+                type="number"
+                min="0"
+                value={form.staffCount}
+                onChange={fieldNum("staffCount")}
+                error={errors.support_staff}
+                placeholder="Enter Staff Count"
+              />
+
+              <Input
+                label="Passenger Capacity *"
+                name="capacity"
+                type="number"
+                min="0"
+                value={form.capacity}
+                onChange={fieldNum("capacity")}
+                error={errors.passenger_capacity}
+                placeholder="Enter Capacity"
+              />
+
+              <Input
+                label="Year of Manufacture"
+                name="year"
+                type="number"
+                min="1950"
+                max={new Date().getFullYear()}
+                value={form.year}
+                onChange={fieldNum("year")}
+                error={errors.year_of_manufacture}
+                placeholder="Enter Year"
+              />
+
               <div>
-                <label className="text-sm font-medium mb-1">District *</label>
+                <label className="text-sm font-medium mb-1">Ghat *</label>
                 <select
-                  name="district"
-                  value={form.district}
-                  onChange={field("district")}
+                  name="ghat"
+                  value={form.ghat}
+                  onChange={field("ghat")}
                   className={inputClass}
+                  disabled={!form.district}
                 >
-                  {loadingDistricts ? (
+                  {!form.district ? (
+                    <option>Select district first</option>
+                  ) : loadingGhaats ? (
                     <option>Loading...</option>
-                  ) : districtError ? (
-                    <option>{districtError}</option>
+                  ) : ghaatError ? (
+                    <option>{ghaatError}</option>
                   ) : (
                     <>
-                      <option value="">Select District</option>
-                      {districts.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.district_name}
-                        </option>
-                      ))}
+                      <option value="">Select Ghat</option>
+                      {ghaats
+                        .filter((g) => g.district_id == form.district)
+                        .map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.ghaat_name}
+                          </option>
+                        ))}
                     </>
                   )}
                 </select>
-                {errors.district_id && (
-                  <p className="text-red-500 text-sm mt-1">{errors.district_id}</p>
+                {errors.ghaat_id && (
+                  <p className="text-red-500 text-sm mt-1">{errors.ghaat_id}</p>
                 )}
               </div>
-            )}
 
-            <Input
-              label="Pilot Name *"
-              name="pilotName"
-              value={form.pilotName}
-              onChange={field("pilotName")}
-              error={errors.pilot_name}
-              placeholder="Enter Pilot Name"
-            />
-
-            <Select
-              label="Boat Type *"
-              name="type"
-              value={form.type}
-              onChange={field("type")}
-              options={["Hybrid", "Engine Driven", "Manual (Paddle/Oar)"]}
-              error={errors.boat_type}
-            />
-
-            {(form.type === "Hybrid" || form.type === "Engine Driven") && (
-  <div className="sm:col-span-2 md:col-span-2">
-    <Input
-      label="Engine Details"
-      name="engine"
-      value={form.engine}
-      onChange={field("engine")}
-      placeholder="Enter Engine Details"
-    />
-  </div>
-)}
-
-
-
-            <Input
-              label="Pilot License Number *"
-              name="license"
-              value={form.license}
-              onChange={field("license")}
-              error={errors.pilot_license_no}
-              placeholder="Enter License Number"
-            />
-
-            <Input
-              label="Support Staff Count *"
-              name="staffCount"
-              type="number"
-              min="0"
-              value={form.staffCount}
-              onChange={fieldNum("staffCount")}
-              error={errors.support_staff}
-              placeholder="Enter Staff Count"
-            />
-
-
-            <Input
-              label="Passenger Capacity *"
-              name="capacity"
-              type="number"
-              min="0"
-              value={form.capacity}
-              onChange={fieldNum("capacity")}
-              error={errors.passenger_capacity}
-              placeholder="Enter Capacity"
-            />
-
-            <Input
-              label="Year of Manufacture"
-              name="year"
-              type="number"
-              min="1950"
-              max={new Date().getFullYear()}
-              value={form.year}
-              onChange={fieldNum("year")}
-              error={errors.year_of_manufacture}
-              placeholder="Enter Year"
-            />
-
-            <div>
-              <label className="text-sm font-medium mb-1">Ghat *</label>
-              <select
-                name="ghat"
-                value={form.ghat}
-                onChange={field("ghat")}
-                className={inputClass}
-                disabled={!form.district}
-              >
-                {!form.district ? (
-                  <option>Select district first</option>
-                ) : loadingGhaats ? (
-                  <option>Loading...</option>
-                ) : ghaatError ? (
-                  <option>{ghaatError}</option>
-                ) : (
-                  <>
-                    <option value="">Select Ghat</option>
-                    {ghaats
-                      .filter((g) => g.district_id == form.district)
-                      .map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.ghaat_name}
-                        </option>
-                      ))}
-                  </>
-                )}
-              </select>
-              {errors.ghaat_id && (
-                <p className="text-red-500 text-sm mt-1">{errors.ghaat_id}</p>
-              )}
+              <Select
+                label="Registration Authority *"
+                name="authority"
+                value={form.authority}
+                onChange={field("authority")}
+                options={[
+                  "District Collector",
+                  "Sub-Divisional Magistrate",
+                  "Circle Officer",
+                  "Block Development Officer",
+                ]}
+                error={errors.registration_authority}
+              />
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/*  Boat Owner */}
+              <h1 className="text-2xl font-bold mb-6 text-green-500  mt-10">
+                Boat Owner Details
+              </h1>
+              {/* <div className="grid grid-cols-1 md:grid-cols-1 gap-6"> */}
 
-            <Select
-              label="Registration Authority *"
-              name="authority"
-              value={form.authority}
-              onChange={field("authority")}
-              options={[
-                "District Collector",
-                "Sub-Divisional Magistrate",
-                "Circle Officer",
-                "Block Development Officer",
-              ]}
-              error={errors.registration_authority}
-            />
+              {/* Inputs Grid */}
+              <h1 className="hidden md:block text-white">.</h1>
 
-            {/*  Boat Owner */}
-            <h1 className="text-2xl font-bold mb-6 text-green-500  mt-10">Boat Owner Details</h1>
-            {/* <div className="grid grid-cols-1 md:grid-cols-1 gap-6"> */}
+              <Input
+                label="Name *"
+                value={form.name}
+                onChange={(e) => {
+                  const onlyLetters = e.target.value.replace(/[0-9]/g, ""); // remove numbers
+                  field("name")({ target: { value: onlyLetters } });
+                }}
+                error={errors.owner_name}
+                placeholder="Enter Name"
+              />
 
-            {/* Inputs Grid */}
-            <h1 className="hidden md:block text-white">.</h1>
+              <Input
+                label="Email *"
+                type="email"
+                value={form.email}
+                onChange={field("email")}
+                error={errors.owner_email}
+                placeholder="Enter Email Address"
+              />
 
+              <Input
+                label="Contact No *"
+                type="tel" // better than "number" for mobile and to prevent spinner
+                value={form.contact}
+                onChange={(e) => {
+                  const input = e.target.value;
+                  const onlyDigits = input.replace(/\D/g, ""); // remove non-digits
+                  if (onlyDigits.length <= 10) {
+                    fieldNum("contact")({ target: { value: onlyDigits } });
+                  }
+                }}
+                error={errors.owner_number}
+                placeholder="Enter Contact Number"
+              />
 
-            <Input
-              label="Name *"
-              value={form.name}
-              onChange={field("name")}
-              error={errors.owner_name}
-            />
+              <Input
+                label="Aadhar No"
+                type="tel"
+                value={form.adhar}
+                onChange={(e) => {
+                  const input = e.target.value;
+                  const onlyDigits = input.replace(/\D/g, ""); // remove all non-digits
+                  if (onlyDigits.length <= 12) {
+                    fieldNum("adhar")({ target: { value: onlyDigits } });
+                  }
+                }}
+                error={errors.owner_adhar_no}
+                placeholder="Enter Aadhar Number"
+              />
 
+              <Input
+                label="No of Boats Owned"
+                type="number"
+                value={form.no_of_boats}
+                onChange={fieldNum("no_of_boats")}
+                error={errors.owner_boat_owned}
+                placeholder="Enter Number of Boats"
+              />
 
+              <Input
+                label="Date of Birth *"
+                type="date"
+                value={form.dob}
+                onChange={field("dob")}
+                error={errors.owner_dob}
+                placeholder="Select Date of Birth"
+              />
 
+              <Input
+                label="Pincode"
+                type="tel" // use "tel" instead of "number" to avoid issues with symbols like 'e', '+', etc.
+                value={form.pincode}
+                onChange={(e) => {
+                  const input = e.target.value;
+                  const onlyDigits = input.replace(/\D/g, ""); // Remove non-digit characters
+                  if (onlyDigits.length <= 6) {
+                    fieldNum("pincode")({ target: { value: onlyDigits } });
+                  }
+                }}
+                error={errors.owner_pincode}
+                placeholder="Enter Pincode"
+              />
 
+              <h1 className="hidden md:block text-white">.</h1>
 
+              {/* Add Family  */}
+              <div className="mt-6 col-span-1">
+                <label className="font-medium text-lg block mb-4 text-sky-700">
+                  Family Members
+                </label>
 
-            <Input
-              label="Email *"
-              type="email"
-              value={form.email}
-              onChange={field("email")}
-              error={errors.owner_email}
-              placeholder="Enter Email Address"
-            />
-
-            <Input
-              label="Contact No *"
-              type="number"
-              value={form.contact}
-              onChange={fieldNum("contact")}
-              error={errors.owner_number}
-              placeholder="Enter Contact Number"
-            />
-
-
-            <Input
-              label="Aadhar No"
-              type="number"
-              value={form.adhar}
-              onChange={fieldNum("adhar")}
-              error={errors.owner_adhar_no}
-              placeholder="Enter Aadhar Number"
-            />
-
-            <Input
-              label="No of Boats Owned"
-              type="number"
-              value={form.no_of_boats}
-              onChange={fieldNum("no_of_boats")}
-              error={errors.owner_boat_owned}
-              placeholder="Enter Number of Boats"
-            />
-
-            <Input
-              label="Date of Birth *"
-              type="date"
-              value={form.dob}
-              onChange={field("dob")}
-              error={errors.owner_dob}
-              placeholder="Select Date of Birth"
-            />
-
-            <Input
-              label="Pincode "
-              type="number"
-              value={form.pincode}
-              onChange={fieldNum("pincode")}
-              error={errors.owner_pincode}
-              placeholder="Enter Pincode"
-            />
-            <h1 className="hidden md:block text-white">.</h1>
-
-
-
-            {/* Add Family  */}
-            <div className="mt-6 col-span-1">
-              <label className="font-medium text-lg block mb-4 text-sky-700">
-                Family Members
-              </label>
-
-              {members.map((member, index) => (
-                <div
-                  key={index}
-                  className="grid md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded border mb-4 items-center"
-                >
-                  <div className="col-span-1">
-                    <input
-                      type="text"
-                      placeholder="Name"
-                      value={member.name}
-                      onChange={(e) => handleChange(index, e.target.value)}
-                      className="w-full p-2 border rounded"
-                    />
-                  </div>
-
-                  {/* Remove Button */}
-                  <button
-                    type="button"
-                    onClick={() => removeMember(index)}
-                    className="text-red-600 hover:text-red-800"
-                    title="Remove"
+                {members.map((member, index) => (
+                  <div
+                    key={index}
+                    className="grid md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded border mb-4 items-center"
                   >
-                    <FaTrash />
-                  </button>
-                </div>
-              ))}
+                    <div className="col-span-1">
+                      <input
+                        type="text"
+                        placeholder="Name"
+                        value={member.name}
+                        onChange={(e) => handleChange(index, e.target.value)}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
 
-              <button
-                type="button"
-                onClick={addMember}
-                className="mt-2 px-4 py-2 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700"
-              >
-                Add Family Member
-              </button>
+                    {/* Remove Button */}
+                    <button
+                      type="button"
+                      onClick={() => removeMember(index)}
+                      className="text-red-600 hover:text-red-800"
+                      title="Remove"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addMember}
+                  className="mt-2 px-4 py-2 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700"
+                >
+                  Add Family Member
+                </button>
+              </div>
             </div>
-
-
-
-
-
 
             <div className="md:col-span-2">
-              <label className="text-sm font-medium mb-1">Additional Remarks</label>
+              <label className="text-sm font-medium mb-1">
+                Additional Remarks
+              </label>
               <textarea
                 name="additionalInfo"
                 value={form.additionalInfo}
@@ -783,7 +822,7 @@ const Boats = () => {
                   "Pilot",
                   "Boat Type",
                   "District",
-                  "Status"
+                  "Status",
                 ];
 
                 const rows = boats.map((boat, index) => [
@@ -791,20 +830,25 @@ const Boats = () => {
                   `"${boat.registration_no}"`,
                   `"${boat.pilot_name}"`,
                   `"${boat.boat_type}"`,
-                  `"${boat.district?.district_name || 'N/A'}"`,
-                  `"${boat.status || 'Active'}"`
+                  `"${boat.district?.district_name || "N/A"}"`,
+                  `"${boat.status || "Active"}"`,
                 ]);
 
                 const csvContent = [
                   headers.join(","),
-                  ...rows.map(row => row.join(","))
+                  ...rows.map((row) => row.join(",")),
                 ].join("\n");
 
-                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                const blob = new Blob([csvContent], {
+                  type: "text/csv;charset=utf-8;",
+                });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
                 link.setAttribute("href", url);
-                link.setAttribute("download", `boat_report_${new Date().toISOString().slice(0, 10)}.csv`);
+                link.setAttribute(
+                  "download",
+                  `boat_report_${new Date().toISOString().slice(0, 10)}.csv`
+                );
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -851,8 +895,8 @@ const Boats = () => {
                       <td className="px-4 py-2">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${boat.status === "Active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
                             }`}
                         >
                           {boat.status || "Active"}
@@ -862,9 +906,12 @@ const Boats = () => {
                         {/* View button (always visible) */}
                         <button
                           onClick={() =>
-                            navigate(`/dashboard/boats/boatdetailsone/${boat.id}`, {
-                              state: { ...boat, readOnly: true },
-                            })
+                            navigate(
+                              `/dashboard/boats/boatdetailsone/${boat.id}`,
+                              {
+                                state: { ...boat, readOnly: true },
+                              }
+                            )
                           }
                           className="text-sky-600 hover:text-sky-800 ml-1"
                           title="View"
@@ -874,9 +921,12 @@ const Boats = () => {
                         {user?.role_id !== 1 && (
                           <button
                             onClick={() =>
-                              navigate(`/dashboard/boats/boatdetails/${boat.id}`, {
-                                state: boat,
-                              })
+                              navigate(
+                                `/dashboard/boats/boatdetails/${boat.id}`,
+                                {
+                                  state: boat,
+                                }
+                              )
                             }
                             className="text-green-600 hover:text-green-800"
                             title="Edit"
@@ -885,7 +935,6 @@ const Boats = () => {
                           </button>
                         )}
                       </td>
-
                     </tr>
                   ))}
                 </tbody>

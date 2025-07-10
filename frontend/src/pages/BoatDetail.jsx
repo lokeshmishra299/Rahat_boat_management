@@ -4,6 +4,7 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaCamera, FaTrash } from "react-icons/fa";
 import Webcam from "react-webcam";
+import toast from "react-hot-toast";
 
 /* ---------- API ---------- */
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
@@ -225,15 +226,17 @@ export default function BoatDetail() {
         if (r.data?.status === "success") {
           setBoat(r.data.data);
           setDraft(r.data.data);
+          toast.success("Boat Updated successfully");
           navigate("/dashboard/boats");
         }
       })
       .catch((err) => {
         if (err.response?.data?.status === "error" && err.response?.data?.data) {
           setErrors(err.response.data.data);
-        } else {
-          alert("Could not save image");
-        }
+        } 
+        // else {
+        // ("Could not save image");
+        // }
       })
       .finally(() => setSaving(false));
   };

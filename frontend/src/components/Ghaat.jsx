@@ -5,12 +5,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaWater, FaPlusCircle, FaListAlt, FaCamera } from "react-icons/fa";
 import Webcam from "react-webcam";
-import { Toaster, toast } from 'react-hot-toast';
+import { Toaster, toast } from "react-hot-toast";
 import { FaEye, FaEdit } from "react-icons/fa";
 import { FaDownload } from "react-icons/fa";
-
-
-
 
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
 
@@ -24,12 +21,13 @@ const api = axios.create({
   },
 });
 
-const inputClass = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition";
+const inputClass =
+  "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition";
 const statusMap = {
-  "0": "Operational",
-  "1": "Not Operational",
-  "2": "Under Maintenance",
-  "3": "Closed",
+  0: "Operational",
+  1: "Not Operational",
+  2: "Under Maintenance",
+  3: "Closed",
 };
 
 export default function Ghaat() {
@@ -39,10 +37,9 @@ export default function Ghaat() {
 
   const user = JSON.parse(localStorage.getItem("user"));
 
-
-
   const [searchParams] = useSearchParams();
-  const initialView = searchParams.get("tab") === "directory" ? "directory" : "register";
+  const initialView =
+    searchParams.get("tab") === "directory" ? "directory" : "register";
   const [view, setView] = useState(initialView);
 
   useEffect(() => {
@@ -55,8 +52,6 @@ export default function Ghaat() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-
 
   // Webcam and geolocation states
   const webcamRef = useRef(null);
@@ -124,7 +119,9 @@ export default function Ghaat() {
   // Helper functions for geolocation
   async function getPincode(lat, lon) {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+      );
       const data = await res.json();
       return data.address.postcode || "";
     } catch {
@@ -134,7 +131,9 @@ export default function Ghaat() {
 
   async function getLocationFromPincode(pincode) {
     try {
-      const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const res = await fetch(
+        `https://api.postalpincode.in/pincode/${pincode}`
+      );
       const data = await res.json();
       if (data[0].Status === "Success" && data[0].PostOffice?.length > 0) {
         return `${data[0].PostOffice[0].Name}, ${data[0].PostOffice[0].District}`;
@@ -148,7 +147,6 @@ export default function Ghaat() {
   useEffect(() => {
     if (user?.role_id === 2 && user?.district_id) {
       setFormData((prev) => ({
-
         ...prev,
         district: user.district_id.toString(),
       }));
@@ -180,15 +178,15 @@ export default function Ghaat() {
       const { data } = await api.get("/ghaat-list");
       const list = Array.isArray(data.data)
         ? data.data.map((d) => ({
-          id: d.id,
-          name: d.ghaat_name,
-          district: d.district_record?.district_name || d.district_id,
-          river: d.river_record?.name || d.river_id,
-          boatsAssigned: `${d.registered_boats_count}/${d.boat_capacity}`,
-          capacity: d.boat_capacity,
-          status: statusMap[d.status] ?? "Operational",
-          raw: d,
-        }))
+            id: d.id,
+            name: d.ghaat_name,
+            district: d.district_record?.district_name || d.district_id,
+            river: d.river_record?.name || d.river_id,
+            boatsAssigned: `${d.registered_boats_count}/${d.boat_capacity}`,
+            capacity: d.boat_capacity,
+            status: statusMap[d.status] ?? "Operational",
+            raw: d,
+          }))
         : [];
       setGhaats(list);
     } catch {
@@ -203,7 +201,8 @@ export default function Ghaat() {
   }, [view, fetchGhaatList]);
 
   // Form handlers
-  const handleChange = (e) => setFormData((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const handleChange = (e) =>
+    setFormData((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   const handleNumeric = (key) => (e) =>
     setFormData((f) => ({
@@ -288,7 +287,6 @@ export default function Ghaat() {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50 to-white px-4 sm:px-12 py-10">
       <Toaster position="top-right" reverseOrder={false} />
@@ -311,10 +309,11 @@ export default function Ghaat() {
         {user?.role_id !== 1 && (
           <button
             onClick={() => setView("register")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "register"
-              ? "bg-indigo-600 text-white"
-              : "bg-white text-indigo-700 hover:bg-indigo-50 shadow"
-              }`}
+            className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
+              view === "register"
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-indigo-700 hover:bg-indigo-50 shadow"
+            }`}
           >
             <FaPlusCircle /> Register New Ghat
           </button>
@@ -326,10 +325,11 @@ export default function Ghaat() {
             setView("directory");
             fetchGhaatList();
           }}
-          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "directory"
-            ? "bg-sky-600 text-white"
-            : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
-            }`}
+          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
+            view === "directory"
+              ? "bg-sky-600 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
+          }`}
         >
           <FaListAlt /> Ghat Directory
         </button>
@@ -337,7 +337,6 @@ export default function Ghaat() {
 
       {/* Register View */}
       {view === "register" && user?.role_id !== 1 && (
-
         <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border">
           {/* Photo Upload Section */}
           <div className="bg-indigo-50 border border-dashed border-indigo-300 rounded-lg p-6 text-center mb-8">
@@ -379,11 +378,15 @@ export default function Ghaat() {
             </div>
 
             {photoName && (
-              <p className="text-sm text-indigo-700 mt-2">Selected: {photoName}</p>
+              <p className="text-sm text-indigo-700 mt-2">
+                Selected: {photoName}
+              </p>
             )}
 
             {errors.photoPath && (
-              <p className="text-red-500 text-sm text-center mt-2">{errors.photoPath}</p>
+              <p className="text-red-500 text-sm text-center mt-2">
+                {errors.photoPath}
+              </p>
             )}
           </div>
 
@@ -423,63 +426,63 @@ export default function Ghaat() {
 
           {/* Photo Preview */}
           {photoFile && (
-            <div className="mb-6 text-center">
+            <div className="mb-6 flex justify-center">
               <img
                 src={URL.createObjectURL(photoFile)}
                 alt="Preview"
-                className="rounded shadow max-w-xs mx-auto"
+                className="rounded shadow w-[90%] max-w-[400px] object-contain"
               />
             </div>
           )}
 
           {/* Ghaat Registration Form */}
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Input
-              label="Ghat Name *"
-              name="ghatName"
-              value={formData.ghatName}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (/^[a-zA-Z\s.-]*$/.test(val)) {
-                  handleChange(e);
-                }
-              }}
-              err={errors.ghatName}
-              placeholder="Enter Ghat Name"
-            />
-
-            {user?.role_id === 2 ? (
-              // Hidden input only – nothing shown on screen
-              <input
-                type="hidden"
-                name="district"
-                value={formData.district}
+          <form onSubmit={handleSubmit} className="">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Input
+                label="Ghat Name *"
+                name="ghatName"
+                value={formData.ghatName}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^[a-zA-Z\s.-]*$/.test(val)) {
+                    handleChange(e);
+                  }
+                }}
+                err={errors.ghatName}
+                placeholder="Enter Ghat Name"
               />
-            ) : (
+
+              {user?.role_id === 2 ? (
+                // Hidden input only – nothing shown on screen
+                <input
+                  type="hidden"
+                  name="district"
+                  value={formData.district}
+                />
+              ) : (
+                <Select
+                  label="District *"
+                  name="district"
+                  value={formData.district}
+                  onChange={handleChange}
+                  err={errors.district}
+                  options={districts.map((d) => ({
+                    value: d.id,
+                    label: d.district_name,
+                  }))}
+                />
+              )}
+
               <Select
-                label="District *"
-                name="district"
-                value={formData.district}
+                label="River *"
+                name="riverName"
+                value={formData.riverName}
                 onChange={handleChange}
-                err={errors.district}
-                options={districts.map((d) => ({
-                  value: d.id,
-                  label: d.district_name,
-                }))}
+                err={errors.riverName}
+                options={rivers.map((r) => ({ value: r.id, label: r.name }))}
               />
-            )}
 
-
-            <Select
-              label="River *"
-              name="riverName"
-              value={formData.riverName}
-              onChange={handleChange}
-              err={errors.riverName}
-              options={rivers.map((r) => ({ value: r.id, label: r.name }))}
-            />
-
-            <Input
+              {/* <Input
               label="Boat Capacity *"
               name="boatCapacity"
               value={formData.boatCapacity}
@@ -488,32 +491,47 @@ export default function Ghaat() {
               type="number"
               inputMode="numeric"
               placeholder="Enter Boat Capacity"
-            />
+            /> */}
 
-            <Select
-              label="Road Accessibility"
-              name="roadAccessibility"
-              value={formData.roadAccessibility}
-              onChange={handleChange}
-              err={errors.roadAccessibility}
-              options={[
-                { value: "Excellent(Paved Road)", label: "Excellent(Paved Road)" },
-                { value: "Good(Metalled Road)", label: "Good(Metalled Road)" },
-                { value: "FairGravel Road)", label: "Fair(Gravel Road)" },
-                { value: "Poor(Kutcha Road)", label: "Poor(Kutcha Road)" },
-              ]}
-            />
+              <Select
+                label="Road Accessibility"
+                name="roadAccessibility"
+                value={formData.roadAccessibility}
+                onChange={handleChange}
+                err={errors.roadAccessibility}
+                options={[
+                  {
+                    value: "Excellent(Paved Road)",
+                    label: "Excellent(Paved Road)",
+                  },
+                  {
+                    value: "Good(Metalled Road)",
+                    label: "Good(Metalled Road)",
+                  },
+                  { value: "FairGravel Road)", label: "Fair(Gravel Road)" },
+                  { value: "Poor(Kutcha Road)", label: "Poor(Kutcha Road)" },
+                ]}
+              />
 
+              <Input
+                label="Available Facilities"
+                name="availableFacilities"
+                value={formData.availableFacilities}
+                onChange={handleChange}
+                err={errors.availableFacilities}
+                placeholder="Enter Available Facilities"
+              />
 
-            <Input
-              label="Available Facilities"
-              name="availableFacilities"
-              value={formData.availableFacilities}
-              onChange={handleChange}
-              err={errors.availableFacilities}
-              placeholder="Enter Available Facilities"
-            />
-
+              <Input
+                label="Nearest Hospital"
+                name="nearestHospital"
+                value={formData.nearestHospital}
+                onChange={handleChange}
+                // err={errors.nearestHospital}
+                className="md:col-span-1"
+                placeholder="Enter Nearest Hospital"
+              />
+            </div>
             {/* <Input
               label="Contact Number *"
               name="contactNumber"
@@ -538,18 +556,55 @@ export default function Ghaat() {
               placeholder="Enter Contact Person"
             /> */}
 
-            <Input
-              label="Nearest Hospital"
-              name="nearestHospital"
-              value={formData.nearestHospital}
-              onChange={handleChange}
-              // err={errors.nearestHospital}
-              className="md:col-span-1"
-              placeholder="Enter Nearest Hospital"
-            />
+            <div className="my-8">
+              <h1 className="text-xl font-bold  text-indigo-700 ">Nearest Police Station</h1>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
+                {/* Police Station Name */}
+                <Input
+                  label="Name*"
+                  name="policeStationName"
+                  value={formData.policeStationName}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^[a-zA-Z\s.-]*$/.test(val)) {
+                      handleChange(e);
+                    }
+                  }}
+                  err={errors.policeStationName}
+                  placeholder="Enter Police Station Name"
+                />
+
+                {/* Mobile Number */}
+                <Input
+                  label="Mobile No*"
+                  name="policeStationMobile"
+                  value={formData.policeStationMobile}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d{0,10}$/.test(val)) {
+                      handleChange(e);
+                    }
+                  }}
+                  err={errors.policeStationMobile}
+                  placeholder="Enter Mobile Number"
+                />
+
+                {/* Full Address */}
+                <Input
+                  label="Full Address*"
+                  name="policeStationAddress"
+                  value={formData.policeStationAddress}
+                  onChange={handleChange}
+                  err={errors.policeStationAddress}
+                  placeholder="Enter Full Address"
+                />
+              </div>
+            </div>
 
             <div className="md:col-span-3">
-              <label className="block text-sm font-medium mb-1">Additional Info</label>
+              <label className="block text-sm font-medium mb-1">
+                Additional Info
+              </label>
               <textarea
                 name="additionalInfo"
                 rows={3}
@@ -559,7 +614,9 @@ export default function Ghaat() {
                 className={inputClass}
               />
               {errors.additionalInfo && (
-                <p className="text-red-500 text-sm mt-1">{errors.additionalInfo}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.additionalInfo}
+                </p>
               )}
             </div>
 
@@ -567,8 +624,9 @@ export default function Ghaat() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-2 rounded-full ${loading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-2 rounded-full ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 {loading ? "Saving..." : "Register Ghat"}
               </button>
@@ -595,7 +653,7 @@ export default function Ghaat() {
                   "River",
                   "Boats Assigned",
                   "Capacity",
-                  "Status"
+                  "Status",
                 ];
 
                 // Prepare CSV rows
@@ -606,21 +664,26 @@ export default function Ghaat() {
                   `"${g.river}"`,
                   `"${g.boatsAssigned}"`,
                   `"${g.capacity}"`,
-                  `"${g.status}"`
+                  `"${g.status}"`,
                 ]);
 
                 // Combine headers and rows
                 const csvContent = [
                   headers.join(","),
-                  ...rows.map(row => row.join(","))
+                  ...rows.map((row) => row.join(",")),
                 ].join("\n");
 
                 // Create and trigger download
-                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                const blob = new Blob([csvContent], {
+                  type: "text/csv;charset=utf-8;",
+                });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
                 link.setAttribute("href", url);
-                link.setAttribute("download", `ghaats_report_${new Date().toISOString().slice(0, 10)}.csv`);
+                link.setAttribute(
+                  "download",
+                  `ghaats_report_${new Date().toISOString().slice(0, 10)}.csv`
+                );
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -639,24 +702,37 @@ export default function Ghaat() {
                 <thead className="bg-gray-100 text-gray-700">
                   <tr>
                     <th className="px-6 py-3 font-bold text-center">Sr.No</th>
-                    <th className="px-6 py-3 font-bold text-center">Ghat Name</th>
-                    <th className="px-6 py-3 font-bold text-center">District</th>
+                    <th className="px-6 py-3 font-bold text-center">
+                      Ghat Name
+                    </th>
+                    <th className="px-6 py-3 font-bold text-center">
+                      District
+                    </th>
                     <th className="px-6 py-3 font-bold text-center">River</th>
-                    <th className="px-6 py-3 font-bold text-center">Boats Assigned</th>
-                    <th className="px-6 py-3 font-bold text-center">Capacity</th>
+                    <th className="px-6 py-3 font-bold text-center">
+                      Boats Assigned
+                    </th>
+                    {/* <th className="px-6 py-3 font-bold text-center">Capacity</th> */}
                     <th className="px-6 py-3 font-bold text-center">Status</th>
                     <th className="px-6 py-3 font-bold text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {ghaats.map((g, idx) => (
-                    <tr key={g.id} className="hover:bg-gray-50 transition duration-150">
+                    <tr
+                      key={g.id}
+                      className="hover:bg-gray-50 transition duration-150"
+                    >
                       <td className="px-6 py-4 text-center">{idx + 1}</td>
-                      <td className="px-6 py-4 font-semibold text-center">{g.name}</td>
+                      <td className="px-6 py-4 font-semibold text-center">
+                        {g.name}
+                      </td>
                       <td className="px-6 py-4 text-center">{g.district}</td>
                       <td className="px-6 py-4 text-center">{g.river}</td>
-                      <td className="px-6 py-4 text-center">{g.boatsAssigned}</td>
-                      <td className="px-6 py-4 text-center">{g.capacity}</td>
+                      <td className="px-6 py-4 text-center">
+                        {g.boatsAssigned}
+                      </td>
+                      {/* <td className="px-6 py-4 text-center">{g.capacity}</td> */}
                       <td className="px-6 py-4 text-center">
                         <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-green-700 text-center">
                           {g.status}
@@ -666,9 +742,12 @@ export default function Ghaat() {
                         <div className="flex gap-4 justify-center">
                           <button
                             onClick={() =>
-                              navigate(`/dashboard/ghats/ghatdetailsview/${g.id}`, {
-                                state: { ...g.raw, readOnly: true },
-                              })
+                              navigate(
+                                `/dashboard/ghats/ghatdetailsview/${g.id}`,
+                                {
+                                  state: { ...g.raw, readOnly: true },
+                                }
+                              )
                             }
                             className="flex items-center gap-1  text-indigo-600 hover:underline"
                           >
@@ -677,7 +756,10 @@ export default function Ghaat() {
                           {user?.role_id !== 1 && (
                             <button
                               onClick={() =>
-                                navigate(`/dashboard/ghats/ghatdetails/${g.id}`, { state: g.raw })
+                                navigate(
+                                  `/dashboard/ghats/ghatdetails/${g.id}`,
+                                  { state: g.raw }
+                                )
                               }
                               className="flex items-center gap-1 text-emerald-600 hover:underline"
                             >
@@ -699,7 +781,17 @@ export default function Ghaat() {
 }
 
 /* ------------ Reusable Inputs ------------ */
-function Input({ label, name, value, onChange, err, type = "text", inputMode, placeholder, className }) {
+function Input({
+  label,
+  name,
+  value,
+  onChange,
+  err,
+  type = "text",
+  inputMode,
+  placeholder,
+  className,
+}) {
   return (
     <div className={`flex flex-col ${className || ""}`}>
       <label className="block text-sm font-medium mb-1" htmlFor={name}>
@@ -729,8 +821,9 @@ function Select({ label, name, value, onChange, err, options }) {
       <select
         id={name}
         name={name}
-        className={`border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ${err ? "border-red-500" : "border-gray-300"
-          }`}
+        className={`border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ${
+          err ? "border-red-500" : "border-gray-300"
+        }`}
         value={value}
         onChange={onChange}
       >
