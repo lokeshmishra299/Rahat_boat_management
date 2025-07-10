@@ -20,22 +20,23 @@ class BoatOwnerController extends Controller
             'adhar_no'     => 'required|numeric|digits:12|unique:boat_owner,adhar_no',
             'dob'          => 'nullable|date',
             'boat_owned'   => 'nullable|integer|min:1',
+             'district_id' => 'required',
             // 'address'      => 'required|string',
             'owner_family_name' => 'nullable|array',
             'owner_family_name.*' => 'nullable|string',
 
             'pincode'      => 'nullable|digits:6',
 
-            'family'               => 'nullable|array',
-            'family.*.name'        => 'required_with:family|string',
-            // 'family.*.age'         => 'required_with:family|integer|min:1',
-            'family.*.relation'    => 'required_with:family|string',
-            'family.*.mobile'      => 'required_with:family|numeric|digits:10',
-            'family.*.adhar'       => 'required_with:family|numeric|digits:12',
+            // 'family'               => 'nullable|array',
+            // 'family.*.name'        => 'required_with:family|string',
+            // // 'family.*.age'         => 'required_with:family|integer|min:1',
+            // 'family.*.relation'    => 'required_with:family|string',
+            // 'family.*.mobile'      => 'required_with:family|numeric|digits:10',
+            // 'family.*.adhar'       => 'required_with:family|numeric|digits:12',
 
         ], [
             'name.required'           => 'Please enter the boat owner\'s name.',
-            // 'district_id.required'    => 'Please select a district.',
+            'district_id.required'    => 'Please select a district.',
             // 'district_id.exists'      => 'Selected district does not exist.',
             'number.required'         => 'Please enter the mobile number.',
             'number.numeric'          => 'Mobile number must be numeric.',
@@ -97,17 +98,6 @@ class BoatOwnerController extends Controller
             'pincode',
             'owner_family_name',
         ]));
-
-        // if ($request->has('family')) {
-        //     foreach ($request->family as $member) {
-        //         $owner->boatFamilyMembers()->create([
-        //             'name'     => $member['name'],
-        //             'adhar'    => $member['adhar'],
-        //             'mobile'   => $member['mobile'],
-        //             'relation' => $member['relation'],
-        //         ]);
-        //     }
-        // }
 
         return ApiResponse::generateResponse(
             'success',

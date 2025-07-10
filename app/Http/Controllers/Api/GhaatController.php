@@ -118,77 +118,83 @@ public function index()
 
 
 
+public function edit_ghaat(Request $request, $id)
+{
+    $ghaat = Ghaat::find($id);
 
-    public function edit_ghaat(Request $request, $id)
-    {
-        $ghaat = Ghaat::find($id);
-
-        if (!$ghaat) {
-            return ApiResponse::generateResponse('error', 'Ghaat not found', [], 404);
-        }
-
-        $request->validate([
-            'photo_path' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
-            'ghaat_name' => 'required|string',
-            'district_id' => 'required|string',
-            'river_id' => 'required|exists:rivers,id',
-            // 'boat_capacity' => 'required|integer',
-            'road_accessibility' => 'required|string',
-            'contact_person' => 'required|string',
-            'contact_number' => 'required|string',
-            'nearest_hospital' => 'required|string',
-            'available_facilities' => 'required|string',
-            'additional_info' => 'nullable|string',
-            'location' => 'nullable|string',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'pincode' => 'nullable|string|max:10',
-        ], [
-            'ghaat_name.required' => 'Ghaat name is required.',
-            'district_id.required' => 'Please select a district.',
-            'river_id.required' => 'Please select a river.',
-            'river_id.exists' => 'Selected river is invalid.',
-            // 'boat_capacity.required' => 'Boat capacity is required.',
-            // 'boat_capacity.integer' => 'Boat capacity must be a number.',
-            'road_accessibility.required' => 'Please specify road accessibility.',
-            'contact_person.required' => 'Contact person name is required.',
-            'contact_number.required' => 'Contact number is required.',
-            'nearest_hospital.required' => 'Please provide nearest hospital details.',
-            'available_facilities.required' => 'Mention at least one facility.',
-            'photo_path.image' => 'Uploaded file must be an image.',
-            'photo_path.mimes' => 'Photo must be in JPEG or PNG format.',
-            'photo_path.max' => 'Photo should not exceed 5MB in size.',
-        ]);
-
-        $photoPath = $ghaat->photo_path;
-
-        if ($request->hasFile('photo_path')) {
-            if ($ghaat->photo_path && Storage::disk('public')->exists($ghaat->photo_path)) {
-                Storage::disk('public')->delete($ghaat->photo_path);
-            }
-
-            $image = $request->file('photo_path');
-            $photoPath = $image->store('photos', 'public');
-        }
-
-        $ghaat->update([
-            'photo_path' => $photoPath,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'pincode' => $request->pincode,
-            'location' => $request->location,
-            'ghaat_name' => $request->ghaat_name,
-            'district_id' => $request->district_id,
-            'river_id' => $request->river_id,
-            // 'boat_capacity' => $request->boat_capacity,
-            'road_accessibility' => $request->road_accessibility,
-            'contact_person' => $request->contact_person,
-            'contact_number' => $request->contact_number,
-            'nearest_hospital' => $request->nearest_hospital,
-            'available_facilities' => $request->available_facilities,
-            'additional_info' => $request->additional_info,
-        ]);
-
-        return ApiResponse::generateResponse('success', 'Ghaat updated successfully', $ghaat);
+    if (!$ghaat) {
+        return ApiResponse::generateResponse('error', 'Ghaat not found', [], 404);
     }
+
+    $request->validate([
+        'photo_path' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
+        'ghaat_name' => 'required|string',
+        'district_id' => 'required|string',
+        'river_id' => 'required|exists:rivers,id',
+        'road_accessibility' => 'nullable|string',
+        'nearest_hospital' => 'required|string',
+        'available_facilities' => 'nullable|string',
+        'additional_info' => 'nullable|string',
+        'location' => 'nullable|string',
+        'latitude' => 'nullable|numeric',
+        'longitude' => 'nullable|numeric',
+        'pincode' => 'nullable|string|max:10',
+
+        // newly added fields
+        'police_station_name' => 'required|string',
+        'police_mobile' => 'required|digits:10',
+        'station_address' => 'required|string',
+    ], [
+        'ghaat_name.required' => 'Ghaat name is required.',
+        'district_id.required' => 'Please select a district.',
+        'river_id.required' => 'Please select a river.',
+        'river_id.exists' => 'Selected river is invalid.',
+        'road_accessibility.required' => 'Please specify road accessibility.',
+        'nearest_hospital.required' => 'Please provide nearest hospital details.',
+        'available_facilities.required' => 'Mention at least one facility.',
+        'photo_path.image' => 'Uploaded file must be an image.',
+        'photo_path.mimes' => 'Photo must be in JPEG or PNG format.',
+        'photo_path.max' => 'Photo should not exceed 5MB in size.',
+
+        // validation messages for new fields
+        'police_station_name.required' => 'Police station name is required.',
+        'police_mobile.required' => 'Police mobile number is required.',
+        'police_mobile.digits' => 'Police mobile must be a 10-digit number.',
+        'station_address.required' => 'Police station address is required.',
+    ]);
+
+    $photoPath = $ghaat->photo_path;
+
+    if ($request->hasFile('photo_path')) {
+        if ($ghaat->photo_path && Storage::disk('public')->exists($ghaat->photo_path)) {
+            Storage::disk('public')->delete($ghaat->photo_path);
+        }
+
+        $image = $request->file('photo_path');
+        $photoPath = $image->store('photos', 'public');
+    }
+
+    $ghaat->update([
+        'photo_path' => $photoPath,
+        'latitude' => $request->latitude,
+        'longitude' => $request->longitude,
+        'pincode' => $request->pincode,
+        'location' => $request->location,
+        'ghaat_name' => $request->ghaat_name,
+        'district_id' => $request->district_id,
+        'river_id' => $request->river_id,
+        'road_accessibility' => $request->road_accessibility,
+        'nearest_hospital' => $request->nearest_hospital,
+        'available_facilities' => $request->available_facilities,
+        'additional_info' => $request->additional_info,
+
+        // new fields
+        'police_station_name' => $request->police_station_name,
+        'police_mobile' => $request->police_mobile,
+        'station_address' => $request->station_address,
+    ]);
+
+    return ApiResponse::generateResponse('success', 'Ghaat updated successfully', $ghaat);
+}
+
 }
