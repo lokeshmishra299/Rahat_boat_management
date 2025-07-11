@@ -38,7 +38,7 @@ class RegisterBoat extends Model
         'owner_boat_owned',
         'owner_address',
         'owner_pincode',
-        // 'owner_relation',
+        'boat_owner_id',
         'owner_dob',
         'owner_family_name',
     ];
@@ -48,10 +48,15 @@ class RegisterBoat extends Model
         static::addGlobalScope(new DistrictDataScope);
     }
 
-    public function district()
-    {
-        return $this->belongsTo(District::class, 'district_id');
-    }
+    // public function district()
+    // {
+    //     return $this->belongsTo(District::class, 'district_id');
+    // }
+
+        public function district()
+{
+    return $this->hasOne(DistrictMaster::class, 'district_code', 'district_id');
+}
 
     public function ghaat()
     {

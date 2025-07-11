@@ -110,7 +110,9 @@ class BoatOwnerController extends Controller
     public function directory()
     {
 
-        $boatOwner = BoatOwner::with('district')->get();
+        $boatOwner = BoatOwner::with('district')
+        ->withCount('boats')
+        ->get();
         // dd($boatOwner->toArray());
 
         return ApiResponse::generateResponse('success', 'Boat Owner fetch successfully', $boatOwner, 200);

@@ -41,6 +41,8 @@ Route::middleware('auth:sanctum')->group(function () {
      
     Route::post('/edit-boat-details/{id}', [BoatManagement::class, 'edit']);   
 
+    Route::get('total-boat-list',[BoatManagement::class,'total_list']);
+
     Route::post('/register-ghaat', [GhaatController::class, 'store']);
     Route::get('/ghaat-list', [GhaatController::class, 'index']);
         Route::get('/ghaat-list/{id}', [GhaatController::class, 'view_list_individual']);  

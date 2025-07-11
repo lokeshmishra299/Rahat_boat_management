@@ -39,4 +39,10 @@ class BoatOwner extends Model
     {
         return $this->hasMany(BoatFamilyMember::class, 'boat_owner_id');
     }
+
+    public function boats()
+{
+    return $this->hasMany(RegisterBoat::class, 'boat_owner_id');
+}
+
 }
