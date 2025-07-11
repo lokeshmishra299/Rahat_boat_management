@@ -102,12 +102,19 @@ const user = JSON.parse(localStorage.getItem("user"));
               <MdSpaceDashboard className="inline-block mr-2 text-xl" />
               Dashboard
             </Link>
-             {user && user.role_id !== 1 && (
-            <Link to="addboatowner" className={linkCls("addboatowner", "bg-green-500")}>
-              <FaShip className="inline-block mr-2 text-lg" />
-              Boats
-            </Link>
-                 )}
+             {user && (
+  user.role_id === 1 ? (
+    <Link to="boats" className={linkCls("boats", "bg-indigo-600")}>
+      <FaShip className="inline-block mr-2 text-lg" />
+      Boats
+    </Link>
+  ) : (
+    <Link to="addboatowner" className={linkCls("addboatowner", "bg-green-500")}>
+      <FaShip className="inline-block mr-2 text-lg" />
+      Boats
+    </Link>
+  )
+)}
             <Link to="ghats" className={linkCls("ghats", "bg-sky-500")}>
               <FaWater className="inline-block mr-2 text-lg" />
               Ghats

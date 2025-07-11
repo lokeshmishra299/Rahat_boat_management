@@ -28,9 +28,10 @@ import InspectionView from "./pages/InspectionView";
 import UserListEdit from "./pages/UserListEdit";
 import UserListView from "./pages/UserListView";
 import ProtectedRoute from "./components/ProtectedRoute";
-import PublicRoute from "./components/PublicRoute";
+// import PublicRoute from "./components/PublicRoute";
 import AddBoatOwner from "./components/AddBoatOwner";
 import BoatOwners from "./components/BoatOwners";
+import BoatsDirectory from "./components/BoatsDirectory";
 
 const App = () => (
   <Routes>
@@ -38,41 +39,41 @@ const App = () => (
    <Route
       path="/"
       element={
-        <PublicRoute>
+        // <PublicRoute>
           <Login />
-        </PublicRoute>
+        // </PublicRoute>
       }
     />
     <Route
       path="/login"
       element={
-        <PublicRoute>
+        // <PublicRoute>
           <Login />
-        </PublicRoute>
+        // </PublicRoute>
       }
     />
     <Route
       path="/forgot-password"
       element={
-        <PublicRoute>
+        // <PublicRoute>
           <ForgotPassword />
-        </PublicRoute>
+        // </PublicRoute>
       }
     />
     <Route
       path="/send-otp"
       element={
-        <PublicRoute>
+        // <PublicRoute>
           <SendOtp />
-        </PublicRoute>
+        // </PublicRoute>
       }
     />
     <Route
       path="/reset-password"
       element={
-        <PublicRoute>
+        // <PublicRoute>
           <ResetPassword />
-        </PublicRoute>
+        // </PublicRoute>
       }
     />
 
@@ -92,7 +93,10 @@ const App = () => (
       <Route path="boats/boatdetailsone/:id" element={<BoatDetailone/>} />
 
 
-      <Route path="addboatowner/boats" element={<Boats />} />
+      {/* <Route path="addboatowner/boats" element={<Boats />} /> */}
+      <Route path="addboatowner/:id/boats" element={<Boats />} />
+            <Route path="boats" element={<BoatsDirectory />} />
+
       <Route path="addboatowner" element={<AddBoatOwner />} />
       <Route path="addboatowner/boat-owners" element={<BoatOwners />} />
     

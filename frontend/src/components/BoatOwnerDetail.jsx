@@ -406,7 +406,7 @@ const BoatOwner = () => {
                     `"${owner.name}"`,
                     `"${owner.district?.district_name || 'N/A'}"`,
                     `"${owner.pincode || ''}"`,
-                    `"${owner.boat_owned || ''}"`,
+                    `"${owner.boat_owned || 'N/A'}"`,
                     `"${owner.number || ''}"`
                   ]);
 

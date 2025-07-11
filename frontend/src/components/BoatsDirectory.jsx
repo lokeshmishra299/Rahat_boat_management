@@ -30,7 +30,7 @@ const api = axios.create({
   },
 });
 
-const Boats = () => {
+const BoatsDirectory = () => {
   const navigate = useNavigate();
   const { id:ownerId } = useParams();
   const [vieww, setVieww] = useState("register");
@@ -198,19 +198,18 @@ const Boats = () => {
   }, []);
 
   // Load boats
-const loadBoats = useCallback(async () => {
-  setLoadingBoats(true);
-  setBoatsError("");
-  try {
-    const { data } = await api.get(`/boat-owner/${ownerId}/boats`);
-    setBoats(Array.isArray(data.data) ? data.data : []);
-  } catch {
-    setBoatsError("Could not fetch boats.");
-  } finally {
-    setLoadingBoats(false);
-  }
-}, [ownerId]);
-
+  const loadBoats = useCallback(async () => {
+    setLoadingBoats(true);
+    setBoatsError("");
+    try {
+      const { data } = await api.get("/boat-list");
+      setBoats(Array.isArray(data) ? data : data.data || []);
+    } catch {
+      setBoatsError("Could not fetch boats.");
+    } finally {
+      setLoadingBoats(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadBoats();
@@ -288,11 +287,7 @@ try {
 }
 
   };
-
-  const [searchParams] = useSearchParams();
-  const initialView =
-    searchParams.get("tab") === "directory" ? "directory" : "register";
-  const [view, setView] = useState(initialView); // ✅ yahi sahi hai
+const [view, setView] = useState("directory");
 
   useEffect(() => {
     if (user?.role_id !== 1 && user?.district_id) {
@@ -350,18 +345,7 @@ try {
 
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10">
         {/* Show only for non-admins */}
-        {user?.role_id !== 1 && (
-          <button
-            onClick={() => setView("register")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
-              view === "register"
-                ? "bg-green-600 text-white"
-                : "bg-white text-green-700 hover:bg-green-50 shadow"
-            }`}
-          >
-            <FaPlusCircle /> Register New Boat
-          </button>
-        )}
+     
 
         {/* Always show directory button */}
         <button
@@ -872,4 +856,4 @@ const Select = ({ label, options, error, ...rest }) => (
   </div>
 );
 
-export default Boats;
+export default BoatsDirectory;

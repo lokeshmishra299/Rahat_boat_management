@@ -5,6 +5,7 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
 const token = localStorage.getItem("access_token");
+const user = JSON.parse(localStorage.getItem("user"));
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -39,7 +40,7 @@ export default function BoatDetailone() {
 
   const Info = ({ label, value, span }) => (
     <div className={`space-y-1 ${span || ""}`}>
-      <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
+      <p className="text-xs text-gray-500  tracking-wide">{label}</p>
       <div className="bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-800 border">
         {value ?? "—"}
       </div>
@@ -55,7 +56,7 @@ export default function BoatDetailone() {
       {/* Header */}
       <div className="border-b pb-4">
         <h1 className="text-3xl font-bold text-blue-700 mb-1">
-          🚤 Boat Details – {boat.registration_no}
+          🚤 Boat Details  {boat.registration_no}
         </h1>
       </div>
 
@@ -70,7 +71,9 @@ export default function BoatDetailone() {
   <Info label="Engine Details" value={boat.engine_details ?? 'N/A'} />
 )}
 
-          <Info label="District Name" value={boat.district?.district_name ?? 'N/A'} />
+          {(user?.role_id !== 1 && user?.role_id !== 2) && (
+  <Info label="District Name" value={boat.district?.district_name ?? 'N/A'} />
+)}
           <Info label="Assigned Ghat" value={boat.ghaat?.ghaat_name ?? 'N/A'} />
           
           <Info label="Pilot License No." value={boat.pilot_license_no ?? 'N/A'} />
@@ -84,7 +87,7 @@ export default function BoatDetailone() {
       </div>
 
       {/* Boat Owner Details */}
-      <div>
+      {/* <div>
         <h2 className="text-xl font-semibold mb-4">Boat Owner Details</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           <Info label="Name" value={boat.owner_name ?? 'N/A'} />
@@ -95,7 +98,7 @@ export default function BoatDetailone() {
           <Info label="Pincode" value={boat.owner_pincode ??'N/A'} />
           <Info label="No. of Boats Owned" value={boat.owner_boat_owned ?? 'N/A'} />
         </div>
-      </div>
+      </div> */}
 
       {/* Family Members */}
       {familyMembers.length > 0 && (

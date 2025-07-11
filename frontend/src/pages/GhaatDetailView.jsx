@@ -89,7 +89,7 @@ export default function GhaatDetailView() {
         {user?.role_id !== 2 && (
           <Field label="District" value={districtName} />
         )}
-        <Field label="River" value={riverName} />
+        <Field label="River/Pond/Lake/Dam" value={riverName} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-4 border-t">

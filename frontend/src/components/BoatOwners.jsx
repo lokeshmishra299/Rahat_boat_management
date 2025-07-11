@@ -6,6 +6,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
 const token = localStorage.getItem("access_token");
+const user = JSON.parse(localStorage.getItem("user"));
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -24,7 +25,7 @@ const BoatOwners = () => {
     boat_owned: "",
     dob: "",
     pincode: "",
-    district_id: "",
+   district_id: user?.role_id === 2 ? user.district_id : "",
   });
 
   const navigate = useNavigate();
@@ -172,27 +173,37 @@ useEffect(() => {
             )}
           </div>
 
-          <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    District *
-  </label>
-  <select
-    name="district_id"
-    value={form.district_id}
-    onChange={handleChange}
-    className="w-full border-2 rounded px-3 py-2 focus:border-green-500 focus:outline-none"
-  >
-    <option value="">Select District</option>
-    {districts.map((district) => (
-      <option key={district.id} value={district.id}>
-        {district.district_name}
-      </option>
-    ))}
-  </select>
-  {errors.district_id && (
-    <p className="text-red-500 text-sm mt-1">{errors.district_id}</p>
-  )}
-</div>
+         {user?.role_id === 2 ? (
+  <>
+    <input
+      type="hidden"
+      name="district_id"
+      value={form.district_id}
+    />
+  </>
+) : (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      District *
+    </label>
+    <select
+      name="district_id"
+      value={form.district_id}
+      onChange={handleChange}
+      className="w-full border-2 rounded px-3 py-2 focus:border-green-500 focus:outline-none"
+    >
+      <option value="">Select District</option>
+      {districts.map((district) => (
+        <option key={district.id} value={district.id}>
+          {district.district_name}
+        </option>
+      ))}
+    </select>
+    {errors.district_id && (
+      <p className="text-red-500 text-sm mt-1">{errors.district_id}</p>
+    )}
+  </div>
+)}
 
          
 

@@ -227,7 +227,7 @@ export default function BoatDetail() {
           setBoat(r.data.data);
           setDraft(r.data.data);
           toast.success("Boat Updated successfully");
-          navigate("/dashboard/boats");
+          navigate("/dashboard/addboatowner");
         }
       })
       .catch((err) => {
@@ -288,7 +288,7 @@ export default function BoatDetail() {
       {/* Header */}
       <div className="border-b pb-4">
         <h1 className="text-3xl font-bold text-blue-700 mb-1">
-          🚤 Boat Detail –{boat.registration_no}
+          🚤 Boat Detail {boat.registration_no}
         </h1>
       </div>
 
@@ -446,7 +446,7 @@ export default function BoatDetail() {
       </div>
 
       {/* Boat Owner Details Section */}
-      <div>
+      {/* <div>
         <h2 className="text-xl font-semibold mb-4">Details</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           <Editable
@@ -509,7 +509,7 @@ export default function BoatDetail() {
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
         </div>
-      </div>
+      </div> */}
 
       {/* Owner Family Members */}
      {/* Owner Family Members */}

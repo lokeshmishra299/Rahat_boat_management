@@ -79,9 +79,9 @@ export default function Ghaat() {
     // contactPerson: "",
     nearestHospital: "",
     additionalInfo: "",
-     policeStationName: "",
-  policeStationMobile: "",
-  policeStationAddress: "",
+    policeStationName: "",
+    policeStationMobile: "",
+    policeStationAddress: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -181,16 +181,18 @@ export default function Ghaat() {
       const { data } = await api.get("/ghaat-list");
       const list = Array.isArray(data.data)
         ? data.data.map((d) => ({
-            id: d.id,
-            name: d.ghaat_name,
-            district: d.district_record?.district_name || d.district_id,
-            river: d.river_record?.name || d.river_id,
-            boatsAssigned: `${d.registered_boats_count}/${d.boat_capacity}`,
-            capacity: d.boat_capacity,
-            status: statusMap[d.status] ?? "Operational",
-            raw: d,
-          }))
+          id: d.id,
+          name: d.ghaat_name,
+          district: d.district_record?.district_name || d.district_id,
+          riverName: d.river?.name || `River #${d.river_id}`,
+
+          boatsAssigned: `${d.registered_boats_count}/${d.boat_capacity}`,
+          capacity: d.boat_capacity,
+          status: statusMap[d.status] ?? "Operational",
+          raw: d, // Keep full object if needed
+        }))
         : [];
+
       setGhaats(list);
     } catch {
       setGhaats([]);
@@ -235,9 +237,9 @@ export default function Ghaat() {
       longitude: coords.lon,
       location: locationName,
       pincode: pincode,
-       police_station_name: formData.policeStationName,
-  police_mobile: formData.policeStationMobile,
-  station_address: formData.policeStationAddress,
+      police_station_name: formData.policeStationName,
+      police_mobile: formData.policeStationMobile,
+      station_address: formData.policeStationAddress,
     }).forEach(([k, v]) => fd.append(k, v));
     if (photoFile) fd.append("photo_path", photoFile);
 
@@ -280,8 +282,8 @@ export default function Ghaat() {
           additional_info: "additionalInfo",
           photo_path: "photoPath",
           police_station_name: "policeStationName",
-  police_mobile: "policeStationMobile",
-  station_address: "policeStationAddress",
+          police_mobile: "policeStationMobile",
+          station_address: "policeStationAddress",
         };
 
         const mappedErrors = {};
@@ -318,11 +320,10 @@ export default function Ghaat() {
         {user?.role_id !== 1 && (
           <button
             onClick={() => setView("register")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
-              view === "register"
+            className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "register"
                 ? "bg-indigo-600 text-white"
                 : "bg-white text-indigo-700 hover:bg-indigo-50 shadow"
-            }`}
+              }`}
           >
             <FaPlusCircle /> Register New Ghat
           </button>
@@ -334,11 +335,10 @@ export default function Ghaat() {
             setView("directory");
             fetchGhaatList();
           }}
-          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
-            view === "directory"
+          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "directory"
               ? "bg-sky-600 text-white"
               : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
-          }`}
+            }`}
         >
           <FaListAlt /> Ghat Directory
         </button>
@@ -483,7 +483,7 @@ export default function Ghaat() {
               )}
 
               <Select
-                label="River *"
+                label="River/Pond/Lake/Dam *"
                 name="riverName"
                 value={formData.riverName}
                 onChange={handleChange}
@@ -595,7 +595,7 @@ export default function Ghaat() {
                     }
                   }}
                   err={errors.policeStationMobile}
-                  placeholder="Enter Mobile Number"
+                  placeholder="Enter Police Station Mobile Number"
                 />
 
                 {/* Full Address */}
@@ -633,9 +633,8 @@ export default function Ghaat() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-2 rounded-full ${
-                  loading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-2 rounded-full ${loading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
               >
                 {loading ? "Saving..." : "Register Ghat"}
               </button>
@@ -717,7 +716,7 @@ export default function Ghaat() {
                     <th className="px-6 py-3 font-bold text-center">
                       District
                     </th>
-                    <th className="px-6 py-3 font-bold text-center">River</th>
+                    <th className="px-6 py-3 font-bold text-center">River/Pond/Lake/Dam</th>
                     {/* <th className="px-6 py-3 font-bold text-center">
                       Boats Assigned
                     </th> */}
@@ -737,7 +736,7 @@ export default function Ghaat() {
                         {g.name}
                       </td>
                       <td className="px-6 py-4 text-center">{g.district}</td>
-                      <td className="px-6 py-4 text-center">{g.river}</td>
+                      <td className="px-6 py-4 text-center">{g.riverName}</td>
                       {/* <td className="px-6 py-4 text-center">
                         {g.boatsAssigned}
                       </td> */}
@@ -830,9 +829,8 @@ function Select({ label, name, value, onChange, err, options }) {
       <select
         id={name}
         name={name}
-        className={`border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ${
-          err ? "border-gray-500" : "border-gray-300"
-        }`}
+        className={`border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ${err ? "border-gray-500" : "border-gray-300"
+          }`}
         value={value}
         onChange={onChange}
       >

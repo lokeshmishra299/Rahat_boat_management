@@ -274,7 +274,7 @@ export default function GhaatDetail() {
     if (k === "river_id") {
       return (
         <div>
-          <p className="text-xs uppercase text-gray-500 font-semibold mb-1">{label}</p>
+          <p className="text-xs  text-gray-500 font-semibold mb-1">{label}</p>
           {editing === k ? (
             <>
               <select
@@ -306,7 +306,7 @@ export default function GhaatDetail() {
 // Existing input for other fields
 return (
   <div>
-    <p className="text-xs uppercase text-gray-500 font-semibold mb-1">{label}</p>
+    <p className="text-xs  text-gray-500 font-semibold mb-1">{label}</p>
     {editing === k && !isReadOnly ? (
       <input
         type={isNumberOnly ? "number" : "text"}
@@ -398,7 +398,7 @@ return (
   {user?.role_id !== 2 && (
   <EditableCell k="district_id" label="District" value={draft.district_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
   )}
-  <EditableCell k="river_id" label="River" value={draft.river_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+  <EditableCell k="river_id" label="River/Pond/Lake/Dam" value={draft.river_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
 </div>
 
  <h2 className="col-span-full text-xl font-semibold text-gray-700 sm:py-8 py-5  mt-2">
@@ -432,7 +432,7 @@ return (
 
       <div className="mt-8">
   <h2 className="text-xl font-semibold text-center text-gray-700 mb-3">
-    Ghaat Photo
+    Ghat Photo
   </h2>
 
   {showCamera && (
