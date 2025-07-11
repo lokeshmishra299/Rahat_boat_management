@@ -6,6 +6,7 @@ use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\BoatFamilyMember;
 use App\Models\BoatOwner;
+use App\Models\RegisterBoat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -107,16 +108,42 @@ class BoatOwnerController extends Controller
         );
     }
 
-    public function directory()
-    {
+  public function directory()
+{
+    $user = auth()->user(); // Get logged-in user
 
-        $boatOwner = BoatOwner::with('district')
-        ->withCount('boats')
-        ->get();
-        // dd($boatOwner->toArray());
+    $boatOwnerQuery = BoatOwner::with('district')->withCount('boats');
 
-        return ApiResponse::generateResponse('success', 'Boat Owner fetch successfully', $boatOwner, 200);
+    // If user is District Nodal Officer (role_id == 2), filter by their district_id
+    if ($user->role_id == 2) {
+        $boatOwnerQuery->where('district_id', $user->district_id);
     }
+
+    $boatOwners = $boatOwnerQuery->get();
+
+    return ApiResponse::generateResponse('success', 'Boat Owner fetch successfully', $boatOwners, 200);
+}
+
+
+public function boatsByOwner($boatOwnerId)
+{
+    $user = auth()->user();
+
+    $query = RegisterBoat::with('district', 'ghaat');
+
+    // Only allow boats of the district nodal officer's district
+    if ($user->role_id == 2) {
+        $query->where('district_id', $user->district_id);
+    }
+
+    // Filter boats by boat_owner_id
+    $query->where('boat_owner_id', $boatOwnerId);
+
+    $boats = $query->get();
+
+    return ApiResponse::generateResponse('success', 'Boats fetched successfully', $boats, 200);
+}
+
 
     public function owner_detail($id)
     {

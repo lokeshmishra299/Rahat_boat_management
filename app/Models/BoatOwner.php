@@ -29,11 +29,17 @@ class BoatOwner extends Model
         static::addGlobalScope(new DistrictDataScope);
     }
 
-    public function district()
-    {
+    // public function district()
+    // {
 
-        return $this->belongsTo(District::class);
-    }
+    //     return $this->belongsTo(District::class);
+    // }
+
+
+    public function district()
+{
+    return $this->hasOne(DistrictMaster::class, 'district_code', 'district_id');
+}
 
     public function boatFamilyMembers()
     {
