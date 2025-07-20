@@ -4,6 +4,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+const API_BASE = BASE_URL.replace("/api", "");
+
 const token = localStorage.getItem("access_token");
 const user = JSON.parse(localStorage.getItem("user"));
 
@@ -65,20 +67,20 @@ export default function BoatDetailone() {
         <h2 className="text-xl font-semibold mb-4">General Information</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           <Info label="Pilot Name" value={boat.pilot_name ?? 'N/A'} />
-         <Info label="Boat Type" value={boat.boat_type ?? 'N/A'} />
+          <Info label="Boat Type" value={boat.boat_type ?? 'N/A'} />
 
-{(boat.boat_type === "Hybrid" || boat.boat_type === "Engine Driven") && (
-  <Info label="Engine Details" value={boat.engine_details ?? 'N/A'} />
-)}
+          {(boat.boat_type === "Hybrid" || boat.boat_type === "Engine Driven") && (
+            <Info label="Engine Details" value={boat.engine_details ?? 'N/A'} />
+          )}
 
           {(user?.role_id !== 1 && user?.role_id !== 2) && (
-  <Info label="District Name" value={boat.district?.district_name ?? 'N/A'} />
-)}
+            <Info label="District Name" value={boat.district?.district_name ?? 'N/A'} />
+          )}
           <Info label="Assigned Ghat" value={boat.ghaat?.ghaat_name ?? 'N/A'} />
-          
+
           <Info label="Pilot License No." value={boat.pilot_license_no ?? 'N/A'} />
           <Info label="Support Staff" value={boat.support_staff ?? 'N/A'} />
-         
+
           <Info label="Passenger Capacity" value={boat.passenger_capacity ?? 'N/A'} />
           <Info label="Year of Manufacture" value={boat.year_of_manufacture ?? 'N/A'} />
           <Info label="Registration Authority" value={boat.registration_authority ?? 'N/A'} />
@@ -123,10 +125,16 @@ export default function BoatDetailone() {
             {boat.image ? (
               <div className="text-center mb-4">
                 <img
-                  src={`http://localhost:8000/storage/${boat.image}`}
+                  src={`${API_BASE}/storage/${boat.image}?nocache=1`}
                   alt="Boat"
                   className="w-full max-w-md mx-auto rounded shadow"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "/no-image.png"; // fallback image in your public folder
+                  }}
                 />
+
+
                 <div className="mt-4 text-sm text-gray-700 space-y-1">
                   <p><strong>Location:</strong> {boat.location || "N/A"}</p>
                   <p><strong>Pincode:</strong> {boat.pincode || "N/A"}</p>

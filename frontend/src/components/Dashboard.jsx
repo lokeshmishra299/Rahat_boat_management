@@ -95,15 +95,15 @@ const user = JSON.parse(localStorage.getItem("user"));
       <Header />
 
       {/* nav bar */}
-      <div className="w-full sm:w-[97%] mx-auto flex justify-center mt-5 px-2">
+      <div className="w-full sm:w-[97%] mx-auto flex justify-center mt-5 relative z-60 px-2">
         <nav className="flex overflow-x-auto scroll-smooth whitespace-nowrap py-3 bg-white shadow-md rounded-full w-full hide-scrollbar">
           <div className="flex flex-nowrap gap-2 sm:gap-8 px-4 mx-auto">
             <Link to="." className={linkCls(".", "bg-blue-600")}>
               <MdSpaceDashboard className="inline-block mr-2 text-xl" />
               Dashboard
             </Link>
-             {user && (
-  user.role_id === 1 ? (
+{user && (
+  (user.role_id === 1 || user.role_id === 3) ? (
     <Link to="boats" className={linkCls("boats", "bg-indigo-600")}>
       <FaShip className="inline-block mr-2 text-lg" />
       Boats
@@ -115,6 +115,7 @@ const user = JSON.parse(localStorage.getItem("user"));
     </Link>
   )
 )}
+
             <Link to="ghats" className={linkCls("ghats", "bg-sky-500")}>
               <FaWater className="inline-block mr-2 text-lg" />
               Ghats
@@ -139,7 +140,7 @@ const user = JSON.parse(localStorage.getItem("user"));
               User Management
             </Link> */}
 
-            {user && user.role_id !== 2 && (
+            {user && user.role_id !== 2 &&  user.role_id!==3 &&(
               <Link to="usermanagment" className={linkCls("usermanagment", "bg-yellow-400")}>
                 <FaUsersCog className="inline-block mr-2 text-lg" />
                 User Management

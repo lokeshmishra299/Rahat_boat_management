@@ -95,7 +95,7 @@ const Login = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col text-gray-900 bg-gradient-to-br from-[#e3a5b6] via-[#d1a4cb] to-[#5782c4]">
+    <div className="relative min-h-screen flex flex-col text-gray-900 ">
       <Toaster position="top-right" />
 
       {/* Background Layers */}

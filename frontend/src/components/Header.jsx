@@ -93,13 +93,23 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', outside);
   }, [openMenu]);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setUserName(parsed.name || "Admin");
+useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const { data } = await api.get("/user-profile");
+      const user = data.data;
+
+      // 🧠 Store user data with district_name in localStorage
+      localStorage.setItem("user", JSON.stringify(user));
+      setUserName(user.name || "Admin");
+    } catch (error) {
+      console.error("Failed to fetch user profile:", error);
     }
-  }, []);
+  };
+
+  fetchProfile();
+}, []);
+
 
   const handleProfile = async () => {
     setOpenMenu(false);
@@ -159,9 +169,20 @@ const Header = () => {
         </div>
 
         <div className="relative flex items-center gap-3 flex-wrap">
-          <span className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full shadow-sm">
-            🟢 75 Districts Online
-          </span>
+        {(() => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (user?.district_name) {
+    return (
+      <span className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full shadow-sm">
+         🟢{user.district_name}
+      </span>
+    );
+  }
+  return null; // or empty string - nothing renders
+})()}
+
+
+
 
           <button
             onClick={() => setOpenMenu((p) => !p)}
@@ -173,7 +194,7 @@ const Header = () => {
           {openMenu && (
             <div
               ref={menuRef}
-              className="absolute right-0 top-full mt-2 w-48 bg-white border rounded-md shadow-lg z-20 overflow-hidden"
+              className="absolute right-0 top-full mt-2  w-48 bg-white border rounded-md shadow-lg z-20 overflow-hidden"
             >
               <button
                 onClick={handleProfile}
@@ -185,7 +206,7 @@ const Header = () => {
                     const user = JSON.parse(localStorage.getItem("user"));
                     if (user?.role_id === 1) return "District Nodal";
                     if (user?.role_id === 2) return "Ghat Incharge";
-                    return "Admin";
+                    return "Admin Monitor";
                   })()}
                 </span>
               </button>

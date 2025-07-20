@@ -1,15 +1,16 @@
 // src/components/LifeJacket.jsx
-import React, { useState, useEffect,useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Toaster, toast } from 'react-hot-toast';
+import { Toaster, toast } from "react-hot-toast";
 // import {Html5QrcodeScanner} from "html5-qrcode";
 // import { Html5Qrcode } from "html5-qrcode";
 import { MdQrCodeScanner } from "react-icons/md";
 import { IoBanOutline } from "react-icons/io5";
 import Select from "react-select";
-import QRCode from "react-qr-code"
-
-
+import QRCode from "react-qr-code";
+import QRCodeLib from "qrcode";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 /* ── API helper (token-aware) ── */
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
@@ -27,66 +28,63 @@ const api = axios.create({
 /* ───────────────────────────────────────────────────────── */
 import { useSearchParams } from "react-router-dom";
 export default function LifeJacket() {
-
   // Scaner
   const qrCodeRegionId = "qr-reader";
-const qrInstanceRef = useRef(null);
- const [scannedData, setScannedData] = useState("");
-const [scanning, setScanning] = useState(false);
-const [startScanTrigger, setStartScanTrigger] = useState(false); 
+  const qrInstanceRef = useRef(null);
+  const [scannedData, setScannedData] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [startScanTrigger, setStartScanTrigger] = useState(false);
 
-useEffect(() => {
-  if (!startScanTrigger) return;
+  useEffect(() => {
+    if (!startScanTrigger) return;
 
-  const html5QrCode = new Html5Qrcode(qrCodeRegionId);
-  qrInstanceRef.current = html5QrCode; // store reference
+    const html5QrCode = new Html5Qrcode(qrCodeRegionId);
+    qrInstanceRef.current = html5QrCode; // store reference
 
-  const config = { fps: 10, qrbox: 250 };
+    const config = { fps: 10, qrbox: 250 };
 
-  html5QrCode.start(
-    { facingMode: "environment" },
-    config,
-    (decodedText) => {
-      setScannedData(decodedText);
-      html5QrCode.stop().then(() => {
-        html5QrCode.clear();
+    html5QrCode
+      .start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+          setScannedData(decodedText);
+          html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+            qrInstanceRef.current = null;
+            setScanning(false);
+            setStartScanTrigger(false);
+          });
+        },
+        (errorMessage) => {
+          console.warn("QR error", errorMessage);
+        }
+      )
+      .catch((err) => {
+        console.error("Unable to start scanning", err);
         qrInstanceRef.current = null;
         setScanning(false);
         setStartScanTrigger(false);
       });
-    },
-    (errorMessage) => {
-      console.warn("QR error", errorMessage);
-    }
-  ).catch((err) => {
-    console.error("Unable to start scanning", err);
-    qrInstanceRef.current = null;
-    setScanning(false);
-    setStartScanTrigger(false);
-  });
+  }, [startScanTrigger]);
 
-}, [startScanTrigger]);
-
-const startScanning = () => {
-  setScannedData("");
-  setScanning(true);
-  setStartScanTrigger(true); // trigger scanner after div is in DOM
-};
-
+  const startScanning = () => {
+    setScannedData("");
+    setScanning(true);
+    setStartScanTrigger(true); // trigger scanner after div is in DOM
+  };
 
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get("tab") === "directory" ? "tracking" : "record";
+  const initialTab =
+    searchParams.get("tab") === "directory" ? "tracking" : "record";
   const [tab, setTab] = useState(initialTab);
 
   const storedUser = JSON.parse(localStorage.getItem("user"));
   const roleId = storedUser?.role_id;
   const [autoBoatCount, setAutoBoatCount] = useState("");
 
-
   const [reload, setReload] = useState(false);
 
-  
- 
   /* headline stats & rows for tracking */
   const [stats, setStats] = useState({
     allocated: 0,
@@ -127,12 +125,15 @@ const startScanning = () => {
     })();
   }, [reload]);
 
-  
-
   /* cards config */
   const cards = [
     { label: "Total Target", val: stats.allocated, emoji: "📦", bg: "orange" },
-    { label: "Total Distributed", val: stats.distributed, emoji: "🛟", bg: "green" },
+    {
+      label: "Total Distributed",
+      val: stats.distributed,
+      emoji: "🛟",
+      bg: "green",
+    },
     {
       label: "Distribution Rate",
       val: stats.efficiency,
@@ -140,25 +141,6 @@ const startScanning = () => {
       bg: "blue",
     },
   ];
-
-
-  const stopScanning = () => {
-  const instance = qrInstanceRef.current;
-
-  if (instance) {
-    instance.stop()
-      .then(() => {
-        instance.clear();
-        qrInstanceRef.current = null;
-        setScanning(false);
-        setStartScanTrigger(false);
-      })
-      .catch((err) => {
-        console.error("Stop failed", err);
-      });
-  }
-};
-
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 px-6 py-10">
@@ -195,10 +177,11 @@ const startScanning = () => {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-6 py-2 rounded-full font-semibold ${tab === t.id
+            className={`px-6 py-2 rounded-full font-semibold ${
+              tab === t.id
                 ? "bg-orange-600 text-white"
                 : "bg-white text-slate-700 shadow hover:bg-slate-50"
-              }`}
+            }`}
           >
             {t.label}
           </button>
@@ -210,7 +193,6 @@ const startScanning = () => {
           onSaved={() => {
             setTab("tracking");
             setReload((f) => !f);
-
           }}
           roleId={roleId}
           storedUser={storedUser}
@@ -224,14 +206,18 @@ const startScanning = () => {
 
 /* ───────────────────────────── RecordForm ───────────────────────────── */
 function RecordForm({ onSaved, roleId, storedUser }) {
+
+  
+  
   const [show, setshow] = useState(false);
-   const [showQR, setShowQR] = useState(false);
+  //  const [showQR, setShowQR] = useState(false);
   //  const handleGenerate = () => setShowQR(true);
   const inputCls =
     "w-full border border-slate-300 rounded-lg px-4 py-2 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500";
 
   /* dropdown data */
   const [districts, setDistricts] = useState([]);
+  const [hide, showhide] = useState(false);
   const [ghaats, setGhaats] = useState([]);
 
   /* form & validation */
@@ -248,6 +234,37 @@ function RecordForm({ onSaved, roleId, storedUser }) {
     notes: "",
   });
 
+  const handleDownload = async () => {
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder("qr-codes");
+
+      const total = parseInt(val.total || 0);
+      const districtName =
+        districts.find((d) => d.id == val.district_id)?.district_name ||
+        "Unknown";
+
+      for (let i = 0; i < total; i++) {
+        const qrValue = `Id ${i + 1} | District: ${districtName}, Ghat: ${
+          val.ghat
+        }, Boat: ${val.boats}, Date: ${val.date}`;
+
+        const dataUrl = await QRCodeLib.toDataURL(qrValue, {
+          width: 500,
+          margin: 1,
+        });
+
+        const base64 = dataUrl.split(",")[1];
+        folder.file(`qr_${i + 1}.png`, base64, { base64: true });
+      }
+
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, "qr-codes.zip");
+    } catch (err) {
+      console.error("QR ZIP download failed:", err);
+    }
+  };
+
   const autoBoatCount = async (ghatName = "") => {
     if (!ghatName) return;
 
@@ -257,27 +274,25 @@ function RecordForm({ onSaved, roleId, storedUser }) {
 
     if (ghat_id && district_id) {
       try {
-        const res = await api.post("/ghaat-boat-count", { ghat_id, district_id });
+        const res = await api.post("/ghaat-boat-count", {
+          ghat_id,
+          district_id,
+        });
         const data = res.data?.data;
 
         const boatText = `${data.total_boats} boats (total capacity ${data.total_capacity})`;
 
-setVal((v) => ({
-  ...v,
-  boats: boatText,
-  total: (parseInt(data.total_capacity || 0) + 1).toString(),
-}));
-
-
+        setVal((v) => ({
+          ...v,
+          boats: boatText,
+          total: (parseInt(data.total_capacity || 0) + 1).toString(),
+        }));
       } catch (error) {
         console.error("Error fetching boat count", error);
         setVal((v) => ({ ...v, boats: "" }));
       }
     }
   };
-
-
-
 
   useEffect(() => {
     if ((roleId === 1 || roleId === 2) && storedUser?.district_id) {
@@ -304,22 +319,23 @@ setVal((v) => ({
       try {
         const d = await api.get("/district-list");
         setDistricts(d.data.data || []);
-        console.log(d.data)
-      } catch { }
+        console.log(d.data);
+      } catch {}
       try {
         const g = await api.get("/ghaat-list");
         setGhaats(g.data.data || []);
-      } catch { }
+      } catch {}
     })();
   }, []);
 
- const [boats, setBoats] = useState([]);
+  const [boats, setBoats] = useState([]);
 
   useEffect(() => {
-    api.get("/boat-registration-no")
+    api
+      .get("/boat-registration-no")
       .then((res) => {
         if (res.data.status === "success") {
-          const boatNumbers = res.data.data.map((item) => item.registration_no);
+          const boatNumbers = res.data.data.map((item) => item.boat_uid);
           setBoats(boatNumbers);
 
           // Optionally auto-fill if not already set
@@ -349,16 +365,13 @@ setVal((v) => ({
         }
 
         if (ghat_id && district_id) {
-          autoBoatCount(value);  // ✅ call only when ghat changes
+          autoBoatCount(value); // ✅ call only when ghat changes
         }
       }
 
       return updated;
     });
   };
-
-
-
 
   const digits = (name) => (e) =>
     setVal((v) => ({
@@ -370,8 +383,8 @@ setVal((v) => ({
   const submit = async (e) => {
     e.preventDefault();
 
-    setSubmitting(true);   // show  “Saving…”
-    setErrors({});         // clear old errors first
+    setSubmitting(true); // show  “Saving…”
+    setErrors({}); // clear old errors first
 
     /* ---------- 1. client‑side quick checks (optional) ---------- */
     const early = {};
@@ -386,20 +399,20 @@ setVal((v) => ({
     /* ---------- 2. build payload (use '' when id not found) ---------- */
     const dist =
       districts.find((d) => d.district_name === val.district) ||
-      districts.find((d) => d.id == val.district_id) || {};
+      districts.find((d) => d.id == val.district_id) ||
+      {};
 
     const ghat = ghaats.find((g) => g.ghaat_name === val.ghat) || {};
 
     const payload = {
-  district_id: dist.id ?? "",
-  ghaat_id: ghat.id ?? "",
-  no_of_boats: parseInt(val.boats), // send just the number
-  total_jackets: parseInt(val.total),
-  distribution_date: val.date,
-  received_by: val.received,
-  distribution_notes: val.notes,
-};
-
+      district_id: dist.id ?? "",
+      ghaat_id: ghat.id ?? "",
+      no_of_boats: parseInt(val.boats), // send just the number
+      total_jackets: parseInt(val.total),
+      distribution_date: val.date,
+      received_by: val.received,
+      distribution_notes: val.notes,
+    };
 
     /* ---------- 3. send request & handle errors ---------- */
     try {
@@ -407,15 +420,24 @@ setVal((v) => ({
 
       toast.success("Distribution saved!");
       setVal({
-        district: "", district_id: "", ghat: "", boats: "", perBoat: "", total: "",
-        allocated: "", date: "", received: "", phone: "", notes: "",
+        district: "",
+        district_id: "",
+        ghat: "",
+        boats: "",
+        perBoat: "",
+        total: "",
+        allocated: "",
+        date: "",
+        received: "",
+        phone: "",
+        notes: "",
       });
 
       onSaved();
     } catch (err) {
       const apiErr =
-        err.response?.data?.errors   // Laravel 422
-        || err.response?.data?.data; // sometimes wrapped in data
+        err.response?.data?.errors || // Laravel 422
+        err.response?.data?.data; // sometimes wrapped in data
 
       if (apiErr && typeof apiErr === "object") {
         const map = {
@@ -447,7 +469,6 @@ setVal((v) => ({
     }
   };
 
-
   /* ghat options filtered by district */
   const filteredGhaats = ghaats.filter(
     (g) => g.district_id === parseInt(val.district_id)
@@ -458,9 +479,7 @@ setVal((v) => ({
         {/* District */}
         {roleId !== 1 && roleId !== 2 && (
           <div>
-            <label className="block text-sm font-medium mb-1">
-              District *
-            </label>
+            <label className="block text-sm font-medium mb-1">District *</label>
             <select
               name="district_id"
               value={val.district_id}
@@ -479,8 +498,6 @@ setVal((v) => ({
             )}
           </div>
         )}
-
-
 
         {/* Ghaat */}
         <div>
@@ -503,73 +520,74 @@ setVal((v) => ({
 
         {/* Boats */}
 
+        {/* // Inside your component: */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Boats *</label>
+          <Select
+            className="react-select-container"
+            classNamePrefix="react-select"
+            options={boats.map((boat) => ({
+              value: boat,
+              label: boat,
+            }))}
+            value={
+              boats
+                .map((boat) => ({ value: boat, label: boat }))
+                .find((opt) => opt.value === val.boats) || null
+            }
+            onChange={(selectedOption) =>
+              setVal({ ...val, boats: selectedOption?.value || "" })
+            }
+            isSearchable
+            placeholder={boats.length === 0 ? "Loading..." : "Select Boat"}
+            styles={{
+              control: (base) => ({
+                ...base,
+                backgroundColor: "#f3f4f6", // Tailwind's gray-100
+                borderColor: "#d1d5db", // Tailwind's gray-300
+                minHeight: "42px",
+                fontSize: "14px",
+                cursor: "pointer",
+              }),
+              option: (base, { isFocused }) => ({
+                ...base,
+                backgroundColor: isFocused ? "#e0f2fe" : "white", // light blue on hover
+                color: "#1e3a8a",
+                fontSize: "14px",
+              }),
+            }}
+          />
 
-{/* // Inside your component: */}
-<div>
-  <label className="block text-sm font-medium mb-1">Boats *</label>
-  <Select
-    className="react-select-container"
-    classNamePrefix="react-select"
-    options={boats.map((boat) => ({
-      value: boat,
-      label: boat,
-    }))}
-    value={
-      boats
-        .map((boat) => ({ value: boat, label: boat }))
-        .find((opt) => opt.value === val.boats) || null
-    }
-    onChange={(selectedOption) =>
-      setVal({ ...val, boats: selectedOption?.value || "" })
-    }
-    isSearchable
-    placeholder={boats.length === 0 ? "Loading..." : "Select Boat"}
-    styles={{
-      control: (base) => ({
-        ...base,
-        backgroundColor: "#f3f4f6", // Tailwind's gray-100
-        borderColor: "#d1d5db", // Tailwind's gray-300
-        minHeight: "42px",
-        fontSize: "14px",
-        cursor: "pointer",
-      }),
-      option: (base, { isFocused }) => ({
-        ...base,
-        backgroundColor: isFocused ? "#e0f2fe" : "white", // light blue on hover
-        color: "#1e3a8a",
-        fontSize: "14px",
-      }),
-    }}
-  />
+          {errors?.boats && (
+            <p className="text-xs text-red-600 mt-1">{errors.boats}</p>
+          )}
+        </div>
 
-  {errors?.boats && (
-    <p className="text-xs text-red-600 mt-1">{errors.boats}</p>
-  )}
-</div>
-
-{/* import Select from "react-select"; */}
-        {/* Total allocated */}
-{/* Total jackets distributed */}
-<div>
-  <label className="block text-sm font-medium mb-1">Total Jackets *</label>
- <input
-  name="total"
-  value={val.total}
-  readOnly
-  placeholder={ph.total}
-  className={`${inputCls} bg-gray-100 cursor-not-allowed`}
-/>
-
-  {errors.total && (
-    <p className="text-xs text-red-600 mt-1">{errors.total}</p>
-  )}
-  {/* {val.boats && (
-    <p className="text-xs text-gray-500 mt-1 italic">
-      Auto-filled as capacity + 1. You can change if needed.
-    </p>
-  )} */}
-</div>
-
+     
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Total Jackets *
+          </label>
+          <input
+            type="text"
+            name="total"
+            value={val.total || ""}
+            onChange={(e) => {
+              const { name, value } = e.target;
+              // Allow only numbers
+              if (/^\d*$/.test(value)) {
+                setVal((prev) => ({ ...prev, [name]: value }));
+              }
+            }}
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder={ph.total || "Enter total jackets"}
+            className={`${inputCls} bg-gray-100`}
+          />
+          {errors.total && (
+            <p className="text-xs text-red-600 mt-1">{errors.total}</p>
+          )}
+        </div>
 
         {/* Date */}
         <div>
@@ -600,34 +618,54 @@ setVal((v) => ({
           />
         </div>
 
-{/* QR Scaneer */}
-    <div className="p-4">
-  <button
-    type="button"
-    onClick={() => {
-      setShowQR((prev) => !prev);
-    }}
-    className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg transition duration-300 hover:bg-blue-700"
-  >
-    {showQR ? "Hide QR Code" : "Show QR Code"}
-  </button>
+        {/* QR Scaneer */}
+        {/* QR Scanner */}
+        <div className="p-4 bg-white rounded-lg shadow-md">
+          {/* Header row with button */}
+          <div className="flex justify-center sm:justify-start mt-4">
+            <button
+              onClick={handleDownload}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-300"
+            >
+              Download QR
+            </button>
+          </div>
 
-  <div
-    className={`transition-all duration-500 ease-in-out overflow-hidden ${
-      showQR ? "opacity-100 max-h-[500px] mt-4" : "opacity-0 max-h-0"
-    }`}
-  >
-    <div className="flex ">
-      <QRCode
-        size={200}
-        bgColor="white"
-        fgColor="black"
-        value="krishna"
-      />
-    </div>
-  </div>
-</div>
+          {/* Hidden QR grid - you can enable it by uncommenting below if needed */}
 
+          {hide && (
+            <div className="sm:flex flex-wrap gap-4 justify-start">
+              {Array.from({ length: parseInt(val.total || 0) }).map(
+                (_, index) => {
+                  const districtName =
+                    districts.find((d) => d.id == val.district_id)
+                      ?.district_name || "Unknown";
+
+                  return (
+                    <div
+                      key={index}
+                      className="p-2 border border-gray-300 rounded-lg shadow-sm bg-gray-50"
+                    >
+                      <QRCode
+                        size={200}
+                        bgColor="white"
+                        fgColor="black"
+                        value={`Id ${
+                          index + 1
+                        } | District: ${districtName}, Ghat: ${
+                          val.ghat
+                        }, Boat: ${val.boats}, Date: ${val.date}`}
+                      />
+                      <p className="mt-2 text-sm text-center text-gray-600">
+                        QR {index + 1}
+                      </p>
+                    </div>
+                  );
+                }
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Notes */}
         <div className="md:col-span-3">
@@ -646,10 +684,11 @@ setVal((v) => ({
       <div className="mt-6 flex items-center justify-center">
         <button
           disabled={submitting}
-          className={`px-8 py-3 rounded-full font-semibold ${submitting
+          className={`px-8 py-3 rounded-full font-semibold ${
+            submitting
               ? "bg-slate-400 cursor-not-allowed"
               : "bg-orange-600 text-white hover:bg-orange-700"
-            }`}
+          }`}
         >
           {submitting ? "Saving…" : "Record Distribution"}
         </button>
@@ -753,28 +792,38 @@ function DistributionTracking({ rows, stats, loading }) {
                     <td className="px-4 py-3">{distRows[0].ghaat}</td>
                     <td className="px-4 py-3">{distRows[0].boats}</td>
                     <td className="px-4 py-3">{distRows[0].total_allocated}</td>
-                    <td className="px-4 py-3">{distRows[0].total_distributed}</td>
                     <td className="px-4 py-3">
-                      {distRows[0].children?.[0]?.distribution_date || 'N/A'}
+                      {distRows[0].total_distributed}
+                    </td>
+                    <td className="px-4 py-3">
+                      {distRows[0].children?.[0]?.distribution_date || "N/A"}
                     </td>
                     <td className="px-4 py-3">{distRows[0].status}</td>
                   </tr>
 
                   {/* Show additional rows only when expanded */}
                   {/* Show additional rows only when expanded */}
-                  {open[district] && distRows.flatMap(r =>
-                    r.children?.map((child, idx) => (
-                      <tr key={idx} className="border-t border-slate-200">
-                        <td className="px-6 py-3">{r.district}</td>
-                        <td className="px-4 py-3">{r.ghaat}</td>
-                        <td className="px-4 py-3">{child.boats}</td>
-                        <td className="px-4 py-3">{child.total_allocated}</td>
-                        <td className="px-4 py-3">{child.total_distributed}</td>
-                        <td className="px-4 py-3">{child.distribution_date}</td>
-                        <td className="px-4 py-3 ">{child.status}</td>
-                      </tr>
-                    )) || []
-                  )}
+                  {open[district] &&
+                    distRows.flatMap(
+                      (r) =>
+                        r.children?.map((child, idx) => (
+                          <tr key={idx} className="border-t border-slate-200">
+                            <td className="px-6 py-3">{r.district}</td>
+                            <td className="px-4 py-3">{r.ghaat}</td>
+                            <td className="px-4 py-3">{child.boats}</td>
+                            <td className="px-4 py-3">
+                              {child.total_allocated}
+                            </td>
+                            <td className="px-4 py-3">
+                              {child.total_distributed}
+                            </td>
+                            <td className="px-4 py-3">
+                              {child.distribution_date}
+                            </td>
+                            <td className="px-4 py-3 ">{child.status}</td>
+                          </tr>
+                        )) || []
+                    )}
                 </React.Fragment>
               ))}
             </tbody>

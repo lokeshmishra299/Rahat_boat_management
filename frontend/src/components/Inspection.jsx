@@ -593,7 +593,7 @@ const Schedule = () => {
 
   useEffect(() => {
     api
-      .get("/upcoming-inspections")
+      .post("/upcoming-inspections")
       .then((res) => {
         if (res.data?.status === "success") {
           setSchedule(res.data.data || []);

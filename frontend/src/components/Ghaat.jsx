@@ -45,7 +45,7 @@ export default function Ghaat() {
   useEffect(() => {
     const tab = searchParams.get("tab");
 
-    if (user?.role_id === 1) {
+    if (user?.role_id === 1 || user?.role_id===3) {
       setView("directory");
     } else {
       setView(tab === "directory" ? "directory" : "register");
@@ -317,7 +317,7 @@ export default function Ghaat() {
       {/* Tabs */}
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10">
         {/* Show "Register New Ghaat" button only if role_id !== 1 */}
-        {user?.role_id !== 1 && (
+        {user?.role_id !== 1 && user?.role_id!==3 && (
           <button
             onClick={() => setView("register")}
             className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "register"
@@ -703,7 +703,7 @@ export default function Ghaat() {
           </div>
 
           {ghaats.length === 0 ? (
-            <p className="text-center text-gray-500">Loading..</p>
+            <p className="text-center text-gray-500">No data found..</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -761,7 +761,7 @@ export default function Ghaat() {
                           >
                             <FaEye />
                           </button>
-                          {user?.role_id !== 1 && (
+                          {user?.role_id !== 1 && user?.role_id!==3 && (
                             <button
                               onClick={() =>
                                 navigate(

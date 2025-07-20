@@ -18,7 +18,7 @@ import { useSearchParams } from "react-router-dom";
 import { FaDownload } from "react-icons/fa";
 import { FaTrash } from "react-icons/fa";
 
-const BASE_URL = import.meta.env.VlITE_API_BASE ?? "http://localhost:8000/api";
+const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
 
 const token = localStorage.getItem("access_token");
 
@@ -32,7 +32,7 @@ const api = axios.create({
 
 const Boats = () => {
   const navigate = useNavigate();
-  const { id:ownerId } = useParams();
+  const { id: ownerId } = useParams();
   const [vieww, setVieww] = useState("register");
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -65,6 +65,8 @@ const Boats = () => {
     type: "",
     pilotName: "",
     license: "",
+    addharNo: "",
+    contactNo: "",
     staffCount: "",
     engine: "",
     capacity: "",
@@ -74,8 +76,11 @@ const Boats = () => {
     additionalInfo: "",
   };
   const [form, setForm] = useState(emptyForm);
-  const [photoName, setPhotoName] = useState("");
-  const [photoFile, setPhotoFile] = useState(null);
+  const [cameraPurpose, setCameraPurpose] = useState(null); // 'boat' or 'pilot'
+  const [boatPhotoName, setBoatPhotoName] = useState("");
+  const [boatPhotoFile, setBoatPhotoFile] = useState(null);
+  const [pilotPhotoName, setPilotPhotoName] = useState("");
+  const [pilotPhotoFile, setPilotPhotoFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -112,8 +117,15 @@ const Boats = () => {
     const blob = new Blob([ab], { type: mimeString });
     const file = new File([blob], "captured.jpg", { type: mimeString });
 
-    setPhotoFile(file);
-    setPhotoName("captured.jpg");
+    if (cameraPurpose === "boat") {
+      const file = new File([blob], "boat_captured.jpg", { type: mimeString });
+      setBoatPhotoFile(file);
+      setBoatPhotoName("boat_captured.jpg");
+    } else {
+      const file = new File([blob], "pilot_captured.jpg", { type: mimeString });
+      setPilotPhotoFile(file);
+      setPilotPhotoName("pilot_captured.jpg");
+    }
     setShowCamera(false);
 
     navigator.geolocation.getCurrentPosition(
@@ -198,19 +210,18 @@ const Boats = () => {
   }, []);
 
   // Load boats
-const loadBoats = useCallback(async () => {
-  setLoadingBoats(true);
-  setBoatsError("");
-  try {
-    const { data } = await api.get(`/boat-owner/${ownerId}/boats`);
-    setBoats(Array.isArray(data.data) ? data.data : []);
-  } catch {
-    setBoatsError("Could not fetch boats.");
-  } finally {
-    setLoadingBoats(false);
-  }
-}, [ownerId]);
-
+  const loadBoats = useCallback(async () => {
+    setLoadingBoats(true);
+    setBoatsError("");
+    try {
+      const { data } = await api.get(`/boat-owner/${ownerId}/boats`);
+      setBoats(Array.isArray(data.data) ? data.data : []);
+    } catch {
+      setBoatsError("Could not fetch boats.");
+    } finally {
+      setLoadingBoats(false);
+    }
+  }, [ownerId]);
 
   useEffect(() => {
     loadBoats();
@@ -228,6 +239,8 @@ const loadBoats = useCallback(async () => {
     fd.append("boat_type", form.type || "");
     fd.append("pilot_name", form.pilotName || "");
     fd.append("pilot_license_no", form.license || "");
+    fd.append("adhar_no", form.addharNo || "");
+    fd.append("contact_no", form.contactNo || "");
     fd.append("support_staff", form.staffCount || "");
     fd.append("engine_details", form.engine || "");
     fd.append("passenger_capacity", form.capacity || "");
@@ -239,16 +252,17 @@ const loadBoats = useCallback(async () => {
     fd.append("longitude", coords.lon || "");
     fd.append("pincode", pincode || "");
     fd.append("location", locationName || "");
-    if (photoFile) fd.append("image", photoFile);
+    if (boatPhotoFile) fd.append("boat_image", boatPhotoFile);
+    if (pilotPhotoFile) fd.append("pilot_image", pilotPhotoFile);
 
     // Boat Owner details (with null fallback)
-    fd.append("owner_name", form.name || "");
-    fd.append("owner_email", form.email || "");
-    fd.append("owner_adhar_no", form.adhar || "");
-    fd.append("owner_number", form.contact || "");
-    fd.append("owner_boat_owned", form.no_of_boats || "");
-    fd.append("owner_dob", form.dob || "");
-    fd.append("owner_pincode", form.pincode || "");
+    // fd.append("owner_name", form.name || "");
+    // fd.append("owner_email", form.email || "");
+    // fd.append("owner_adhar_no", form.adhar || "");
+    // fd.append("owner_number", form.contact || "");
+    // fd.append("owner_boat_owned", form.no_of_boats || "");
+    // fd.append("owner_dob", form.dob || "");
+    // fd.append("owner_pincode", form.pincode || "");
 
     const familyNames = members.map((m) => m.name).filter(Boolean);
     fd.append(
@@ -256,37 +270,38 @@ const loadBoats = useCallback(async () => {
       familyNames.length ? familyNames.join(",") : ""
     );
 
-try {
-  const response = await api.post(`/boat-owner/${ownerId}/boats`, fd, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+    try {
+      const response = await api.post(`/boat-owner/${ownerId}/boats`, fd, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-  toast.success(response.data?.message || "Boat registered successfully!");
+      toast.success(response.data?.message || "Boat registered successfully!");
 
-  // Delay navigation slightly to show the toast
-  setTimeout(() => {
-    navigate("/dashboard/addboatowner");
-  }, 1000);
+      // Delay navigation slightly to show the toast
+      setTimeout(() => {
+        navigate("/dashboard/addboatowner");
+      }, 1000);
 
-  await loadBoats();
-  setForm(emptyForm);
-  setPhotoName("");
-  setPhotoFile(null);
-  setCoords({ lat: "", lon: "" });
-  setPincode("");
-  setMembers([]);
-  setTimeout(() => setView("directory"), 1000);
-} catch (err) {
-  const v = err.response?.data;
-  if (v?.data && typeof v.data === "object") {
-    setErrors(v.data);
-  } else {
-    toast.error("Something went wrong, please try again.");
-  }
-} finally {
-  setSaving(false);
-}
-
+      await loadBoats();
+      setForm(emptyForm);
+      setBoatPhotoName("");
+      setBoatPhotoFile(null);
+      setPilotPhotoName("");
+      setPilotPhotoFile(null);
+      setCoords({ lat: "", lon: "" });
+      setPincode("");
+      setMembers([]);
+      setTimeout(() => setView("directory"), 1000);
+    } catch (err) {
+      const v = err.response?.data;
+      if (v?.data && typeof v.data === "object") {
+        setErrors(v.data);
+      } else {
+        toast.error("Something went wrong, please try again.");
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const [searchParams] = useSearchParams();
@@ -349,15 +364,18 @@ try {
       </div>
 
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10">
-        {/* Show only for non-admins */}
         {user?.role_id !== 1 && (
           <button
+            style={{
+              WebkitTapHighlightColor: "transparent",
+              outline: "none",
+              WebkitFocusRingColor: "transparent",
+            }}
             onClick={() => setView("register")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
-              view === "register"
+            className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "register"
                 ? "bg-green-600 text-white"
                 : "bg-white text-green-700 hover:bg-green-50 shadow"
-            }`}
+              }`}
           >
             <FaPlusCircle /> Register New Boat
           </button>
@@ -369,11 +387,10 @@ try {
             setView("directory");
             loadBoats(); // Ensure this is defined and fetching properly
           }}
-          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
-            view === "directory"
+          className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "directory"
               ? "bg-sky-600 text-white"
               : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
-          }`}
+            }`}
         >
           <FaListAlt /> Boat Directory
         </button>
@@ -382,6 +399,9 @@ try {
       {/* Camera Modal */}
       {showCamera && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 p-4">
+          <h3 className="text-white text-xl mb-4">
+            Capturing {cameraPurpose === "boat" ? "Boat" : "Pilot"} Photo
+          </h3>
           <Webcam
             ref={webcamRef}
             screenshotFormat="image/jpeg"
@@ -432,34 +452,36 @@ try {
               Capture or upload a photo with GPS coordinates
             </p>
 
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <button
-                onClick={() => setShowCamera(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition"
-              >
-                <FaCamera className="inline mr-2" /> Capture Photo
-              </button>
-
-              {/* <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition inline-block text-center">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setPhotoName(file.name);
-                      setPhotoFile(file);
-                    }
+            <div className="flex items-center justify-center gap-2">
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <button
+                  onClick={() => {
+                    setCameraPurpose("boat");
+                    setShowCamera(true);
                   }}
-                />
-                Choose Photo
-              </label> */}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition"
+                >
+                  <FaCamera className="inline mr-2" /> Capture Boat
+                </button>
+                <button
+                  onClick={() => {
+                    setCameraPurpose("pilot");
+                    setShowCamera(true);
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition"
+                >
+                  <FaCamera className="inline mr-2" /> Capture Pilot
+                </button>
+              </div>
             </div>
-
-            {photoName && (
+            {boatPhotoName && (
               <p className="text-sm text-green-700 mt-2">
-                Selected: {photoName}
+                Boat Photo: {boatPhotoName}
+              </p>
+            )}
+            {pilotPhotoName && (
+              <p className="text-sm text-blue-700 mt-1">
+                Pilot Photo: {pilotPhotoName}
               </p>
             )}
 
@@ -480,29 +502,28 @@ try {
             </div>
           )}
 
-          {/* Photo Preview */}
-          {/* Purana code  */}
-          {/* {photoFile && (
-            <div className="mb-6 text-center">
-              <img
-                src={URL.createObjectURL(photoFile)}
-                alt="Preview"
-                className="rounded shadow max-w-xs mx-auto"
-              />
+          {(boatPhotoFile || pilotPhotoFile) && (
+            <div className="mb-6 flex flex-col sm:flex-row justify-center gap-4">
+              {boatPhotoFile && (
+                <div className="text-center">
+                  <p className="text-sm font-medium mb-1">Boat Photo</p>
+                  <img
+                    src={URL.createObjectURL(boatPhotoFile)}
+                    alt="Boat Preview"
+                  />
+                </div>
+              )}
+              {pilotPhotoFile && (
+                <div className="text-center">
+                  <p className="text-sm font-medium mb-1">Pilot Photo</p>
+                  <img
+                    src={URL.createObjectURL(pilotPhotoFile)}
+                    alt="Pilot Preview"
+                  />
+                </div>
+              )}
             </div>
-          )} */}
-
-     {photoFile && (
-  <div className="mb-6 flex justify-center">
-    <img
-      src={URL.createObjectURL(photoFile)}
-      alt="Preview"
-      className="rounded shadow w-[90%] max-w-[400px] object-contain"
-    />
-  </div>
-)}
-
-
+          )}
 
           {/* Boat Registration Form */}
           <form onSubmit={handleSubmit} className="">
@@ -548,14 +569,7 @@ try {
                 </div>
               )}
 
-              <Input
-                label="Pilot Name *"
-                name="pilotName"
-                value={form.pilotName}
-                onChange={field("pilotName")}
-                error={errors.pilot_name}
-                placeholder="Enter Pilot Name"
-              />
+
 
               <Select
                 label="Boat Type *"
@@ -578,14 +592,6 @@ try {
                 </div>
               )}
 
-              <Input
-                label="Pilot License Number *"
-                name="license"
-                value={form.license}
-                onChange={field("license")}
-                error={errors.pilot_license_no}
-                placeholder="Enter License Number"
-              />
 
               <Input
                 label="Support Staff Count *"
@@ -667,8 +673,66 @@ try {
                 ]}
                 error={errors.registration_authority}
               />
+
+              {/* Pilot Details Section */}
+              <div className="col-span-full mt-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
+                  Pilot Details
+                </h2>
+              </div>
+
+              <Input
+                label="Pilot Name *"
+                name="pilotName"
+                value={form.pilotName}
+                onChange={field("pilotName")}
+                error={errors.pilot_name}
+                placeholder="Enter Pilot Name"
+              />
+
+              <Input
+                label="License Number *"
+                name="license"
+                value={form.license}
+                onChange={field("license")}
+                error={errors.pilot_license_no}
+                placeholder="Enter License Number"
+              />
+
+              <Input
+                label="Aadhaar Number *"
+                name="addharNo"
+                value={form.addharNo}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "");
+                  if (val.length <= 12) {
+                    field("addharNo")({ target: { value: val } });
+                  }
+                }}
+                maxLength={12}
+                inputMode="numeric"
+                error={errors.adhar_no}
+                placeholder="Enter Aadhaar Number"
+              />
+
+              <Input
+                label="Contact Number *"
+                name="contactNo"
+                value={form.contactNo}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "");
+                  if (val.length <= 10) {
+                    field("contactNo")({ target: { value: val } });
+                  }
+                }}
+                maxLength={10}
+                inputMode="numeric"
+                error={errors.contact_no}
+                placeholder="Enter Contact Number"
+              />
+
             </div>
-          
+
 
             <div className="md:col-span-2 mt-5">
               <label className="text-sm font-medium mb-2">
@@ -691,9 +755,8 @@ try {
               <button
                 type="submit"
                 disabled={saving}
-                className={`bg-green-600 hover:bg-green-700 text-white font-semibold px-10 py-2 rounded-full transition ${
-                  saving ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className={`bg-green-600 hover:bg-green-700 text-white font-semibold px-10 py-2 rounded-full transition ${saving ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
               >
                 {saving ? "Saving..." : "Register Boat"}
               </button>
@@ -788,11 +851,10 @@ try {
                       </td>
                       <td className="px-4 py-2">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            boat.status === "Active"
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${boat.status === "Active"
                               ? "bg-green-100 text-green-800"
                               : "bg-yellow-100 text-yellow-800"
-                          }`}
+                            }`}
                         >
                           {boat.status || "Active"}
                         </span>

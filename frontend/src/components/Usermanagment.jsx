@@ -18,6 +18,8 @@ import { useNavigate } from "react-router-dom";
 
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
 
+const user=JSON.parse(localStorage.getItem('user'));
+
 const token = localStorage.getItem("access_token");
 
 const api = axios.create({
@@ -236,6 +238,19 @@ export default function Usermanagment() {
 
   const [userLoading, setUserLoading] = useState(false);
   const [userList, setUserList] = useState([]);
+  
+  const fetchUserList = async () => {
+  try {
+    setUserLoading(true); // Optional: show loading state
+    const res = await api.get("/user-list"); // Replace with actual API if needed
+    setUserList(res.data?.data || []);
+  } catch (err) {
+    console.error("Failed to fetch users", err);
+  } finally {
+    setUserLoading(false); // Turn off loading indicator
+  }
+};
+
 
   useEffect(() => {
     if (view === "manage") {
@@ -261,6 +276,38 @@ export default function Usermanagment() {
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentUsers = userList.slice(indexOfFirstItem, indexOfLastItem);
+
+  //for popup
+  const [showPopup, setShowPopup] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  
+
+  const closePopup = () => {
+    setSelectedUserId(null);
+    setShowPopup(false);
+  };
+
+const handleConfirmDelete = async () => {
+  try {
+    const res = await api.delete(`/user-delete/${selectedUserId}`);
+    console.log("User deleted:", res.data);
+
+   
+    setUserList((prevList) => prevList.filter((user) => user.id !== selectedUserId));
+
+    if (user?.role_id === 1) {
+      toast.success("Ghat Incharge deleted successfully!");
+    } else {
+      toast.success("User deleted successfully!");
+    }
+
+    setShowPopup(false); // Close the popup
+
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    toast.error("Failed to delete user!");
+  }
+};
 
   /* ====================================== JSX ====================================== */
   return (
@@ -503,18 +550,17 @@ export default function Usermanagment() {
                     className={input}
                   >
                     <option value="">Select designation</option>
-                   {designation
-  .filter((d) => {
-    // If District Nodal, only allow Ghaat Nodal (id = 2)
-    if (authUser?.role_id === 1) return d.id === 2;
-    return true; // For others, show all
-  })
-  .map((d) => (
-    <option key={d.id} value={d.name}>
-      {d.name}
-    </option>
-))}
-
+                    {designation
+                      .filter((d) => {
+                        // If District Nodal, only allow Ghaat Nodal (id = 2)
+                        if (authUser?.role_id === 1) return d.id === 2;
+                        return true; // For others, show all
+                      })
+                      .map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
                   </select>
                   {errors.designation_id && (
                     <p className="text-red-500 text-sm mt-1">
@@ -537,7 +583,13 @@ export default function Usermanagment() {
                   >
                     <option value="">Select role</option>
                     {roles
-                      .filter((r) => r && r.name)
+                      .filter(
+                        (r) =>
+                          r &&
+                          r.name &&
+                          (r.name === "district_nodal" ||
+                            r.name === "ghaat_nodal")
+                      )
                       .map((r, i) => (
                         <option key={i} value={r.name}>
                           {r.name
@@ -645,29 +697,31 @@ export default function Usermanagment() {
                   try {
                     const isDistrictNodal = authUser?.role_id === 1;
 
-const roleId = isDistrictNodal
-  ? roles.find((r) => r.name === "ghaat_nodal")?.id
-  : roles.find((r) => r.name === userForm.role)?.id;
+                    const roleId = isDistrictNodal
+                      ? roles.find((r) => r.name === "ghaat_nodal")?.id
+                      : roles.find((r) => r.name === userForm.role)?.id;
 
-const districtId = isDistrictNodal
-  ? authUser?.district_id
-  : districts.find((d) => d.district_name === userForm.district)?.id;
+                    const districtId = isDistrictNodal
+                      ? authUser?.district_id
+                      : districts.find(
+                          (d) => d.district_name === userForm.district
+                        )?.id;
 
-const designationId = isDistrictNodal
-  ? 2 // ✅ Force designation ID to 2 for ghat nodal
-  : designation.find((d) => d.name === userForm.designation)?.id;
+                    const designationId = isDistrictNodal
+                      ? 2 // ✅ Force designation ID to 2 for ghat nodal
+                      : designation.find((d) => d.name === userForm.designation)
+                          ?.id;
 
-const payload = {
-  name: userForm.fullName,
-  email: userForm.email,
-  password: userForm.password,
-  password_confirmation: userForm.confirmPassword,
-  role_id: roleId,
-  district_id: districtId,
-  designation_id: designationId,
-  number: userForm.contact,
-};
-
+                    const payload = {
+                      name: userForm.fullName,
+                      email: userForm.email,
+                      password: userForm.password,
+                      password_confirmation: userForm.confirmPassword,
+                      role_id: roleId,
+                      district_id: districtId,
+                      designation_id: designationId,
+                      number: userForm.contact,
+                    };
 
                     console.log("PAYLOAD", payload);
 
@@ -862,6 +916,60 @@ const payload = {
                             >
                               <FaEdit />
                             </button>
+                            <button
+                              onClick={() => {
+                                console.log(
+                                  "Selected user ID for delete:",
+                                  u.id
+                                );
+                                setSelectedUserId(u.id);
+                                setShowPopup(true);
+                              }}
+                              className="text-red-600 hover:text-red-800"
+                              title="Delete"
+                            >
+                              <FaTrash />
+                            </button>
+
+                            {showPopup && (
+                              <div className="fixed inset-0  backdrop-blur-sm flex items-center justify-center z-50">
+                                <div className="relative w-full max-w-md bg-white rounded-xl sm:mx-0 mx-5 p-6 shadow-md">
+                                  {/* Close button */}
+                                  <button
+                                    onClick={closePopup}
+                                    className="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl"
+                                  >
+                                    &times;
+                                  </button>
+
+                                  {/* Title */}
+                                  <h2 className="text-center text-2xl font-semibold text-purple-600 mb-3">
+                                    Are you sure?
+                                  </h2>
+
+                                  {/* Message */}
+                                  <p className="text-center text-xl text-gray-600 mb-6">
+                                    Do you really want to delete this user?
+                                  </p>
+
+                                  {/* Action buttons */}
+                                  <div className="flex justify-center gap-4">
+                                    <button
+                                      onClick={closePopup}
+                                      className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      onClick={handleConfirmDelete}
+                                      className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+                                    >
+                                      Yes, Delete
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </Td>
                       </tr>
@@ -870,53 +978,59 @@ const payload = {
                 )}
               </tbody>
             </table>
-             <div className="flex mt-4 gap-2 justify-end">
-  {/* Previous Button */}
-  <button
-    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-    disabled={currentPage === 1}
-    className={`px-3 py-1 rounded border ${
-      currentPage === 1
-        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-        : "bg-white text-green-700"
-    }`}
-  >
-    Prev
-  </button>
+            <div className="flex mt-4 gap-2 justify-end">
+              {/* Previous Button */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded border ${
+                  currentPage === 1
+                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                    : "bg-white text-green-700"
+                }`}
+              >
+                Prev
+              </button>
 
-  {/* Page Numbers */}
-  {Array.from({ length: Math.ceil(userList.length / itemsPerPage) }).map((_, idx) => (
-    <button
-      key={idx}
-      onClick={() => setCurrentPage(idx + 1)}
-      className={`px-3 py-1 rounded border ${
-        currentPage === idx + 1
-          ? "bg-green-600 text-white"
-          : "bg-white text-green-700"
-      }`}
-    >
-      {idx + 1}
-    </button>
-  ))}
+              {/* Page Numbers */}
+              {Array.from({
+                length: Math.ceil(userList.length / itemsPerPage),
+              }).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentPage(idx + 1)}
+                  className={`px-3 py-1 rounded border ${
+                    currentPage === idx + 1
+                      ? "bg-green-600 text-white"
+                      : "bg-white text-green-700"
+                  }`}
+                >
+                  {idx + 1}
+                </button>
+              ))}
 
-  {/* Next Button */}
-  <button
-    onClick={() =>
-      setCurrentPage(prev =>
-        Math.min(prev + 1, Math.ceil(userList.length / itemsPerPage))
-      )
-    }
-    disabled={currentPage === Math.ceil(userList.length / itemsPerPage)}
-    className={`px-3 py-1 rounded border ${
-      currentPage === Math.ceil(userList.length / itemsPerPage)
-        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-        : "bg-white text-green-700"
-    }`}
-  >
-    Next
-  </button>
-</div>
-
+              {/* Next Button */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) =>
+                    Math.min(
+                      prev + 1,
+                      Math.ceil(userList.length / itemsPerPage)
+                    )
+                  )
+                }
+                disabled={
+                  currentPage === Math.ceil(userList.length / itemsPerPage)
+                }
+                className={`px-3 py-1 rounded border ${
+                  currentPage === Math.ceil(userList.length / itemsPerPage)
+                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                    : "bg-white text-green-700"
+                }`}
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       )}

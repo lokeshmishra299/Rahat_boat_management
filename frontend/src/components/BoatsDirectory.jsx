@@ -18,7 +18,7 @@ import { useSearchParams } from "react-router-dom";
 import { FaDownload } from "react-icons/fa";
 import { FaTrash } from "react-icons/fa";
 
-const BASE_URL = import.meta.env.VlITE_API_BASE ?? "http://localhost:8000/api";
+const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
 
 const token = localStorage.getItem("access_token");
 
@@ -763,7 +763,7 @@ const [view, setView] = useState("directory");
                     <tr key={boat.id} className="hover:bg-gray-50">
                       <td className="px-4 py-2">{idx + 1}</td>
                       <td className="px-4 py-2 font-semibold">
-                        {boat.registration_no || "N/A"}
+                        {boat.boat_uid || "N/A"}
                       </td>
                       <td className="px-4 py-2">{boat.pilot_name}</td>
                       <td className="px-4 py-2">{boat.boat_type}</td>
@@ -797,7 +797,7 @@ const [view, setView] = useState("directory");
                         >
                           <FaEye className="text-lg" />
                         </button>
-                        {user?.role_id !== 1 && (
+                        {user?.role_id !== 1 && user?.role_id!==3 && (
                           <button
                             onClick={() =>
                               navigate(

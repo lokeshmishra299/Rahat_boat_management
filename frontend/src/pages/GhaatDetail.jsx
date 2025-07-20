@@ -52,15 +52,16 @@ export default function GhaatDetail() {
   const [showCamera, setShowCamera] = useState(false);
   const webcamRef = useRef(null);
 
-  const getPincode = async (lat, lon) => {
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
-      const data = await res.json();
-      return data.address.postcode || "";
-    } catch {
-      return "";
-    }
-  };
+ const getPincode = async (lat, lon) => {
+  try {
+    const res = await fetch(`${BASE_URL}/reverse-geocode?lat=${lat}&lon=${lon}`);
+    const data = await res.json();
+    return data.address?.postcode || "";
+  } catch {
+    return "";
+  }
+};
+
 
   const getLocationFromPincode = async (pin) => {
     try {

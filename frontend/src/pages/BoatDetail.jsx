@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 
 /* ---------- API ---------- */
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+const API_BASE = BASE_URL.replace("/api", "");
 
 const token = localStorage.getItem("access_token");
 
@@ -182,13 +183,14 @@ export default function BoatDetail() {
   // Helper functions for geolocation
   async function getPincode(lat, lon) {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
-      const data = await res.json();
-      return data.address.postcode || "";
-    } catch {
+      const res = await api.get(`/reverse-geocode?lat=${lat}&lon=${lon}`);
+      return res.data?.address?.postcode || "";
+    } catch (err) {
+      console.error("Error fetching pincode:", err);
       return "";
     }
   }
+
 
   async function getLocationFromPincode(pincode) {
     try {
@@ -233,7 +235,7 @@ export default function BoatDetail() {
       .catch((err) => {
         if (err.response?.data?.status === "error" && err.response?.data?.data) {
           setErrors(err.response.data.data);
-        } 
+        }
         // else {
         // ("Could not save image");
         // }
@@ -316,37 +318,37 @@ export default function BoatDetail() {
           />
 
 
-        <div className="space-y-1">
-  <p className="text-xs text-gray-500 uppercase tracking-wide">Boat Type</p>
-  <select
-    value={draft.boat_type ?? ""}
-    onChange={(e) =>
-      setDraft((prev) => ({ ...prev, boat_type: e.target.value }))
-    }
-    className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm"
-  >
-    <option value="">Select Boat Type</option>
-    <option value="Hybrid">Hybrid</option>
-    <option value="Engine Driven">Engine Driven</option>
-    <option value="Manual (Paddle/Oar)">Manual (Paddle/Oar)</option>
-  </select>
-  {errors.boat_type && (
-    <p className="text-sm text-red-500">{errors.boat_type[0]}</p>
-  )}
-</div>
+          <div className="space-y-1">
+            <p className="text-xs text-gray-500 uppercase tracking-wide">Boat Type</p>
+            <select
+              value={draft.boat_type ?? ""}
+              onChange={(e) =>
+                setDraft((prev) => ({ ...prev, boat_type: e.target.value }))
+              }
+              className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm"
+            >
+              <option value="">Select Boat Type</option>
+              <option value="Hybrid">Hybrid</option>
+              <option value="Engine Driven">Engine Driven</option>
+              <option value="Manual (Paddle/Oar)">Manual (Paddle/Oar)</option>
+            </select>
+            {errors.boat_type && (
+              <p className="text-sm text-red-500">{errors.boat_type[0]}</p>
+            )}
+          </div>
 
-{/* Conditionally show Editable only for specific types */}
-{(draft.boat_type === "Hybrid" || draft.boat_type === "Engine Driven") && (
-  <Editable
-    label="Engine Details"
-    field="engine_details"
-    value={draft.engine_details}
-    error={errors.engine_details}
-    onChange={(field, value) =>
-      setDraft((prev) => ({ ...prev, [field]: value }))
-    }
-  />
-)}
+          {/* Conditionally show Editable only for specific types */}
+          {(draft.boat_type === "Hybrid" || draft.boat_type === "Engine Driven") && (
+            <Editable
+              label="Engine Details"
+              field="engine_details"
+              value={draft.engine_details}
+              error={errors.engine_details}
+              onChange={(field, value) =>
+                setDraft((prev) => ({ ...prev, [field]: value }))
+              }
+            />
+          )}
 
 
           {/* District Dropdown — only visible to Admin (no role_id) */}
@@ -512,62 +514,62 @@ export default function BoatDetail() {
       </div> */}
 
       {/* Owner Family Members */}
-     {/* Owner Family Members */}
-{draft.owner_family_name && (
-  <div className="md:col-span-2 mt-8">
-    <h2 className="text-xl font-semibold mb-4 text-green-600">Family Members</h2>
-    
-    <div className="space-y-4">
-      {draft.owner_family_name.split(",").map((member, idx) => (
-        <div key={idx} className="bg-gray-50 border p-4 rounded shadow-sm flex items-center gap-4">
-          <input
-            type="text"
-            value={member.trim()}
-            onChange={(e) => {
-              const updated = draft.owner_family_name.split(",");
-              updated[idx] = e.target.value;
-              setDraft((prev) => ({
-                ...prev,
-                owner_family_name: updated.join(","),
-              }));
-            }}
-            className="w-full border px-3 py-2 rounded"
-          />
+      {/* Owner Family Members */}
+      {draft.owner_family_name && (
+        <div className="md:col-span-2 mt-8">
+          <h2 className="text-xl font-semibold mb-4 text-green-600">Family Members</h2>
+
+          <div className="space-y-4">
+            {draft.owner_family_name.split(",").map((member, idx) => (
+              <div key={idx} className="bg-gray-50 border p-4 rounded shadow-sm flex items-center gap-4">
+                <input
+                  type="text"
+                  value={member.trim()}
+                  onChange={(e) => {
+                    const updated = draft.owner_family_name.split(",");
+                    updated[idx] = e.target.value;
+                    setDraft((prev) => ({
+                      ...prev,
+                      owner_family_name: updated.join(","),
+                    }));
+                  }}
+                  className="w-full border px-3 py-2 rounded"
+                />
+                <button
+                  type="button"
+                  className="text-red-600 hover:text-red-800"
+                  onClick={() => {
+                    const updated = draft.owner_family_name.split(",");
+                    updated.splice(idx, 1);
+                    setDraft((prev) => ({
+                      ...prev,
+                      owner_family_name: updated.join(","),
+                    }));
+                  }}
+                >
+                  <FaTrash />
+                </button>
+              </div>
+            ))}
+          </div>
+
           <button
             type="button"
-            className="text-red-600 hover:text-red-800"
             onClick={() => {
-              const updated = draft.owner_family_name.split(",");
-              updated.splice(idx, 1);
+              const updated = draft.owner_family_name
+                ? [...draft.owner_family_name.split(","), ""]
+                : [""];
               setDraft((prev) => ({
                 ...prev,
                 owner_family_name: updated.join(","),
               }));
             }}
+            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700"
           >
-            <FaTrash />
+            Add Family Member
           </button>
         </div>
-      ))}
-    </div>
-
-    <button
-      type="button"
-      onClick={() => {
-        const updated = draft.owner_family_name
-          ? [...draft.owner_family_name.split(","), ""]
-          : [""];
-        setDraft((prev) => ({
-          ...prev,
-          owner_family_name: updated.join(","),
-        }));
-      }}
-      className="mt-4 px-4 py-2 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700"
-    >
-      Add Family Member
-    </button>
-  </div>
-)}
+      )}
 
       {/* Image Section */}
       <div>
@@ -608,13 +610,15 @@ export default function BoatDetail() {
                 {boat.image ? (
                   <img
                     src={
-                      boat.image.startsWith("blob:")
+                      boat.image?.startsWith("blob:")
                         ? boat.image
-                        : `${BASE_URL.replace('/api', '')}/storage/${boat.image}`
+                        : `${API_BASE}/storage/${boat.image}`
                     }
                     alt="Boat"
                     className="w-full h-64 object-cover"
                   />
+
+
                 ) : (
                   <div className="w-full h-64 flex items-center justify-center bg-gray-50 text-gray-400">
                     No image
