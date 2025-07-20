@@ -34,6 +34,8 @@ export default function LifeJacket() {
   const [scannedData, setScannedData] = useState("");
   const [scanning, setScanning] = useState(false);
   const [startScanTrigger, setStartScanTrigger] = useState(false);
+//   const [boats, setBoats] = useState([]);
+// const [selectedBoatCapacity, setSelectedBoatCapacity] = useState(0);
 
   useEffect(() => {
     if (!startScanTrigger) return;
@@ -177,11 +179,10 @@ export default function LifeJacket() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-6 py-2 rounded-full font-semibold ${
-              tab === t.id
+            className={`px-6 py-2 rounded-full font-semibold ${tab === t.id
                 ? "bg-orange-600 text-white"
                 : "bg-white text-slate-700 shadow hover:bg-slate-50"
-            }`}
+              }`}
           >
             {t.label}
           </button>
@@ -207,8 +208,8 @@ export default function LifeJacket() {
 /* ───────────────────────────── RecordForm ───────────────────────────── */
 function RecordForm({ onSaved, roleId, storedUser }) {
 
-  
-  
+
+
   const [show, setshow] = useState(false);
   //  const [showQR, setShowQR] = useState(false);
   //  const handleGenerate = () => setShowQR(true);
@@ -218,7 +219,11 @@ function RecordForm({ onSaved, roleId, storedUser }) {
   /* dropdown data */
   const [districts, setDistricts] = useState([]);
   const [hide, showhide] = useState(false);
-  const [ghaats, setGhaats] = useState([]);
+  // const [ghaats, setGhaats] = useState([]);
+   const [ghaats, setGhaats] = useState([]);
+  const [boats, setBoats] = useState([]);
+  const [selectedBoatCapacity, setSelectedBoatCapacity] = useState(0);
+
 
   /* form & validation */
   const [val, setVal] = useState({
@@ -234,36 +239,55 @@ function RecordForm({ onSaved, roleId, storedUser }) {
     notes: "",
   });
 
-  const handleDownload = async () => {
-    try {
-      const zip = new JSZip();
-      const folder = zip.folder("qr-codes");
+const handleDownload = async () => {
+  try {
+    // Validate all required fields
+    const requiredFields = {
+      district_id: "District",
+      ghat: "Ghat",
+      boats: "Boat",
+      total: "Total Jackets",
+      date: "Distribution Date"
+    };
 
-      const total = parseInt(val.total || 0);
-      const districtName =
-        districts.find((d) => d.id == val.district_id)?.district_name ||
-        "Unknown";
-
-      for (let i = 0; i < total; i++) {
-        const qrValue = `Id ${i + 1} | District: ${districtName}, Ghat: ${
-          val.ghat
-        }, Boat: ${val.boats}, Date: ${val.date}`;
-
-        const dataUrl = await QRCodeLib.toDataURL(qrValue, {
-          width: 500,
-          margin: 1,
-        });
-
-        const base64 = dataUrl.split(",")[1];
-        folder.file(`qr_${i + 1}.png`, base64, { base64: true });
+    const missingFields = [];
+    for (const [field, name] of Object.entries(requiredFields)) {
+      if (!val[field]) {
+        missingFields.push(name);
       }
-
-      const content = await zip.generateAsync({ type: "blob" });
-      saveAs(content, "qr-codes.zip");
-    } catch (err) {
-      console.error("QR ZIP download failed:", err);
     }
-  };
+
+    if (missingFields.length > 0) {
+      // toast.error(`Please fill all required fields: ${missingFields.join(", ")}`);
+      return;
+    }
+
+    const zip = new JSZip();
+    const folder = zip.folder("qr-codes");
+
+    const districtName = districts.find(d => d.id == val.district_id)?.district_name || "Unknown";
+    const ghatName = ghaats.find(g => g.id == val.ghat)?.ghaat_name || "Unknown";
+
+    for (let i = 0; i < val.total; i++) {
+      const qrValue = `ID ${i+1} | District: ${districtName} | Ghat: ${ghatName} | Boat: ${val.boats} | Date: ${val.date}`;
+      
+      const dataUrl = await QRCodeLib.toDataURL(qrValue, {
+        width: 500,
+        margin: 1
+      });
+
+      const base64 = dataUrl.split(",")[1];
+      folder.file(`qr_${i+1}.png`, base64, { base64: true });
+    }
+
+    const content = await zip.generateAsync({ type: "blob" });
+    saveAs(content, "life-jackets-qr-codes.zip");
+    toast.success("QR codes downloaded successfully!");
+  } catch (err) {
+    console.error("QR download failed:", err);
+    toast.error("Failed to generate QR codes");
+  }
+};
 
   const autoBoatCount = async (ghatName = "") => {
     if (!ghatName) return;
@@ -320,44 +344,59 @@ function RecordForm({ onSaved, roleId, storedUser }) {
         const d = await api.get("/district-list");
         setDistricts(d.data.data || []);
         console.log(d.data);
-      } catch {}
+      } catch { }
       try {
         const g = await api.get("/ghaat-list");
         setGhaats(g.data.data || []);
-      } catch {}
+      } catch { }
     })();
   }, []);
 
-  const [boats, setBoats] = useState([]);
+//   const [boats, setBoats] = useState([]);
 
-  useEffect(() => {
-    api
-      .get("/boat-registration-no")
-      .then((res) => {
-        if (res.data.status === "success") {
-          const boatNumbers = res.data.data.map((item) => item.boat_uid);
-          setBoats(boatNumbers);
+// const [boats, setBoats] = useState([]);
+// const [selectedBoatCapacity, setSelectedBoatCapacity] = useState(0);
 
-          // Optionally auto-fill if not already set
-          if (!val.boats && boatNumbers.length > 0) {
-            setVal({ ...val, boats: boatNumbers[0] }); // default to first boat
-          }
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch boats", err);
-      });
-  }, []);
+const fetchBoatsByGhat = async (ghatId) => {
+  try {
+    const res = await api.post("/boats-by-ghaat", { ghaat_id: ghatId });
+
+    if (res.data.status === "success") {
+      const boats = res.data.data
+        .filter(item => item.boat_uid !== null)
+        .map(item => ({
+          value: item.boat_uid,
+          label: item.boat_uid,
+          capacity: item.passenger_capacity
+        }));
+
+      const firstBoat = boats[0];
+
+      setBoats(boats);
+      setSelectedBoatCapacity(firstBoat?.capacity || 0);
+
+      setVal(prev => ({
+        ...prev,
+        boats: firstBoat?.value || "",
+        total: firstBoat?.capacity ? (firstBoat.capacity + 1).toString() : "0"
+      }));
+    }
+  } catch (err) {
+    console.error("Error fetching boats by ghat:", err);
+  }
+};
+
+
 
   /* handlers */
-  const handle = async (e) => {
+  const handle = (e) => {
     const { name, value } = e.target;
-
     setVal((v) => {
       const updated = { ...v, [name]: value };
 
       if (name === "ghat") {
-        const ghat_id = ghaats.find((g) => g.ghaat_name === value)?.id;
+        // value is now ghat_id (string)
+        const ghat_id = value;
         let district_id = storedUser?.district_id;
 
         if (!district_id && updated.district_id) {
@@ -365,13 +404,15 @@ function RecordForm({ onSaved, roleId, storedUser }) {
         }
 
         if (ghat_id && district_id) {
-          autoBoatCount(value); // ✅ call only when ghat changes
+          const ghatName = ghaats.find((g) => g.id === parseInt(ghat_id))?.ghaat_name || "";
+          autoBoatCount(ghatName);  // pass name for this function
+          fetchBoatsByGhat(ghat_id);
         }
       }
-
       return updated;
     });
   };
+
 
   const digits = (name) => (e) =>
     setVal((v) => ({
@@ -406,8 +447,8 @@ function RecordForm({ onSaved, roleId, storedUser }) {
 
     const payload = {
       district_id: dist.id ?? "",
-      ghaat_id: ghat.id ?? "",
-      no_of_boats: parseInt(val.boats), // send just the number
+      ghaat_id: val.ghat ?? "",
+      no_of_boats: val.boats,  // send just the number
       total_jackets: parseInt(val.total),
       distribution_date: val.date,
       received_by: val.received,
@@ -510,7 +551,9 @@ function RecordForm({ onSaved, roleId, storedUser }) {
           >
             <option value="">Select Ghat</option>
             {filteredGhaats.map((g) => (
-              <option key={g.id}>{g.ghaat_name}</option>
+              <option key={g.id} value={g.id}>
+                {g.ghaat_name}
+              </option>
             ))}
           </select>
           {errors.ghat && (
@@ -523,71 +566,64 @@ function RecordForm({ onSaved, roleId, storedUser }) {
         {/* // Inside your component: */}
         <div>
           <label className="block text-sm font-medium mb-1">Boats *</label>
-          <Select
-            className="react-select-container"
-            classNamePrefix="react-select"
-            options={boats.map((boat) => ({
-              value: boat,
-              label: boat,
-            }))}
-            value={
-              boats
-                .map((boat) => ({ value: boat, label: boat }))
-                .find((opt) => opt.value === val.boats) || null
-            }
-            onChange={(selectedOption) =>
-              setVal({ ...val, boats: selectedOption?.value || "" })
-            }
-            isSearchable
-            placeholder={boats.length === 0 ? "Loading..." : "Select Boat"}
-            styles={{
-              control: (base) => ({
-                ...base,
-                backgroundColor: "#f3f4f6", // Tailwind's gray-100
-                borderColor: "#d1d5db", // Tailwind's gray-300
-                minHeight: "42px",
-                fontSize: "14px",
-                cursor: "pointer",
-              }),
-              option: (base, { isFocused }) => ({
-                ...base,
-                backgroundColor: isFocused ? "#e0f2fe" : "white", // light blue on hover
-                color: "#1e3a8a",
-                fontSize: "14px",
-              }),
-            }}
-          />
+         <Select
+  className="react-select-container"
+  classNamePrefix="react-select"
+  options={boats}
+  value={boats.find(option => option.value === val.boats) || null}
+  onChange={(selectedOption) => {
+    const capacity = selectedOption?.capacity || 0;
+    setSelectedBoatCapacity(capacity);
+    setVal(prev => ({
+      ...prev,
+      boats: selectedOption?.value || "",
+      total: capacity ? (capacity + 1).toString() : "0"
+    }));
+  }}
+  isSearchable
+  placeholder={boats.length === 0 ? "No boats available" : "Select Boat"}
+  noOptionsMessage={() => "No boats found for this ghat"}
+  isDisabled={boats.length === 0}
+  styles={{
+    control: (base) => ({
+      ...base,
+      backgroundColor: "#f3f4f6",
+      borderColor: boats.length === 0 ? "#ef4444" : "#d1d5db",
+      minHeight: "42px",
+    }),
+    option: (base, { isFocused }) => ({
+      ...base,
+      backgroundColor: isFocused ? "#e0f2fe" : "white",
+      color: "#1e3a8a",
+    }),
+  }}
+/>
 
           {errors?.boats && (
             <p className="text-xs text-red-600 mt-1">{errors.boats}</p>
           )}
         </div>
 
-     
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Total Jackets *
-          </label>
-          <input
-            type="text"
-            name="total"
-            value={val.total || ""}
-            onChange={(e) => {
-              const { name, value } = e.target;
-              // Allow only numbers
-              if (/^\d*$/.test(value)) {
-                setVal((prev) => ({ ...prev, [name]: value }));
-              }
-            }}
-            inputMode="numeric"
-            pattern="[0-9]*"
-            placeholder={ph.total || "Enter total jackets"}
-            className={`${inputCls} bg-gray-100`}
-          />
-          {errors.total && (
-            <p className="text-xs text-red-600 mt-1">{errors.total}</p>
-          )}
-        </div>
+
+<div>
+  <label className="block text-sm font-medium mb-1">
+    Total Jackets *
+  </label>
+  <input
+    type="text"
+    name="total"
+    value={val.total || ""}
+    readOnly
+    className={`${inputCls} bg-gray-100 cursor-not-allowed`}
+    title="Automatically calculated from boat capacity"
+  />
+  {/* <p className="text-xs text-gray-500 mt-1">
+    Calculated from boat capacity: {selectedBoatCapacity} passengers + 1
+  </p> */}
+  {errors.total && (
+    <p className="text-xs text-red-600 mt-1">{errors.total}</p>
+  )}
+</div>
 
         {/* Date */}
         <div>
@@ -608,7 +644,7 @@ function RecordForm({ onSaved, roleId, storedUser }) {
 
         {/* Received by (optional) */}
         <div>
-          <label className="block text-sm font-medium mb-1">Received By</label>
+          <label className="block text-sm font-medium mb-1">Received By *</label>
           <input
             name="received"
             value={val.received}
@@ -650,11 +686,9 @@ function RecordForm({ onSaved, roleId, storedUser }) {
                         size={200}
                         bgColor="white"
                         fgColor="black"
-                        value={`Id ${
-                          index + 1
-                        } | District: ${districtName}, Ghat: ${
-                          val.ghat
-                        }, Boat: ${val.boats}, Date: ${val.date}`}
+                        value={`Id ${index + 1
+                          } | District: ${districtName}, Ghat: ${val.ghat
+                          }, Boat: ${val.boats}, Date: ${val.date}`}
                       />
                       <p className="mt-2 text-sm text-center text-gray-600">
                         QR {index + 1}
@@ -684,11 +718,10 @@ function RecordForm({ onSaved, roleId, storedUser }) {
       <div className="mt-6 flex items-center justify-center">
         <button
           disabled={submitting}
-          className={`px-8 py-3 rounded-full font-semibold ${
-            submitting
+          className={`px-8 py-3 rounded-full font-semibold ${submitting
               ? "bg-slate-400 cursor-not-allowed"
               : "bg-orange-600 text-white hover:bg-orange-700"
-          }`}
+            }`}
         >
           {submitting ? "Saving…" : "Record Distribution"}
         </button>

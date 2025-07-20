@@ -131,10 +131,10 @@ const user = JSON.parse(localStorage.getItem("user"));
               <FaShieldAlt className="inline-block mr-2 text-lg" />
               Life Jackets
             </Link>
-            <Link to="inspection" className={linkCls("inspection", "bg-purple-500")}>
+            {/* <Link to="inspection" className={linkCls("inspection", "bg-purple-500")}>
               <FaClipboardCheck className="inline-block mr-2 text-lg" />
               Inspection
-            </Link>
+            </Link> */}
             {/* <Link to="usermanagment" className={linkCls("usermanagment", "bg-yellow-400")}>
               <FaUsersCog className="inline-block mr-2 text-lg" />
               User Management
