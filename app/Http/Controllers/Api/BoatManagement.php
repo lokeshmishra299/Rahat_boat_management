@@ -277,91 +277,95 @@ class BoatManagement extends Controller
 
 
     public function edit(Request $request, $id)
-    {
-        $boat = RegisterBoat::find($id);
+{
+    $boat = RegisterBoat::find($id);
 
-        if (!$boat) {
-            return ApiResponse::generateResponse('error', 'Boat not found', [], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'district_id'            => 'required',
-            'image'                  => 'nullable|image',
-            'boat_type'              => 'required|string',
-            'pilot_name'             => 'required|string',
-            'pilot_license_no'       => 'required|string',
-            'support_staff'          => 'required|integer',
-            'engine_details'         => 'nullable|string',
-            'passenger_capacity'     => 'required|integer',
-            'year_of_manufacture'    => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
-            'ghaat_id'               => 'required|exists:ghaats,id',
-            'registration_authority' => 'required|string',
-            'location'               => 'nullable|string',
-            'latitude'               => 'nullable|numeric',
-            'longitude'              => 'nullable|numeric',
-            'pincode'                => 'nullable|string|max:10',
-            'remarks'                => 'nullable|string',
-
-            // Boat owner details
-            'owner_name'             => 'nullable|string|max:255',
-            'owner_email'            => 'nullable|email',
-            'owner_number'           => 'nullable|digits:10',
-            'owner_adhar_no'         => 'nullable|digits:12',
-            'owner_boat_owned'       => 'nullable|string|max:255',
-            'owner_pincode'          => 'nullable|string|max:10',
-            'owner_family_name'      => 'nullable',
-            'owner_dob'              => 'nullable',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::generateResponse('error', 'Validation failed.', $validator->errors(), 422);
-        }
-
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('boats', 'public');
-            $boat->image = $imagePath;
-        }
-
-        // Handle array to string conversion
-        $owner_family_name = is_array($request->owner_family_name)
-            ? implode(',', $request->owner_family_name)
-            : $request->owner_family_name;
-
-        $owner_dob = is_array($request->owner_dob)
-            ? implode(',', $request->owner_dob)
-            : $request->owner_dob;
-
-        $boat->fill($request->only([
-            'district_id',
-            'boat_type',
-            'pilot_name',
-            'pilot_license_no',
-            'support_staff',
-            'engine_details',
-            'passenger_capacity',
-            'year_of_manufacture',
-            'ghaat_id',
-            'registration_authority',
-            'location',
-            'latitude',
-            'longitude',
-            'pincode',
-            'remarks',
-            'registration_no',
-
-            'owner_name',
-            'owner_email',
-            'owner_number',
-            'owner_adhar_no',
-            'owner_boat_owned',
-            'owner_pincode',
-        ]));
-
-        $boat->owner_family_name = $owner_family_name;
-        $boat->owner_dob = $owner_dob;
-
-        $boat->save();
-
-        return ApiResponse::generateResponse('success', 'Boat details updated successfully.', $boat);
+    if (!$boat) {
+        return ApiResponse::generateResponse('error', 'Boat not found', [], 404);
     }
+
+    $validator = Validator::make($request->all(), [
+        'registration_no'        => 'nullable|unique:register_boats,registration_no,' . $id,
+        'district_id'            => 'required',
+        'boat_image'             => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+        'pilot_image'            => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+        'boat_type'              => 'required|string',
+        'pilot_name'             => 'required|string',
+        'pilot_license_no'       => 'required|string',
+        'support_staff'          => 'required|integer',
+        'engine_details'         => 'nullable|string',
+        'passenger_capacity'     => 'required|integer',
+        'year_of_manufacture'    => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
+        'ghaat_id'               => 'required|exists:ghaats,id',
+        'registration_authority' => 'required|string',
+        'location'               => 'nullable|string',
+        'latitude'               => 'nullable|numeric',
+        'longitude'              => 'nullable|numeric',
+        'pincode'                => 'nullable|string|max:10',
+        'remarks'                => 'nullable|string',
+        'adhar_no'               => 'nullable|string|max:12',
+        'contact_no'             => 'nullable|string|max:20',
+    ]);
+
+    if ($validator->fails()) {
+        return ApiResponse::generateResponse('error', 'Validation failed.', $validator->errors(), 422);
+    }
+
+    // Upload boat image
+    if ($request->hasFile('boat_image')) {
+        $boatImagePath = $request->file('boat_image')->store('boats', 'public');
+        $boat->boat_image = 'storage/' . $boatImagePath;
+    }
+
+    // Upload pilot image
+    if ($request->hasFile('pilot_image')) {
+        $pilotImagePath = $request->file('pilot_image')->store('pilots', 'public');
+        $boat->pilot_image = 'storage/' . $pilotImagePath;
+    }
+
+    // Fill basic fields
+    $boat->fill($request->only([
+        'registration_no',
+        'district_id',
+        'boat_type',
+        'pilot_name',
+        'pilot_license_no',
+        'support_staff',
+        'engine_details',
+        'passenger_capacity',
+        'year_of_manufacture',
+        'ghaat_id',
+        'registration_authority',
+        'location',
+        'latitude',
+        'longitude',
+        'pincode',
+        'remarks',
+    ]));
+
+    // Map manual fields
+    $boat->pilot_adhar = $request->adhar_no;
+    $boat->pilot_contact = $request->contact_no;
+
+    // Regenerate UID only if ghat or district changed
+    if (
+        $request->ghaat_id != $boat->getOriginal('ghaat_id') ||
+        $request->district_id != $boat->getOriginal('district_id')
+    ) {
+        $ghaat = Ghaat::with('district_record')->find($request->ghaat_id);
+
+        if ($ghaat && $ghaat->district_record) {
+            $districtNameShort = strtoupper(substr($ghaat->district_record->district_name, 0, 3)); // e.g. BAH
+            $ghaatUid = $ghaat->ghat_uid ?? 'GH-000-0000'; // e.g. GH-180-0003
+            $boatId = str_pad($boat->id, 3, '0', STR_PAD_LEFT); // e.g. 021
+
+            $boat->boat_uid = "UP-$districtNameShort-$ghaatUid-$boatId";
+        }
+    }
+
+    $boat->save();
+
+    return ApiResponse::generateResponse('success', 'Boat details updated successfully.', $boat);
+}
+
 }
