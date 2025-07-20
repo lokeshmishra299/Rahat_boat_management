@@ -117,14 +117,14 @@ class DashboardController extends Controller
             ->latest('updated_at')
             ->first();
 
-        if ($latestMaintainedBoat) {
-            $activities[] = [
-                'title' => 'Boat maintenance',
-                'location' => $latestMaintainedBoat->district->district_name ?? 'Unknown District',
-                'status' => 'pending',
-                'time_ago' => Carbon::parse($latestMaintainedBoat->updated_at)->diffForHumans(),
-            ];
-        }
+        // if ($latestMaintainedBoat) {
+        //     $activities[] = [
+        //         'title' => 'Boat maintenance',
+        //         'location' => $latestMaintainedBoat->district->district_name ?? 'Unknown District',
+        //         'status' => 'pending',
+        //         'time_ago' => Carbon::parse($latestMaintainedBoat->updated_at)->diffForHumans(),
+        //     ];
+        // }
 
         return response()->json([
             'status' => 'success',

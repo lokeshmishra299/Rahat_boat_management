@@ -111,7 +111,7 @@ public function distribuation_tracking()
         return [
             'district'           => $first->district_record->district_name ?? 'N/A',
             'ghaat'              => $first->ghaat->ghaat_name ?? 'N/A',
-            'boats'              => $items->sum('no_of_boats'),
+            'boats'              => $items->count(),
             'total_allocated'    => $items->sum('total_allocated_jackets'),
             'total_distributed'  => $items->sum('total_jackets'),
             'status'             => $items->every(fn($i) => $i->status == 0) ? 'Completed' : 'Pending',
