@@ -368,4 +368,22 @@ class BoatManagement extends Controller
     return ApiResponse::generateResponse('success', 'Boat details updated successfully.', $boat);
 }
 
+public function boatsByGhaat(Request $request)
+{
+    $request->validate([
+        'ghaat_id' => 'required|integer|exists:ghaats,id',
+    ]);
+
+    $boats = RegisterBoat::where('ghaat_id', $request->ghaat_id)
+        ->select('id', 'boat_uid','passenger_capacity')
+        ->get();
+
+    return ApiResponse::generateResponse(
+        'success',
+        'Boats fetched successfully.',
+        $boats,
+        200
+    );
+
+}
 }

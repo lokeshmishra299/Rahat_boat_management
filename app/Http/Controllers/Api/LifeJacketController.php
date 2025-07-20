@@ -12,63 +12,33 @@ class LifeJacketController extends Controller
 {
 public function store(Request $request)
 {
-
-
-      $user = auth()->user(); 
-    //   dd($user);
+    $user = auth()->user();
 
     if ($user && $user->role_id == 1) {
         $request->merge(['district_id' => $user->district_id]);
-       
     }
-//     dd([
-//     'from_all' => $request->all(),
-//     'from_json' => $request->json()->all(),
-//     'merged' => $request->merge(['district_id' => $user->district_id])->all(),
-// ]);
-
 
     $validated = $request->validate([
         'ghaat_id'          => 'required|exists:ghaats,id',
-        'district_id'       => 'required|exists:districts,id',
-        'no_of_boats'       => 'required|integer|min:1',
+        'district_id'       => 'required|exists:district_master,district_code',
+        'no_of_boats'       => 'nullable', // Validate boat exists
         'total_jackets'     => 'required|integer|min:1',
-        // 'total_allocated_jackets' =>'required|integer|min:1',
         'distribution_date' => 'required|date',
         'received_by'       => 'required|string|max:255',
-        // 'phone'             => 'required|regex:/^[0-9]{10}$/',
         'distribution_notes'=> 'nullable|string|max:255',
     ], [
         'ghaat_id.required'          => 'Ghaat is required.',
         'ghaat_id.exists'            => 'Selected ghaat does not exist.',
-        // 'district_id.required'       => 'District is required.',
-        // 'district_id.exists'         => 'Selected district does not exist.',
-        'no_of_boats.required'       => 'Number of boats is required.',
-        'no_of_boats.integer'        => 'Number of boats must be a number.',
-        'jackets_per_boat.required'  => 'Jackets per boat is required.',
+        'no_of_boats.required'       => 'Boat selection is required.',
+        'no_of_boats.exists'         => 'Selected boat does not exist.',
         'total_jackets.required'     => 'Total jackets is required.',
-        'total_allocated_jackets.required'=>'Total allocated jackets is required',
         'distribution_date.required' => 'Distribution date is required.',
-        'distribution_date.date'     => 'Distribution date must be a valid date.',
         'received_by.required'       => 'Receiver name is required.',
-        // 'phone.required'             => 'Phone number is required.',
-        // 'phone.regex'                => 'Phone number must be 10 digits.',
     ]);
 
-//    if ($validated['total_jackets'] > $validated['total_allocated_jackets']) {
-//     return response()->json([
-//         'status' => 'error',
-//         'message' => 'Total jackets cannot exceed total allocated jackets',
-//         'errors' => [
-//             'total_jackets' => ['Total jackets cannot exceed total allocated jackets.']
-//         ]
-//     ], 422);
-// }
-// dd($validated);
+    $lifeJacket = LifeJacket::create($validated);
 
-    $lifeJacket=LifeJacket::create($validated);
-
-    return ApiResponse::generateResponse('success','Life Jacket distributed successfully',$lifeJacket);
+    return ApiResponse::generateResponse('success', 'Life Jacket distributed successfully', $lifeJacket);
 }
 
 /* public function distribuation_tracking()
@@ -120,7 +90,7 @@ public function store(Request $request)
 
 public function distribuation_tracking()
 {
-    $records = LifeJacket::with(['district', 'ghaat'])
+    $records = LifeJacket::with(['district_record', 'ghaat'])
         ->select(
             'district_id',
             'ghaat_id',
@@ -139,7 +109,7 @@ public function distribuation_tracking()
         $first = $items->first();
 
         return [
-            'district'           => $first->district->district_name ?? 'N/A',
+            'district'           => $first->district_record->district_name ?? 'N/A',
             'ghaat'              => $first->ghaat->ghaat_name ?? 'N/A',
             'boats'              => $items->sum('no_of_boats'),
             'total_allocated'    => $items->sum('total_allocated_jackets'),
@@ -190,7 +160,7 @@ $totalCapacity = (int)DB::table('register_boats')
     ->where('district_id', $district_id)
     ->sum('passenger_capacity');
 
-dd( $totalCapacity);
+// dd( $totalCapacity);
 
     return ApiResponse::generateResponse('success', 'Boat count fetched', [
         'district_id' => $district_id,

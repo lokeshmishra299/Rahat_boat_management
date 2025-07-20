@@ -215,4 +215,12 @@ public function registration_no_list(){
     return ApiResponse::generateResponse('success','Registered boat name fetched successfully',$boat,200);
 }
 
+// public function registration_no_list(){
+
+   
+    
+//     return ApiResponse::generateResponse('success','Registered boat name fetched successfully',$boat,200);
+// }
+
+
 }

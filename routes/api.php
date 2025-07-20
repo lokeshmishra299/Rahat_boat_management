@@ -47,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('total-boat-list', [BoatManagement::class, 'total_list']);
 
+    Route::post('/boats-by-ghaat', [BoatManagement::class, 'boatsByGhaat']);
+
     Route::post('/register-ghaat', [GhaatController::class, 'store']);
     Route::get('/ghaat-list', [GhaatController::class, 'index']);
     Route::get('/ghaat-list/{id}', [GhaatController::class, 'view_list_individual']);
@@ -73,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/analytics', [InspectionController::class, 'analytics']);
 
     Route::get('/boat-registration-no', [InspectionController::class, 'registration_no_list']);
+    
 
 
     //Dashboard

@@ -34,8 +34,13 @@ class LifeJacket extends Model
         return $this->belongsTo(Ghaat::class);
     }
 
-    public function district()
-    {
-        return $this->belongsTo(District::class);
-    }
+    // public function district()
+    // {
+    //     return $this->belongsTo(District::class);
+    // }
+
+        public function district_record()
+{
+    return $this->hasOne(DistrictMaster::class, 'district_code', 'district_id');
+}
 }
