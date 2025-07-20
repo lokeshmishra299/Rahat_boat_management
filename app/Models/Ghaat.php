@@ -32,7 +32,8 @@ class Ghaat extends Model
         'user_id',
         'police_station_name',
         'police_mobile',
-        'station_address'
+        'station_address',
+        'ghat_uid',
     ];
 
     protected static function booted()

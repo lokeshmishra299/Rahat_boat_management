@@ -9,11 +9,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable,SoftDeletes;
     // use HasRoles;
     use HasApiTokens;
     /**
@@ -21,8 +23,9 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    
     protected $fillable = [
-        'name', 'email', 'district_id', 'designation_id', 'role_id','password1','password','otp','number','user_name',
+        'name', 'email', 'district_id', 'designation_id', 'role_id','password1','password','otp','number','user_name','deleted_at',
     ];
 
     /**

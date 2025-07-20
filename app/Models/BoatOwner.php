@@ -21,7 +21,11 @@ class BoatOwner extends Model
         'pincode',
         'family',
         'owner_family_name',
-        'dob'
+        'dob',
+        'latitude',
+        'longitude',
+        'location',
+        'image',
     ];
 
     protected static function booted()

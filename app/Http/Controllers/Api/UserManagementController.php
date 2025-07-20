@@ -107,6 +107,7 @@ public function user_list()
     else {
         return ApiResponse::generateResponse('success', 'No access to user list', [], 200);
     }
+    $query->orderBy('id', 'desc');
 
     $users = $query->get();
 
@@ -117,7 +118,9 @@ public function user_list()
     
      public function user_list_id($id){
 
-        $user = User::with('district', 'designation', 'role')->where('id', $id)->first();
+        $user = User::with('district', 'designation', 'role')
+        ->orderBy('id','desc')
+        ->where('id', $id)->first();
 
         // dd($user);
         return ApiResponse::generateResponse('success','User list fetch successfully',$user,200);
@@ -240,6 +243,21 @@ if (Hash::check($request->password, $user->password)) {
 
     return ApiResponse::generateResponse('success', 'Password updated successfully', null, 200);
 }
+
+public function user_delete($id)
+{
+    $user = User::find($id);
+
+    if (!$user) {
+        return response()->json(['message' => 'User not found'], 404);
+    }
+
+    $user->delete(); // This now sets deleted_at instead of hard delete
+
+    return ApiResponse::generateResponse('success', 'User soft deleted successfully', null, 200);
+}
+
+
 
 
 }

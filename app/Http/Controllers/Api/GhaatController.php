@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Models\DistrictMaster;
 use Illuminate\Http\Request;
 use App\Models\Ghaat; // make sure this import exists
 use App\Models\River;
@@ -24,7 +25,7 @@ class GhaatController extends Controller
         return ApiResponse::generateResponse('success', 'River list fetched successfully', $rivers);
     }
 
-   public function store(Request $request)
+ public function store(Request $request)
 {
     $request->validate([
         'photo_path' => 'required|image|mimes:jpeg,jpg,png|max:5120',
@@ -40,27 +41,13 @@ class GhaatController extends Controller
         'additional_info' => 'nullable|string',
         'location' => 'nullable|string',
     ], [
-        'photo_path.required' => 'Please upload a photo.',
-        'photo_path.image' => 'Uploaded file must be an image.',
-        'photo_path.mimes' => 'Photo must be a JPEG or PNG file.',
-        'photo_path.max' => 'Photo size should not exceed 5MB.',
-        
-        'ghaat_name.required' => 'Ghaat name is required.',
-        'district_id.required' => 'Please select a district.',
-        'river_id.required' => 'Please select a river.',
-        'river_id.exists' => 'Selected river is invalid.',
-
-        'police_station_name.required' => 'Police station name is required.',
-        'police_mobile.required' => 'Police mobile number is required.',
-        'police_mobile.digits' => 'Police mobile must be a 10-digit number.',
-        'station_address.required' => 'Police station address is required.',
-
-        'nearest_hospital.required' => 'Please provide nearest hospital details.',
+        // Custom messages here...
     ]);
 
     $image = $request->file('photo_path');
     $photoPath = $image->store('photos', 'public');
 
+    // Step 1: Create Ghaat without UID
     $ghaat = Ghaat::create([
         'photo_path' => $photoPath,
         'latitude' => $request->latitude,
@@ -80,6 +67,16 @@ class GhaatController extends Controller
         'user_id' => auth()->id(),
     ]);
 
+ 
+    $districtId = $request->district_id;
+    $ghaatId = $ghaat->id;
+    $ghatUid = sprintf('GH-%s-%04d', $districtId, $ghaatId);
+
+    
+    $ghaat->update([
+        'ghat_uid' => $ghatUid
+    ]);
+
     return ApiResponse::generateResponse(
         'success',
         'Ghaat registered successfully',
@@ -87,6 +84,7 @@ class GhaatController extends Controller
         201
     );
 }
+
 
 public function index()
 {

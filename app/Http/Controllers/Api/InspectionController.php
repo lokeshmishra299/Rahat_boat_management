@@ -144,27 +144,41 @@ public function view_inspection_by_id($id)
     );
 }
 
-public function upcoming_inspections()
+public function upcoming_inspections(Request $request)
 {
     $today = Carbon::now();
     $upcoming = [];
+
+    // Check if a specific date is passed (e.g. from calendar)
+    $filterDate = $request->has('date') ? Carbon::parse($request->date) : null;
 
     $inspections = BoatInspection::with('boat.district')->get();
 
     foreach ($inspections as $inspection) {
         $lastInspectionDate = Carbon::parse($inspection->inspection_date);
-
         $nextDueDate = $lastInspectionDate->copy()->addYear();
+        $daysLeft = (int) $today->diffInDays($nextDueDate, false);
 
-        $daysLeft = (int)$today->diffInDays($nextDueDate, false);
-
-        if ($daysLeft >= 0 && $daysLeft <= 30) {
-            $upcoming[] = [
-                'registration_no' => $inspection->boat->registration_no ?? 'N/A',
-                'district'        => $inspection->boat->district->district_name ?? 'N/A',
-                'due_date'        => $nextDueDate->format('Y-m-d'),
-                'days_left'       => $daysLeft,
-            ];
+        // If specific date is passed, match it exactly
+        if ($filterDate) {
+            if ($nextDueDate->isSameDay($filterDate)) {
+                $upcoming[] = [
+                    'registration_no' => $inspection->boat->registration_no ?? 'N/A',
+                    'district'        => $inspection->boat->district->district_name ?? 'N/A',
+                    'due_date'        => $nextDueDate->format('Y-m-d'),
+                    'days_left'       => $daysLeft,
+                ];
+            }
+        } else {
+            // Default logic: due within next 30 days
+            if ($daysLeft >= 0 && $daysLeft <= 30) {
+                $upcoming[] = [
+                    'registration_no' => $inspection->boat->registration_no ?? 'N/A',
+                    'district'        => $inspection->boat->district->district_name ?? 'N/A',
+                    'due_date'        => $nextDueDate->format('Y-m-d'),
+                    'days_left'       => $daysLeft,
+                ];
+            }
         }
     }
 
@@ -193,7 +207,9 @@ return ApiResponse::generateResponse('success','Analytics fetch successfully',$d
 
 public function registration_no_list(){
 
-    $boat=RegisterBoat::select('registration_no')->get();
+    // $boat=RegisterBoat::select('registration_no')->get();
+        $boat=RegisterBoat::select('boat_uid')->get();
+
     // dd($boat->toArray());
     
     return ApiResponse::generateResponse('success','Registered boat name fetched successfully',$boat,200);

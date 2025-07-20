@@ -15,7 +15,8 @@ class RegisterBoat extends Model
     protected $fillable = [
         'registration_no',
         'district_id',
-        'image',
+        'boat_image',
+        'pilot_image',
         'latitude',
         'longitude',
         'location',
@@ -30,6 +31,8 @@ class RegisterBoat extends Model
         'ghaat_id',
         'registration_authority',
         'remarks',
+        'pilot_adhar',
+        'pilot_contact',
 
         'owner_name',
         'owner_email',
@@ -41,6 +44,7 @@ class RegisterBoat extends Model
         'boat_owner_id',
         'owner_dob',
         'owner_family_name',
+        'boat_uid',
     ];
 
     protected static function booted()

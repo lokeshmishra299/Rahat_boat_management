@@ -12,101 +12,224 @@ use Illuminate\Support\Facades\Validator;
 
 class BoatOwnerController extends Controller
 {
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'name'         => 'required|string',
-            'number'       => 'required|numeric|digits:10|unique:boat_owner,number',
-            'email'        => 'required|email',
-            'adhar_no'     => 'required|numeric|digits:12|unique:boat_owner,adhar_no',
-            'dob'          => 'nullable|date',
-            'boat_owned'   => 'nullable|integer|min:1',
-             'district_id' => 'required',
-            // 'address'      => 'required|string',
-            'owner_family_name' => 'nullable|array',
-            'owner_family_name.*' => 'nullable|string',
+ public function store(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'name'         => 'required|string',
+        'number'       => 'required|numeric|digits:10|unique:boat_owner,number',
+        'email'        => 'required|email',
+        'adhar_no'     => 'required|numeric|digits:12|unique:boat_owner,adhar_no',
+        'dob'          => 'nullable|date',
+        'boat_owned'   => 'nullable|integer|min:1',
+        'district_id'  => 'required',
 
-            'pincode'      => 'nullable|digits:6',
+        'latitude'     => 'nullable|numeric',
+        'longitude'    => 'nullable|numeric',
+        'location'     => 'nullable|string',
 
-            // 'family'               => 'nullable|array',
-            // 'family.*.name'        => 'required_with:family|string',
-            // // 'family.*.age'         => 'required_with:family|integer|min:1',
-            // 'family.*.relation'    => 'required_with:family|string',
-            // 'family.*.mobile'      => 'required_with:family|numeric|digits:10',
-            // 'family.*.adhar'       => 'required_with:family|numeric|digits:12',
-
-        ], [
-            'name.required'           => 'Please enter the boat owner\'s name.',
-            'district_id.required'    => 'Please select a district.',
-            // 'district_id.exists'      => 'Selected district does not exist.',
-            'number.required'         => 'Please enter the mobile number.',
-            'number.numeric'          => 'Mobile number must be numeric.',
-            'number.digits'           => 'Mobile number must be exactly 10 digits.',
-            'number.unique'           => 'This mobile number is already registered.',
-            'email.email'             => 'Please enter a valid email address.',
-            'adhar_no.required'       => 'Please enter the Aadhar number.',
-            'adhar_no.numeric'        => 'Aadhar number must be numeric.',
-            'adhar_no.digits'         => 'Aadhar number must be exactly 12 digits.',
-            'adhar_no.unique'         => 'This Aadhar number is already registered.',
-            'dob.required'            => 'Please enter the date of birth.',
-            'dob.date'                => 'Please enter a valid date of birth.',
-            'boat_owned.required'     => 'Please enter how many boats are owned.',
-            'boat_owned.integer'      => 'Number of boats must be a number.',
-            'boat_owned.min'          => 'Boat count must be at least 1.',
-            // 'address.required'        => 'Please enter the address.',
-            'pincode.required'        => 'Please enter the pincode.',
-            'pincode.digits'          => 'Pincode must be exactly 6 digits.',
-            'owner_family_name'       => 'Please enter family member name',
-
-            // 'family.*.name.required_with'     => 'Family member name is required.',
-            // 'family.*.name.string'            => 'Family member name must be a string.',
-            // // 'family.*.age.required_with'      => 'Family member age is required.',
-            // // 'family.*.age.integer'            => 'Family member age must be a number.',
-            // // 'family.*.age.min'                => 'Family member age must be at least 1.',
-            // 'family.*.relation.required_with' => 'Family member relation is required.',
-            // 'family.*.relation.string'        => 'Family member relation must be a string.',
-            // 'family.*.mobile.required_with'   => 'Family member mobile number is required.',
-            // 'family.*.mobile.numeric'         => 'Family member mobile number must be numeric.',
-            // 'family.*.mobile.digits'          => 'Family member mobile number must be exactly 10 digits.',
-            // 'family.*.adhar.required_with'    => 'Family member Aadhar number is required.',
-            // 'family.*.adhar.numeric'          => 'Family member Aadhar must be numeric.',
-            // 'family.*.adhar.digits'           => 'Family member Aadhar must be exactly 12 digits.',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::generateResponse(
-                'error',
-                'Validation failed',
-                $validator->errors(),
-                422
-            );
-        }
-        if (is_array($request->owner_family_name)) {
-    $request->merge([
-        'owner_family_name' => implode(', ', $request->owner_family_name),
+        'owner_family_name'     => 'nullable|array',
+        'owner_family_name.*'   => 'nullable|string',
+        'pincode'               => 'nullable|string|max:10',
+        'photo'                 => 'required|image|mimes:jpeg,png,jpg|max:2048',
+    ], [
+        'name.required'           => 'Please enter the boat owner\'s name.',
+        'district_id.required'    => 'Please select a district.',
+        'number.required'         => 'Please enter the mobile number.',
+        'number.numeric'          => 'Mobile number must be numeric.',
+        'number.digits'           => 'Mobile number must be exactly 10 digits.',
+        'number.unique'           => 'This mobile number is already registered.',
+        'email.email'             => 'Please enter a valid email address.',
+        'adhar_no.required'       => 'Please enter the Aadhar number.',
+        'adhar_no.numeric'        => 'Aadhar number must be numeric.',
+        'adhar_no.digits'         => 'Aadhar number must be exactly 12 digits.',
+        'adhar_no.unique'         => 'This Aadhar number is already registered.',
+        'dob.date'                => 'Please enter a valid date of birth.',
+        'boat_owned.integer'      => 'Number of boats must be a number.',
+        'boat_owned.min'          => 'Boat count must be at least 1.',
+        'latitude.numeric'        => 'Latitude must be numeric.',
+        'longitude.numeric'       => 'Longitude must be numeric.',
+        'location.string'         => 'Location must be a string.',
+        'owner_family_name'       => 'Please enter family member name',
     ]);
+
+    if ($validator->fails()) {
+        return ApiResponse::generateResponse(
+            'error',
+            'Validation failed',
+            $validator->errors(),
+            422
+        );
+    }
+
+  
+    if (is_array($request->owner_family_name)) {
+        $request->merge([
+            'owner_family_name' => implode(', ', $request->owner_family_name),
+        ]);
+    }
+
+   
+    if ($request->hasFile('photo')) {
+        $file = $request->file('photo');
+        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('boat_owner_photos', $filename, 'public'); 
+        $photoPath = 'storage/' . $path;
+    } else {
+        $photoPath = null;
+    }
+
+   
+    $owner = BoatOwner::create([
+        'name'              => $request->name,
+        'district_id'       => $request->district_id,
+        'number'            => $request->number,
+        'email'             => $request->email,
+        'adhar_no'          => $request->adhar_no,
+        'dob'               => $request->dob,
+        'boat_owned'        => $request->boat_owned,
+        'latitude'          => $request->latitude,
+        'longitude'         => $request->longitude,
+        'location'          => $request->location,
+        'owner_family_name' => $request->owner_family_name,
+        'pincode'           => $request->pincode,
+        'image'             => $photoPath,
+    ]);
+
+    return ApiResponse::generateResponse(
+        'success',
+        'Boat owner and family details saved successfully',
+        $owner
+    );
 }
 
 
-        $owner = BoatOwner::create($request->only([
-            'name',
-            'district_id',
-            'number',
-            'email',
-            'adhar_no',
-            'dob',
-            'boat_owned',
-            'pincode',
-            'owner_family_name',
-        ]));
+public function update(Request $request, $id)
+{
+    $owner = BoatOwner::find($id);
 
+    if (!$owner) {
         return ApiResponse::generateResponse(
-            'success',
-            'Boat owner and family details saved successfully',
-            // $owner->load('boatFamilyMembers')
-            $owner
+            'error',
+            'Boat owner not found',
+            null,
+            404
         );
     }
+
+    $validator = Validator::make($request->all(), [
+        'name'         => 'required|string',
+        'number'       => 'required|numeric|digits:10|unique:boat_owner,number,' . $id,
+        'email'        => 'required|email',
+        'adhar_no'     => 'required|numeric|digits:12|unique:boat_owner,adhar_no,' . $id,
+        'dob'          => 'nullable|date',
+        'boat_owned'   => 'nullable|integer|min:1',
+        'district_id'  => 'required',
+
+        'latitude'     => 'nullable|numeric',
+        'longitude'    => 'nullable|numeric',
+        'location'     => 'nullable|string',
+
+        'owner_family_name'     => 'nullable|array',
+        'owner_family_name.*'   => 'nullable|string',
+        'pincode'               => 'nullable|string|max:10',
+        'photo'                 => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+    ], [
+        'name.required'           => 'Please enter the boat owner\'s name.',
+        'district_id.required'    => 'Please select a district.',
+        'number.required'         => 'Please enter the mobile number.',
+        'number.numeric'          => 'Mobile number must be numeric.',
+        'number.digits'           => 'Mobile number must be exactly 10 digits.',
+        'number.unique'           => 'This mobile number is already registered.',
+        'email.email'             => 'Please enter a valid email address.',
+        'adhar_no.required'       => 'Please enter the Aadhar number.',
+        'adhar_no.numeric'        => 'Aadhar number must be numeric.',
+        'adhar_no.digits'         => 'Aadhar number must be exactly 12 digits.',
+        'adhar_no.unique'         => 'This Aadhar number is already registered.',
+        'dob.date'                => 'Please enter a valid date of birth.',
+        'boat_owned.integer'      => 'Number of boats must be a number.',
+        'boat_owned.min'          => 'Boat count must be at least 1.',
+        'latitude.numeric'        => 'Latitude must be numeric.',
+        'longitude.numeric'       => 'Longitude must be numeric.',
+        'location.string'         => 'Location must be a string.',
+        'owner_family_name'       => 'Please enter family member name',
+    ]);
+
+    if ($validator->fails()) {
+        return ApiResponse::generateResponse(
+            'error',
+            'Validation failed',
+            $validator->errors(),
+            422
+        );
+    }
+
+    // Handle array of family names
+    if (is_array($request->owner_family_name)) {
+        $request->merge([
+            'owner_family_name' => implode(', ', $request->owner_family_name),
+        ]);
+    }
+
+    // Handle photo update if new photo uploaded
+    if ($request->hasFile('photo')) {
+        $file = $request->file('photo');
+        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('boat_owner_photos', $filename, 'public'); 
+        $photoPath = 'storage/' . $path;
+    } else {
+        $photoPath = $owner->image; // retain old image if not updated
+    }
+
+    $owner->update([
+        'name'              => $request->name,
+        'district_id'       => $request->district_id,
+        'number'            => $request->number,
+        'email'             => $request->email,
+        'adhar_no'          => $request->adhar_no,
+        'dob'               => $request->dob,
+        'boat_owned'        => $request->boat_owned,
+        'latitude'          => $request->latitude,
+        'longitude'         => $request->longitude,
+        'location'          => $request->location,
+        'owner_family_name' => $request->owner_family_name,
+        'pincode'           => $request->pincode,
+        'image'             => $photoPath,
+    ]);
+
+    return ApiResponse::generateResponse(
+        'success',
+        'Boat owner details updated successfully',
+        $owner
+    );
+}
+
+
+public function list($id)
+{
+    $owner = BoatOwner::find($id);
+
+    if (!$owner) {
+        return ApiResponse::generateResponse(
+            'error',
+            'Boat owner not found',
+            null,
+            404
+        );
+    }
+
+    $owner->owner_family_name = $owner->owner_family_name
+        ? explode(', ', $owner->owner_family_name)
+        : [];
+
+    return ApiResponse::generateResponse(
+        'success',
+        'Boat owner data fetched successfully',
+        $owner
+    );
+}
+
+
+
 
   public function directory()
 {

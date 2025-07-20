@@ -170,10 +170,23 @@ public function resetPassword(Request $request)
 
 
 
-    public function user(Request $request)
-    {
-        return ApiResponse::generateResponse('success', 'User fetched successfully.', $request->user());
-    }
+public function user(Request $request)
+{
+    $user = $request->user()->load('district');
+
+    return ApiResponse::generateResponse('success', 'User fetched successfully.', [
+        'id'            => $user->id,
+        'name'          => $user->name,
+        'email'         => $user->email,
+        'role_id'       => $user->role_id,
+        'district_id'   => $user->district_id,
+        'district_name' => $user->district->district_name ?? null, // 👈 district name add kiya
+        'designation_id'=> $user->designation_id,
+        'number'        => $user->number,
+        'user_name'     => $user->user_name,
+    ]);
+}
+
 
     public function logout(Request $request){
 
