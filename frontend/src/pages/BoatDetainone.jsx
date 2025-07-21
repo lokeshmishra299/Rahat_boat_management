@@ -42,7 +42,7 @@ export default function BoatDetailone() {
 
   const Info = ({ label, value, span }) => (
     <div className={`space-y-1 ${span || ""}`}>
-      <p className="text-xs text-gray-500  tracking-wide">{label}</p>
+      <p className="text-xs text-gray-500 tracking-wide">{label}</p>
       <div className="bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-800 border">
         {value ?? "—"}
       </div>
@@ -58,7 +58,7 @@ export default function BoatDetailone() {
       {/* Header */}
       <div className="border-b pb-4">
         <h1 className="text-3xl font-bold text-blue-700 mb-1">
-          🚤 Boat Details  {boat.registration_no}
+          🚤 Boat Details: {boat.boat_uid}
         </h1>
       </div>
 
@@ -66,41 +66,45 @@ export default function BoatDetailone() {
       <div>
         <h2 className="text-xl font-semibold mb-4">General Information</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          <Info label="Pilot Name" value={boat.pilot_name ?? 'N/A'} />
-          <Info label="Boat Type" value={boat.boat_type ?? 'N/A'} />
-
+          <Info label="Registration Number" value={boat.registration_no} />
+          <Info label="Boat Type" value={boat.boat_type} />
+          
           {(boat.boat_type === "Hybrid" || boat.boat_type === "Engine Driven") && (
-            <Info label="Engine Details" value={boat.engine_details ?? 'N/A'} />
+            <Info label="Engine Details" value={boat.engine_details} />
           )}
 
-          {(user?.role_id !== 1 && user?.role_id !== 2) && (
-            <Info label="District Name" value={boat.district?.district_name ?? 'N/A'} />
-          )}
-          <Info label="Assigned Ghat" value={boat.ghaat?.ghaat_name ?? 'N/A'} />
-
-          <Info label="Pilot License No." value={boat.pilot_license_no ?? 'N/A'} />
-          <Info label="Support Staff" value={boat.support_staff ?? 'N/A'} />
-
-          <Info label="Passenger Capacity" value={boat.passenger_capacity ?? 'N/A'} />
-          <Info label="Year of Manufacture" value={boat.year_of_manufacture ?? 'N/A'} />
-          <Info label="Registration Authority" value={boat.registration_authority ?? 'N/A'} />
+          <Info label="District" value={boat.district?.district_name} />
+          <Info label="Assigned Ghat" value={boat.ghaat?.ghaat_name} />
+          <Info label="Registration Authority" value={boat.registration_authority} />
+          <Info label="Support Staff Count" value={boat.support_staff} />
+          <Info label="Passenger Capacity" value={boat.passenger_capacity} />
+          <Info label="Year of Manufacture" value={boat.year_of_manufacture} />
+          <Info label="Status" value={boat.status || "Active"} />
           <Info label="Additional Remarks" value={boat.remarks} span="sm:col-span-2" />
         </div>
       </div>
 
-      {/* Boat Owner Details */}
-      {/* <div>
-        <h2 className="text-xl font-semibold mb-4">Boat Owner Details</h2>
+      {/* Pilot Details */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Pilot Information</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          <Info label="Name" value={boat.owner_name ?? 'N/A'} />
-          <Info label="Email" value={boat.owner_email ?? 'N/A'} />
-          <Info label="Contact" value={boat.owner_number ??'N/A'} />
-          <Info label="Aadhar No" value={boat.owner_adhar_no ??'N/A'} />
-          <Info label="DOB" value={boat.owner_dob ?? 'N/A'} />
-          <Info label="Pincode" value={boat.owner_pincode ??'N/A'} />
-          <Info label="No. of Boats Owned" value={boat.owner_boat_owned ?? 'N/A'} />
+          <Info label="Pilot Name" value={boat.pilot_name} />
+          <Info label="License Number" value={boat.pilot_license_no} />
+          <Info label="Aadhaar Number" value={boat.adhar_no} />
+          <Info label="Contact Number" value={boat.contact_no} />
         </div>
-      </div> */}
+      </div>
+
+      {/* Location Information */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Location Information</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <Info label="Latitude" value={boat.latitude} />
+          <Info label="Longitude" value={boat.longitude} />
+          <Info label="Pincode" value={boat.pincode} />
+          <Info label="Location Name" value={boat.location} span="sm:col-span-2" />
+        </div>
+      </div>
 
       {/* Family Members */}
       {familyMembers.length > 0 && (
@@ -109,7 +113,6 @@ export default function BoatDetailone() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {familyMembers.map((member, idx) => (
               <div key={idx} className="bg-gray-50 border p-3 rounded">
-                {/* <p className="text-sm text-gray-600">Member {idx + 1}</p> */}
                 <p className="font-semibold text-gray-800">{member}</p>
               </div>
             ))}
@@ -117,45 +120,67 @@ export default function BoatDetailone() {
         </div>
       )}
 
-      {/* Image & Geo Info */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4 text-center">Boat Image</h2>
-        <div className="flex justify-center">
-          <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
-            {boat.image ? (
-              <div className="text-center mb-4">
-                <img
-                  src={`${API_BASE}/storage/${boat.image}?nocache=1`}
-                  alt="Boat"
-                  className="w-full max-w-md mx-auto rounded shadow"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/no-image.png"; // fallback image in your public folder
-                  }}
-                />
-
-
-                <div className="mt-4 text-sm text-gray-700 space-y-1">
-                  <p><strong>Location:</strong> {boat.location || "N/A"}</p>
-                  <p><strong>Pincode:</strong> {boat.pincode || "N/A"}</p>
-                  {/* <p><strong>Latitude:</strong> {boat.latitude || "N/A"}</p>
-                  <p><strong>Longitude:</strong> {boat.longitude || "N/A"}</p> */}
-                </div>
-              </div>
-            ) : (
-              <div className="w-full h-64 flex items-center justify-center bg-gray-100 text-gray-400">
-                No Image Available
-              </div>
-            )}
+      {/* Images Section */}
+      <div className="flex flex-col lg:flex-row items-start justify-center gap-8">
+  {/* Boat Image */}
+  <div className="space-y-4 w-full lg:w-auto">
+    <h2 className="text-xl font-semibold mb-2 text-center lg:text-left">Boat Image</h2>
+    <div className="flex justify-center lg:justify-start">
+      <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
+        {boat.image ? (
+          <div className="text-center mb-4">
+            <img
+              src={`${API_BASE}/storage/${boat.image}?nocache=1`}
+              alt="Boat"
+              className="w-full max-w-md mx-auto rounded shadow"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "/no-image.png";
+              }}
+            />
           </div>
-        </div>
+        ) : (
+          <div className="w-full h-64 flex items-center justify-center bg-gray-100 text-gray-400">
+            No Boat Image Available
+          </div>
+        )}
       </div>
+    </div>
+  </div>
+
+  {/* Pilot Image */}
+  <div className="space-y-4 w-full lg:w-auto">
+    <h2 className="text-xl font-semibold mb-2 text-center lg:text-left">Pilot Image</h2>
+    <div className="flex justify-center lg:justify-start">
+      <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
+        {boat.pilot_image ? (
+          <div className="text-center mb-4">
+            <img
+              src={`${API_BASE}/storage/${boat.pilot_image}?nocache=1`}
+              alt="Pilot"
+              className="w-full max-w-md mx-auto rounded shadow"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "/no-image.png";
+              }}
+            />
+          </div>
+        ) : (
+          <div className="w-full h-64 flex items-center justify-center bg-gray-100 text-gray-400">
+            No Pilot Image Available
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</div>
+
 
       {/* Back Button */}
       <div className="pt-4 border-t flex justify-center">
         <button
           onClick={() => navigate(-1)}
-          className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+          className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
         >
           Go Back
         </button>

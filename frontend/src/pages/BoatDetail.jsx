@@ -24,8 +24,8 @@ const Editable = ({ label, field, error, value, onChange }) => {
   const isNumberOnly = ["support_staff", "passenger_capacity", "year_of_manufacture", "owner_boat_owned"].includes(field);
   const isSelect = field === "registration_authority";
   const isTextOnly = field === "pilot_name" || field === "owner_name";
-  const isAadhar = field === "owner_adhar_no";
-  const isPhone = field === "owner_number";
+  const isAadhar = field === "owner_adhar_no" || field === "adhar_no";
+  const isPhone = field === "owner_number" || field === "contact_no";
 
   const handleChange = (e) => {
     let val = e.target.value;
@@ -93,7 +93,6 @@ const Editable = ({ label, field, error, value, onChange }) => {
         </p>
       )}
     </div>
-
   );
 };
 
@@ -113,8 +112,10 @@ export default function BoatDetail() {
   const [errors, setErrors] = useState({});
 
   const [imgDraft, setImgDraft] = useState(null);
+  const [pilotImgDraft, setPilotImgDraft] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [showPilotCamera, setShowPilotCamera] = useState(false);
   const [coords, setCoords] = useState({ lat: "", lon: "" });
   const [pincode, setPincode] = useState("");
   const [locationName, setLocationName] = useState("");
@@ -148,7 +149,7 @@ export default function BoatDetail() {
   }, []);
 
   // Webcam capture function
-  const captureFromWebcam = () => {
+  const captureFromWebcam = (isPilot = false) => {
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
@@ -162,8 +163,13 @@ export default function BoatDetail() {
     const blob = new Blob([ab], { type: mimeString });
     const file = new File([blob], "captured.jpg", { type: mimeString });
 
-    setImgDraft(file);
-    setShowCamera(false);
+    if (isPilot) {
+      setPilotImgDraft(file);
+      setShowPilotCamera(false);
+    } else {
+      setImgDraft(file);
+      setShowCamera(false);
+    }
 
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const lat = pos.coords.latitude.toFixed(6);
@@ -191,7 +197,6 @@ export default function BoatDetail() {
     }
   }
 
-
   async function getLocationFromPincode(pincode) {
     try {
       const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
@@ -206,43 +211,57 @@ export default function BoatDetail() {
   }
 
   /* ─── save (text fields + optional image) ─── */
-  const handleSaveAll = () => {
-    setSaving(true);
 
-    const fd = new FormData();
-    Object.entries(draft).forEach(([k, v]) => fd.append(k, v ?? ""));
-    if (imgDraft) fd.set("image", imgDraft);
-    else fd.delete("image");
+const handleSaveAll = () => {
+  setSaving(true);
+  setErrors({}); // Clear previous errors
 
-    // Add location data if available
-    if (coords.lat) fd.append("latitude", coords.lat);
-    if (coords.lon) fd.append("longitude", coords.lon);
-    if (pincode) fd.append("pincode", pincode);
-    if (locationName) fd.append("location", locationName);
+  const fd = new FormData();
+  Object.entries(draft).forEach(([k, v]) => fd.append(k, v ?? ""));
+ if (imgDraft) fd.set("boat_image", imgDraft);
 
-    api
-      .post(`/edit-boat-details/${boat.id}`, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then((r) => {
-        if (r.data?.status === "success") {
-          setBoat(r.data.data);
-          setDraft(r.data.data);
-          toast.success("Boat Updated successfully");
-          navigate("/dashboard/addboatowner");
-        }
-      })
-      .catch((err) => {
-        if (err.response?.data?.status === "error" && err.response?.data?.data) {
-          setErrors(err.response.data.data);
-        }
-        // else {
-        // ("Could not save image");
-        // }
-      })
-      .finally(() => setSaving(false));
-  };
+  if (pilotImgDraft) fd.set("pilot_image", pilotImgDraft);
 
+  // Add location data
+  if (coords.lat) fd.append("latitude", coords.lat);
+  if (coords.lon) fd.append("longitude", coords.lon);
+  if (pincode) fd.append("pincode", pincode);
+  if (locationName) fd.append("location", locationName);
+
+  api.post(`/edit-boat-details/${boat.id}`, fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  })
+  .then((response) => {
+    if (response.data?.status === "success") {
+      setBoat(response.data.data);
+      setDraft(response.data.data);
+      toast.success("Boat updated successfully");
+      navigate("/dashboard/addboatowner");
+    } else if (response.data?.status === "error") {
+      // Handle error response with validation errors
+      setErrors(response.data.data); // This matches your backend format
+      toast.error(response.data.message); // Show the general error message
+    }
+  })
+  .catch((error) => {
+    console.log("API Error:", error.response); // For debugging
+    
+    if (error.response?.data?.status === "error") {
+      // Your specific error format
+      setErrors(error.response.data.data);
+      toast.error(error.response.data.message);
+    } else if (error.response?.data?.errors) {
+      // Alternative error format
+      setErrors(error.response.data.errors);
+    } else if (error.message) {
+      toast.error(error.message);
+    } else {
+      toast.error("An unknown error occurred");
+    }
+  })
+  .finally(() => setSaving(false));
+};
+  
   /* ─── static field helper ─── */
   const Info = ({ label, value }) => (
     <div className="space-y-1">
@@ -260,7 +279,7 @@ export default function BoatDetail() {
   return (
     <div className="max-w-5xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md border space-y-10">
       {/* Camera Modal */}
-      {showCamera && (
+      {(showCamera || showPilotCamera) && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center justify-center">
             <div className="w-full flex justify-center">
@@ -272,13 +291,13 @@ export default function BoatDetail() {
               />
             </div>
             <button
-              onClick={captureFromWebcam}
+              onClick={() => showPilotCamera ? captureFromWebcam(true) : captureFromWebcam(false)}
               className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
             >
               Capture
             </button>
             <button
-              onClick={() => setShowCamera(false)}
+              onClick={() => showPilotCamera ? setShowPilotCamera(false) : setShowCamera(false)}
               className="mt-2 text-sm text-gray-600 underline"
             >
               Cancel
@@ -290,7 +309,7 @@ export default function BoatDetail() {
       {/* Header */}
       <div className="border-b pb-4">
         <h1 className="text-3xl font-bold text-blue-700 mb-1">
-          🚤 Boat Detail {boat.registration_no}
+          🚤 Boat Detail {boat.boat_uid}
         </h1>
       </div>
 
@@ -305,18 +324,15 @@ export default function BoatDetail() {
 
       {/* General Information Section */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">General Information</h2>
+        <h2 className="text-xl font-semibold mb-4">Boat Information</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {/* Boat Type Dropdown */}
-
           <Editable
-            label="Pilot Name"
-            field="pilot_name"
-            value={draft.pilot_name}
-            error={errors.pilot_name}
+            label="Registration Number"
+            field="registration_no"
+            value={draft.registration_no}
+            error={errors.registration_no}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
-
 
           <div className="space-y-1">
             <p className="text-xs text-gray-500 uppercase tracking-wide">Boat Type</p>
@@ -337,7 +353,6 @@ export default function BoatDetail() {
             )}
           </div>
 
-          {/* Conditionally show Editable only for specific types */}
           {(draft.boat_type === "Hybrid" || draft.boat_type === "Engine Driven") && (
             <Editable
               label="Engine Details"
@@ -350,8 +365,6 @@ export default function BoatDetail() {
             />
           )}
 
-
-          {/* District Dropdown — only visible to Admin (no role_id) */}
           {!user?.role_id && (
             <div className="space-y-1">
               <p className="text-xs text-gray-500 uppercase tracking-wide">District</p>
@@ -375,7 +388,6 @@ export default function BoatDetail() {
             </div>
           )}
 
-          {/* Ghat Dropdown */}
           <div className="space-y-1">
             <p className="text-xs text-gray-500 uppercase tracking-wide">Assigned Ghat</p>
             <select
@@ -398,10 +410,10 @@ export default function BoatDetail() {
           </div>
 
           <Editable
-            label="Pilot License No."
-            field="pilot_license_no"
-            value={draft.pilot_license_no}
-            error={errors.pilot_license_no}
+            label="Registration Authority"
+            field="registration_authority"
+            value={draft.registration_authority}
+            error={errors.registration_authority}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
 
@@ -430,227 +442,223 @@ export default function BoatDetail() {
           />
 
           <Editable
-            label="Registration Authority"
-            field="registration_authority"
-            value={draft.registration_authority}
-            error={errors.registration_authority}
-            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
-          />
-
-          <Editable
             label="Additional Remarks"
             field="remarks"
             value={draft.remarks}
             error={errors.remarks}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
+
+          <Editable
+            label="Status"
+            field="status"
+            value={draft.status}
+            error={errors.status}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
         </div>
       </div>
 
-      {/* Boat Owner Details Section */}
-      {/* <div>
-        <h2 className="text-xl font-semibold mb-4">Details</h2>
+      {/* Pilot Information Section */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Pilot Information</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           <Editable
-            label="Name"
-            field="owner_name"
-            value={draft.owner_name}
-            error={errors.owner_name}
+            label="Pilot Name"
+            field="pilot_name"
+            value={draft.pilot_name}
+            error={errors.pilot_name}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
 
           <Editable
-            label="Email"
-            field="owner_email"
-            value={draft.owner_email}
-            error={errors.owner_email}
+            label="Pilot License No."
+            field="pilot_license_no"
+            value={draft.pilot_license_no}
+            error={errors.pilot_license_no}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
 
           <Editable
-            label="Contact"
-            field="owner_number"
-            value={draft.owner_number}
-            error={errors.owner_number}
+            label="Aadhaar Number"
+            field="adhar_no"
+            value={draft.adhar_no}
+            error={errors.adhar_no}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
 
           <Editable
-            label="Aadhar No"
-            field="owner_adhar_no"
-            value={draft.owner_adhar_no}
-            error={errors.owner_adhar_no}
+            label="Contact Number"
+            field="contact_no"
+            value={draft.contact_no}
+            error={errors.contact_no}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+          />
+        </div>
+      </div>
+
+  
+
+       {/* Location Information */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Location Information</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <Editable
+            label="Latitude"
+            field="latitude"
+            value={draft.latitude}
+            error={errors.latitude}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
 
-          <Editable className="cursor-pointer"
-            label="DOB"
-            field="owner_dob"
-            value={draft.owner_dob}
-            error={errors.owner_dob}
+          <Editable
+            label="Longitude"
+            field="longitude"
+            value={draft.longitude}
+            error={errors.longitude}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
 
           <Editable
             label="Pincode"
-            field="owner_pincode"
-            value={draft.owner_pincode}
-            error={errors.owner_pincode}
-            onChange={(field, value) => {
-              const clean = value.replace(/\D/g, "").slice(0, 6); // only digits, max 6
-              setDraft((prev) => ({ ...prev, [field]: clean }));
-            }}
-          />
-
-
-          <Editable
-            label="No. of Boats Owned"
-            field="owner_boat_owned"
-            value={draft.owner_boat_owned}
-            error={errors.owner_boat_owned}
+            field="pincode"
+            value={draft.pincode}
+            error={errors.pincode}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
+
+          <Editable
+            label="Location Name"
+            field="location"
+            value={draft.location}
+            error={errors.location}
+            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
+            span="sm:col-span-2"
+          />
         </div>
-      </div> */}
+      </div>
 
-      {/* Owner Family Members */}
-      {/* Owner Family Members */}
-      {draft.owner_family_name && (
-        <div className="md:col-span-2 mt-8">
-          <h2 className="text-xl font-semibold mb-4 text-green-600">Family Members</h2>
-
-          <div className="space-y-4">
-            {draft.owner_family_name.split(",").map((member, idx) => (
-              <div key={idx} className="bg-gray-50 border p-4 rounded shadow-sm flex items-center gap-4">
-                <input
-                  type="text"
-                  value={member.trim()}
-                  onChange={(e) => {
-                    const updated = draft.owner_family_name.split(",");
-                    updated[idx] = e.target.value;
-                    setDraft((prev) => ({
-                      ...prev,
-                      owner_family_name: updated.join(","),
-                    }));
-                  }}
-                  className="w-full border px-3 py-2 rounded"
-                />
-                <button
-                  type="button"
-                  className="text-red-600 hover:text-red-800"
-                  onClick={() => {
-                    const updated = draft.owner_family_name.split(",");
-                    updated.splice(idx, 1);
-                    setDraft((prev) => ({
-                      ...prev,
-                      owner_family_name: updated.join(","),
-                    }));
-                  }}
-                >
-                  <FaTrash />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              const updated = draft.owner_family_name
-                ? [...draft.owner_family_name.split(","), ""]
-                : [""];
-              setDraft((prev) => ({
-                ...prev,
-                owner_family_name: updated.join(","),
-              }));
-            }}
-            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700"
-          >
-            Add Family Member
-          </button>
-        </div>
-      )}
-
-      {/* Image Section */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4 text-center">Boat Image</h2>
-
-        {imgDraft ? (
-          <>
-            <div className="flex justify-center">
-              <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
-                <img
-                  src={URL.createObjectURL(imgDraft)}
-                  alt="Preview"
-                  className="w-full h-64 object-cover"
-                />
-              </div>
-            </div>
-            <div className="flex justify-center mt-3">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setImgDraft(null)}
-                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
-                >
-                  Cancel
-                </button>
-                {coords.lat && (
-                  <div className="bg-blue-50 px-3 py-2 rounded text-sm text-blue-800">
-                    Location captured
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="w-full flex flex-col items-center justify-center">
-              {/* Boat Image */}
-              <div className="sm:w-80 w-full rounded-lg shadow overflow-hidden">
-                {boat.image ? (
+      {/* Images Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Boat Image */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4 text-center">Boat Image</h2>
+          {imgDraft ? (
+            <>
+              <div className="flex justify-center">
+                <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
                   <img
-                    src={
-                      boat.image?.startsWith("blob:")
-                        ? boat.image
-                        : `${API_BASE}/storage/${boat.image}`
-                    }
-                    alt="Boat"
+                    src={URL.createObjectURL(imgDraft)}
+                    alt="Preview"
                     className="w-full h-64 object-cover"
                   />
-
-
-                ) : (
-                  <div className="w-full h-64 flex items-center justify-center bg-gray-50 text-gray-400">
-                    No image
-                  </div>
-                )}
+                </div>
               </div>
-
-              {/* Location Info */}
-              <div className="mt-4 text-sm text-gray-700 space-y-1 text-center">
-                <p><strong>Location:</strong> {draft.location || boat.location || "N/A"}</p>
-                <p><strong>Pincode:</strong> {draft.pincode || boat.pincode || "N/A"}</p>
-                {boat.latitude && boat.longitude && (
-                  <>
-                    {/* <p><strong>Latitude:</strong> {boat.latitude}</p>
-                    <p><strong>Longitude:</strong> {boat.longitude}</p> */}
-                  </>
-                )}
+              <div className="flex justify-center mt-3">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setImgDraft(null)}
+                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
+                  >
+                    Cancel
+                  </button>
+                  {coords.lat && (
+                    <div className="bg-blue-50 px-3 py-2 rounded text-sm text-blue-800">
+                      Location captured
+                    </div>
+                  )}
+                </div>
               </div>
-
-              {/* Buttons (Capture & Upload) */}
-              <div className="flex gap-2 mt-4 justify-center">
+            </>
+          ) : (
+            <>
+              <div className="w-full flex flex-col items-center justify-center">
+                <div className="sm:w-80 w-full rounded-lg shadow overflow-hidden">
+                  {boat.image ? (
+                    <img
+                      src={
+                        boat.image?.startsWith("blob:")
+                          ? boat.image
+                          : `${API_BASE}/storage/${boat.image}`
+                      }
+                      alt="Boat"
+                      className="w-full h-64 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-64 flex items-center justify-center bg-gray-50 text-gray-400">
+                      No image
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={() => setShowCamera(true)}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium transition"
+                  className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium transition"
                 >
-                  <FaCamera /> Update Photo
+                  <FaCamera /> Update Boat Photo
                 </button>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
+
+        {/* Pilot Image */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4 text-center">Pilot Image</h2>
+          {pilotImgDraft ? (
+            <>
+              <div className="flex justify-center">
+                <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
+                  <img
+                    src={URL.createObjectURL(pilotImgDraft)}
+                    alt="Preview"
+                    className="w-full h-64 object-cover"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-center mt-3">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPilotImgDraft(null)}
+                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-full flex flex-col items-center justify-center">
+                <div className="sm:w-80 w-full rounded-lg shadow overflow-hidden">
+                  {boat.pilot_image ? (
+                    <img
+                      src={
+                        boat.pilot_image?.startsWith("blob:")
+                          ? boat.pilot_image
+                          : `${API_BASE}/storage/${boat.pilot_image}`
+                      }
+                      alt="Pilot"
+                      className="w-full h-64 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-64 flex items-center justify-center bg-gray-50 text-gray-400">
+                      No image
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowPilotCamera(true)}
+                  className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium transition"
+                >
+                  <FaCamera /> Update Pilot Photo
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
+
+   
 
       {/* Save Button */}
       <div className="pt-4 border-t flex justify-center">

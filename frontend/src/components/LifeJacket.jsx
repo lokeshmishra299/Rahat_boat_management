@@ -34,8 +34,8 @@ export default function LifeJacket() {
   const [scannedData, setScannedData] = useState("");
   const [scanning, setScanning] = useState(false);
   const [startScanTrigger, setStartScanTrigger] = useState(false);
-//   const [boats, setBoats] = useState([]);
-// const [selectedBoatCapacity, setSelectedBoatCapacity] = useState(0);
+  //   const [boats, setBoats] = useState([]);
+  // const [selectedBoatCapacity, setSelectedBoatCapacity] = useState(0);
 
   useEffect(() => {
     if (!startScanTrigger) return;
@@ -180,8 +180,8 @@ export default function LifeJacket() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`px-6 py-2 rounded-full font-semibold ${tab === t.id
-                ? "bg-orange-600 text-white"
-                : "bg-white text-slate-700 shadow hover:bg-slate-50"
+              ? "bg-orange-600 text-white"
+              : "bg-white text-slate-700 shadow hover:bg-slate-50"
               }`}
           >
             {t.label}
@@ -220,7 +220,7 @@ function RecordForm({ onSaved, roleId, storedUser }) {
   const [districts, setDistricts] = useState([]);
   const [hide, showhide] = useState(false);
   // const [ghaats, setGhaats] = useState([]);
-   const [ghaats, setGhaats] = useState([]);
+  const [ghaats, setGhaats] = useState([]);
   const [boats, setBoats] = useState([]);
   const [selectedBoatCapacity, setSelectedBoatCapacity] = useState(0);
 
@@ -239,55 +239,55 @@ function RecordForm({ onSaved, roleId, storedUser }) {
     notes: "",
   });
 
-const handleDownload = async () => {
-  try {
-    // Validate all required fields
-    const requiredFields = {
-      district_id: "District",
-      ghat: "Ghat",
-      boats: "Boat",
-      total: "Total Jackets",
-      date: "Distribution Date"
-    };
+  const handleDownload = async () => {
+    try {
+      // Validate all required fields
+      const requiredFields = {
+        district_id: "District",
+        ghat: "Ghat",
+        boats: "Boat",
+        total: "Total Jackets",
+        date: "Distribution Date"
+      };
 
-    const missingFields = [];
-    for (const [field, name] of Object.entries(requiredFields)) {
-      if (!val[field]) {
-        missingFields.push(name);
+      const missingFields = [];
+      for (const [field, name] of Object.entries(requiredFields)) {
+        if (!val[field]) {
+          missingFields.push(name);
+        }
       }
+
+      if (missingFields.length > 0) {
+        // toast.error(`Please fill all required fields: ${missingFields.join(", ")}`);
+        return;
+      }
+
+      const zip = new JSZip();
+      const folder = zip.folder("qr-codes");
+
+      const districtName = districts.find(d => d.id == val.district_id)?.district_name || "Unknown";
+      const ghatName = ghaats.find(g => g.id == val.ghat)?.ghaat_name || "Unknown";
+
+      for (let i = 0; i < val.total; i++) {
+        const qrValue = `ID ${i + 1} | District: ${districtName} | Ghat: ${ghatName} | Boat: ${val.boats} | Date: ${val.date}`;
+
+        const dataUrl = await QRCodeLib.toDataURL(qrValue, {
+          width: 500,
+          margin: 1
+        });
+
+        const base64 = dataUrl.split(",")[1];
+        folder.file(`qr_${i + 1}.png`, base64, { base64: true });
+      }
+
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, "life-jackets-qr-codes.zip");
+      toast.success("QR codes downloaded successfully!");
+    } catch (err) {
+      console.error("QR download failed:", err);
+      toast.error("Failed to generate QR codes");
     }
-
-    if (missingFields.length > 0) {
-      // toast.error(`Please fill all required fields: ${missingFields.join(", ")}`);
-      return;
-    }
-
-    const zip = new JSZip();
-    const folder = zip.folder("qr-codes");
-
-    const districtName = districts.find(d => d.id == val.district_id)?.district_name || "Unknown";
-    const ghatName = ghaats.find(g => g.id == val.ghat)?.ghaat_name || "Unknown";
-
-    for (let i = 0; i < val.total; i++) {
-      const qrValue = `ID ${i+1} | District: ${districtName} | Ghat: ${ghatName} | Boat: ${val.boats} | Date: ${val.date}`;
-      
-      const dataUrl = await QRCodeLib.toDataURL(qrValue, {
-        width: 500,
-        margin: 1
-      });
-
-      const base64 = dataUrl.split(",")[1];
-      folder.file(`qr_${i+1}.png`, base64, { base64: true });
-    }
-
-    const content = await zip.generateAsync({ type: "blob" });
-    saveAs(content, "life-jackets-qr-codes.zip");
-    toast.success("QR codes downloaded successfully!");
-  } catch (err) {
-    console.error("QR download failed:", err);
-    toast.error("Failed to generate QR codes");
-  }
-};
+  };
 
   const autoBoatCount = async (ghatName = "") => {
     if (!ghatName) return;
@@ -352,39 +352,39 @@ const handleDownload = async () => {
     })();
   }, []);
 
-//   const [boats, setBoats] = useState([]);
+  //   const [boats, setBoats] = useState([]);
 
-// const [boats, setBoats] = useState([]);
-// const [selectedBoatCapacity, setSelectedBoatCapacity] = useState(0);
+  // const [boats, setBoats] = useState([]);
+  // const [selectedBoatCapacity, setSelectedBoatCapacity] = useState(0);
 
-const fetchBoatsByGhat = async (ghatId) => {
-  try {
-    const res = await api.post("/boats-by-ghaat", { ghaat_id: ghatId });
+  const fetchBoatsByGhat = async (ghatId) => {
+    try {
+      const res = await api.post("/boats-by-ghaat", { ghaat_id: ghatId });
 
-    if (res.data.status === "success") {
-      const boats = res.data.data
-        .filter(item => item.boat_uid !== null)
-        .map(item => ({
-          value: item.boat_uid,
-          label: item.boat_uid,
-          capacity: item.passenger_capacity
+      if (res.data.status === "success") {
+        const boats = res.data.data
+          .filter(item => item.boat_uid !== null)
+          .map(item => ({
+            value: item.boat_uid,
+            label: item.boat_uid,
+            capacity: item.passenger_capacity
+          }));
+
+        const firstBoat = boats[0];
+
+        setBoats(boats);
+        setSelectedBoatCapacity(firstBoat?.capacity || 0);
+
+        setVal(prev => ({
+          ...prev,
+          boats: firstBoat?.value || "",
+          total: firstBoat?.capacity ? (firstBoat.capacity + 1).toString() : "0"
         }));
-
-      const firstBoat = boats[0];
-
-      setBoats(boats);
-      setSelectedBoatCapacity(firstBoat?.capacity || 0);
-
-      setVal(prev => ({
-        ...prev,
-        boats: firstBoat?.value || "",
-        total: firstBoat?.capacity ? (firstBoat.capacity + 1).toString() : "0"
-      }));
+      }
+    } catch (err) {
+      console.error("Error fetching boats by ghat:", err);
     }
-  } catch (err) {
-    console.error("Error fetching boats by ghat:", err);
-  }
-};
+  };
 
 
 
@@ -566,38 +566,38 @@ const fetchBoatsByGhat = async (ghatId) => {
         {/* // Inside your component: */}
         <div>
           <label className="block text-sm font-medium mb-1">Boats *</label>
-         <Select
-  className="react-select-container"
-  classNamePrefix="react-select"
-  options={boats}
-  value={boats.find(option => option.value === val.boats) || null}
-  onChange={(selectedOption) => {
-    const capacity = selectedOption?.capacity || 0;
-    setSelectedBoatCapacity(capacity);
-    setVal(prev => ({
-      ...prev,
-      boats: selectedOption?.value || "",
-      total: capacity ? (capacity + 1).toString() : "0"
-    }));
-  }}
-  isSearchable
-  placeholder={boats.length === 0 ? "No boats available" : "Select Boat"}
-  noOptionsMessage={() => "No boats found for this ghat"}
-  isDisabled={boats.length === 0}
-  styles={{
-    control: (base) => ({
-      ...base,
-      backgroundColor: "#f3f4f6",
-      borderColor: boats.length === 0 ? "#ef4444" : "#d1d5db",
-      minHeight: "42px",
-    }),
-    option: (base, { isFocused }) => ({
-      ...base,
-      backgroundColor: isFocused ? "#e0f2fe" : "white",
-      color: "#1e3a8a",
-    }),
-  }}
-/>
+          <Select
+            className="react-select-container"
+            classNamePrefix="react-select"
+            options={boats}
+            value={boats.find(option => option.value === val.boats) || null}
+            onChange={(selectedOption) => {
+              const capacity = selectedOption?.capacity || 0;
+              setSelectedBoatCapacity(capacity);
+              setVal(prev => ({
+                ...prev,
+                boats: selectedOption?.value || "",
+                total: capacity ? (capacity + 1).toString() : "0"
+              }));
+            }}
+            isSearchable
+            placeholder={boats.length === 0 ? "No boats available" : "Select Boat"}
+            noOptionsMessage={() => "No boats found for this ghat"}
+            isDisabled={boats.length === 0}
+            styles={{
+              control: (base) => ({
+                ...base,
+                backgroundColor: "#f3f4f6",
+                borderColor: boats.length === 0 ? "#ef4444" : "#d1d5db",
+                minHeight: "42px",
+              }),
+              option: (base, { isFocused }) => ({
+                ...base,
+                backgroundColor: isFocused ? "#e0f2fe" : "white",
+                color: "#1e3a8a",
+              }),
+            }}
+          />
 
           {errors?.boats && (
             <p className="text-xs text-red-600 mt-1">{errors.boats}</p>
@@ -605,25 +605,25 @@ const fetchBoatsByGhat = async (ghatId) => {
         </div>
 
 
-<div>
-  <label className="block text-sm font-medium mb-1">
-    Total Jackets *
-  </label>
-  <input
-    type="text"
-    name="total"
-    value={val.total || ""}
-    readOnly
-    className={`${inputCls} bg-gray-100 cursor-not-allowed`}
-    title="Automatically calculated from boat capacity"
-  />
-  {/* <p className="text-xs text-gray-500 mt-1">
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Total Jackets *
+          </label>
+          <input
+            type="text"
+            name="total"
+            value={val.total || ""}
+            readOnly
+            className={`${inputCls} bg-gray-100 cursor-not-allowed`}
+            title="Automatically calculated from boat capacity"
+          />
+          {/* <p className="text-xs text-gray-500 mt-1">
     Calculated from boat capacity: {selectedBoatCapacity} passengers + 1
   </p> */}
-  {errors.total && (
-    <p className="text-xs text-red-600 mt-1">{errors.total}</p>
-  )}
-</div>
+          {errors.total && (
+            <p className="text-xs text-red-600 mt-1">{errors.total}</p>
+          )}
+        </div>
 
         {/* Date */}
         <div>
@@ -719,8 +719,8 @@ const fetchBoatsByGhat = async (ghatId) => {
         <button
           disabled={submitting}
           className={`px-8 py-3 rounded-full font-semibold ${submitting
-              ? "bg-slate-400 cursor-not-allowed"
-              : "bg-orange-600 text-white hover:bg-orange-700"
+            ? "bg-slate-400 cursor-not-allowed"
+            : "bg-orange-600 text-white hover:bg-orange-700"
             }`}
         >
           {submitting ? "Saving…" : "Record Distribution"}

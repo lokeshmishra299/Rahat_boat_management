@@ -784,7 +784,7 @@ const Boats = () => {
 
                 const rows = boats.map((boat, index) => [
                   index + 1,
-                  `"${boat.registration_no}"`,
+                  `"${boat.boat_uid}"`,
                   `"${boat.pilot_name}"`,
                   `"${boat.boat_type}"`,
                   `"${boat.district?.district_name || "N/A"}"`,
@@ -828,7 +828,7 @@ const Boats = () => {
                 <thead className="bg-gray-50">
                   <tr className="text-left font-semibold text-gray-700">
                     <th className="px-4 py-3">Sr.No</th>
-                    <th className="px-4 py-3">Reg. No.</th>
+                    <th className="px-4 py-3">Reg. No</th>
                     <th className="px-4 py-3">Pilot</th>
                     <th className="px-4 py-3">Type</th>
                     <th className="px-4 py-3">District</th>
@@ -842,7 +842,7 @@ const Boats = () => {
                     <tr key={boat.id} className="hover:bg-gray-50">
                       <td className="px-4 py-2">{idx + 1}</td>
                       <td className="px-4 py-2 font-semibold">
-                        {boat.registration_no || "N/A"}
+                        {boat.boat_uid || "N/A"}
                       </td>
                       <td className="px-4 py-2">{boat.pilot_name}</td>
                       <td className="px-4 py-2">{boat.boat_type}</td>
