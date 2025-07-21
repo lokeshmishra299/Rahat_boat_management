@@ -212,56 +212,56 @@ export default function BoatDetail() {
 
   /* ─── save (text fields + optional image) ─── */
 
-const handleSaveAll = () => {
-  setSaving(true);
-  setErrors({}); // Clear previous errors
+  const handleSaveAll = () => {
+    setSaving(true);
+    setErrors({}); // Clear previous errors
 
-  const fd = new FormData();
-  Object.entries(draft).forEach(([k, v]) => fd.append(k, v ?? ""));
- if (imgDraft) fd.set("boat_image", imgDraft);
+    const fd = new FormData();
+    Object.entries(draft).forEach(([k, v]) => fd.append(k, v ?? ""));
+    if (imgDraft) fd.set("boat_image", imgDraft);
 
-  if (pilotImgDraft) fd.set("pilot_image", pilotImgDraft);
+    if (pilotImgDraft) fd.set("pilot_image", pilotImgDraft);
 
-  // Add location data
-  if (coords.lat) fd.append("latitude", coords.lat);
-  if (coords.lon) fd.append("longitude", coords.lon);
-  if (pincode) fd.append("pincode", pincode);
-  if (locationName) fd.append("location", locationName);
+    // Add location data
+    if (coords.lat) fd.append("latitude", coords.lat);
+    if (coords.lon) fd.append("longitude", coords.lon);
+    if (pincode) fd.append("pincode", pincode);
+    if (locationName) fd.append("location", locationName);
 
-  api.post(`/edit-boat-details/${boat.id}`, fd, {
-    headers: { "Content-Type": "multipart/form-data" },
-  })
-  .then((response) => {
-    if (response.data?.status === "success") {
-      setBoat(response.data.data);
-      setDraft(response.data.data);
-      toast.success("Boat updated successfully");
-      navigate("/dashboard/addboatowner");
-    } else if (response.data?.status === "error") {
-      // Handle error response with validation errors
-      setErrors(response.data.data); // This matches your backend format
-      toast.error(response.data.message); // Show the general error message
-    }
-  })
-  .catch((error) => {
-    console.log("API Error:", error.response); // For debugging
-    
-    if (error.response?.data?.status === "error") {
-      // Your specific error format
-      setErrors(error.response.data.data);
-      toast.error(error.response.data.message);
-    } else if (error.response?.data?.errors) {
-      // Alternative error format
-      setErrors(error.response.data.errors);
-    } else if (error.message) {
-      toast.error(error.message);
-    } else {
-      toast.error("An unknown error occurred");
-    }
-  })
-  .finally(() => setSaving(false));
-};
-  
+    api.post(`/edit-boat-details/${boat.id}`, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+      .then((response) => {
+        if (response.data?.status === "success") {
+          setBoat(response.data.data);
+          setDraft(response.data.data);
+          toast.success("Boat updated successfully");
+          navigate("/dashboard/addboatowner");
+        } else if (response.data?.status === "error") {
+          // Handle error response with validation errors
+          setErrors(response.data.data); // This matches your backend format
+          toast.error(response.data.message); // Show the general error message
+        }
+      })
+      .catch((error) => {
+        console.log("API Error:", error.response); // For debugging
+
+        if (error.response?.data?.status === "error") {
+          // Your specific error format
+          setErrors(error.response.data.data);
+          toast.error(error.response.data.message);
+        } else if (error.response?.data?.errors) {
+          // Alternative error format
+          setErrors(error.response.data.errors);
+        } else if (error.message) {
+          toast.error(error.message);
+        } else {
+          toast.error("An unknown error occurred");
+        }
+      })
+      .finally(() => setSaving(false));
+  };
+
   /* ─── static field helper ─── */
   const Info = ({ label, value }) => (
     <div className="space-y-1">
@@ -497,65 +497,28 @@ const handleSaveAll = () => {
         </div>
       </div>
 
-  
 
-       {/* Location Information */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Location Information</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          <Editable
-            label="Latitude"
-            field="latitude"
-            value={draft.latitude}
-            error={errors.latitude}
-            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
-          />
-
-          <Editable
-            label="Longitude"
-            field="longitude"
-            value={draft.longitude}
-            error={errors.longitude}
-            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
-          />
-
-          <Editable
-            label="Pincode"
-            field="pincode"
-            value={draft.pincode}
-            error={errors.pincode}
-            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
-          />
-
-          <Editable
-            label="Location Name"
-            field="location"
-            value={draft.location}
-            error={errors.location}
-            onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
-            span="sm:col-span-2"
-          />
-        </div>
-      </div>
 
       {/* Images Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Boat Image */}
         <div>
-          <h2 className="text-xl font-semibold mb-4 text-center">Boat Image</h2>
-          {imgDraft ? (
-            <>
-              <div className="flex justify-center">
+          <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">
+            Boat Photo
+          </h2>
+
+          <div className="w-full flex flex-col items-center justify-center">
+            {imgDraft ? (
+              <>
                 <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
                   <img
                     src={URL.createObjectURL(imgDraft)}
-                    alt="Preview"
-                    className="w-full h-64 object-cover"
+                    alt="Boat Preview"
+                    className="w-full h-64 object-cover border rounded"
                   />
                 </div>
-              </div>
-              <div className="flex justify-center mt-3">
-                <div className="flex gap-2">
+
+                <div className="flex justify-center mt-3 gap-2">
                   <button
                     onClick={() => setImgDraft(null)}
                     className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
@@ -568,11 +531,9 @@ const handleSaveAll = () => {
                     </div>
                   )}
                 </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="w-full flex flex-col items-center justify-center">
+              </>
+            ) : (
+              <>
                 <div className="sm:w-80 w-full rounded-lg shadow overflow-hidden">
                   {boat.image ? (
                     <img
@@ -582,83 +543,99 @@ const handleSaveAll = () => {
                           : `${API_BASE}/storage/${boat.image}`
                       }
                       alt="Boat"
-                      className="w-full h-64 object-cover"
+                      className="w-full h-64 object-cover border rounded"
                     />
                   ) : (
                     <div className="w-full h-64 flex items-center justify-center bg-gray-50 text-gray-400">
-                      No image
+                      No image available
                     </div>
                   )}
                 </div>
+
                 <button
                   onClick={() => setShowCamera(true)}
                   className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium transition"
                 >
                   <FaCamera /> Update Boat Photo
                 </button>
-              </div>
-            </>
-          )}
+              </>
+            )}
+
+            {/* Location + Pincode always shown below the image */}
+            <div className="mt-4 text-sm text-gray-700 space-y-1 text-center">
+              <p><strong>Location:</strong> {boat.location || "N/A"}</p>
+              <p><strong>Pincode:</strong> {boat.pincode || "N/A"}</p>
+            </div>
+          </div>
         </div>
+
 
         {/* Pilot Image */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4 text-center">Pilot Image</h2>
-          {pilotImgDraft ? (
-            <>
-              <div className="flex justify-center">
-                <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
-                  <img
-                    src={URL.createObjectURL(pilotImgDraft)}
-                    alt="Preview"
-                    className="w-full h-64 object-cover"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-center mt-3">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setPilotImgDraft(null)}
-                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </>
+<div>
+  <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">
+    Pilot Photo
+  </h2>
+
+  <div className="w-full flex flex-col items-center justify-center">
+    {pilotImgDraft ? (
+      <>
+        <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
+          <img
+            src={URL.createObjectURL(pilotImgDraft)}
+            alt="Pilot Preview"
+            className="w-full h-64 object-cover border rounded"
+          />
+        </div>
+
+        <div className="flex justify-center mt-3">
+          <button
+            onClick={() => setPilotImgDraft(null)}
+            className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
+          >
+            Cancel
+          </button>
+        </div>
+      </>
+    ) : (
+      <>
+        <div className="sm:w-80 w-full rounded-lg shadow overflow-hidden">
+          {boat.pilot_image ? (
+            <img
+              src={
+                boat.pilot_image?.startsWith("blob:")
+                  ? boat.pilot_image
+                  : `${API_BASE}/storage/${boat.pilot_image}`
+              }
+              alt="Pilot"
+              className="w-full h-64 object-cover border rounded"
+            />
           ) : (
-            <>
-              <div className="w-full flex flex-col items-center justify-center">
-                <div className="sm:w-80 w-full rounded-lg shadow overflow-hidden">
-                  {boat.pilot_image ? (
-                    <img
-                      src={
-                        boat.pilot_image?.startsWith("blob:")
-                          ? boat.pilot_image
-                          : `${API_BASE}/storage/${boat.pilot_image}`
-                      }
-                      alt="Pilot"
-                      className="w-full h-64 object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-64 flex items-center justify-center bg-gray-50 text-gray-400">
-                      No image
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => setShowPilotCamera(true)}
-                  className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium transition"
-                >
-                  <FaCamera /> Update Pilot Photo
-                </button>
-              </div>
-            </>
+            <div className="w-full h-64 flex items-center justify-center bg-gray-50 text-gray-400">
+              No image available
+            </div>
           )}
         </div>
+
+        <button
+          onClick={() => setShowPilotCamera(true)}
+          className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium transition"
+        >
+          <FaCamera /> Update Pilot Photo
+        </button>
+      </>
+    )}
+
+    {/* Location & Pincode below the image */}
+    <div className="mt-4 text-sm text-gray-700 space-y-1 text-center">
+      <p><strong>Location:</strong> {boat.pilot_location || "N/A"}</p>
+      <p><strong>Pincode:</strong> {boat.pilot_pincode || "N/A"}</p>
+    </div>
+  </div>
+</div>
+
       </div>
 
-   
+
 
       {/* Save Button */}
       <div className="pt-4 border-t flex justify-center">
