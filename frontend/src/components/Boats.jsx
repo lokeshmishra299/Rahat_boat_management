@@ -439,58 +439,73 @@ const Boats = () => {
       {view === "register" && user?.role_id !== 1 ? (
         <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border">
           {/* Photo Upload Section */}
-          <div className="bg-green-50 border border-dashed border-green-300 rounded-lg p-6 text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <div className="bg-white rounded-full p-3 shadow inline-flex">
-                <FaCamera className="text-green-500 text-xl" />
-              </div>
-            </div>
-            <p className="text-green-800 font-semibold mb-1">
-              Upload Boat Photo (Geo-Tag)
-            </p>
-            <p className="text-gray-600 text-sm mb-4">
-              Capture or upload a photo with GPS coordinates
-            </p>
+<div className="bg-green-50 border border-dashed border-green-300 rounded-lg p-6 text-center mb-8">
+  <div className="flex justify-center mb-4">
+    <div className="bg-white rounded-full p-3 shadow inline-flex">
+      <FaCamera className="text-green-500 text-xl" />
+    </div>
+  </div>
 
-            <div className="flex items-center justify-center gap-2">
-              <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <button
-                  onClick={() => {
-                    setCameraPurpose("boat");
-                    setShowCamera(true);
-                  }}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition"
-                >
-                  <FaCamera className="inline mr-2" /> Capture Boat
-                </button>
-                <button
-                  onClick={() => {
-                    setCameraPurpose("pilot");
-                    setShowCamera(true);
-                  }}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition"
-                >
-                  <FaCamera className="inline mr-2" /> Capture Pilot
-                </button>
-              </div>
-            </div>
-            {boatPhotoName && (
-              <p className="text-sm text-green-700 mt-2">
-                Boat Photo: {boatPhotoName}
-              </p>
-            )}
-            {pilotPhotoName && (
-              <p className="text-sm text-blue-700 mt-1">
-                Pilot Photo: {pilotPhotoName}
-              </p>
-            )}
+  <p className="text-green-800 font-semibold mb-1">
+    Upload Boat Photo (Geo-Tag)
+  </p>
+  <p className="text-gray-600 text-sm mb-4">
+    Capture or upload a photo with GPS coordinates
+  </p>
 
-            {errors.image && (
-              <p className="text-red-500 text-sm text-center mt-2">
-                {errors.image}
-              </p>
-            )}
-          </div>
+  {/* Capture Buttons */}
+  <div className="flex items-center justify-center gap-2">
+    <div className="flex flex-col sm:flex-row justify-center gap-4">
+      <button
+        onClick={() => {
+          setCameraPurpose("boat");
+          setShowCamera(true);
+        }}
+        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition"
+      >
+        <FaCamera className="inline mr-2" /> Capture Boat
+      </button>
+      <button
+        onClick={() => {
+          setCameraPurpose("pilot");
+          setShowCamera(true);
+        }}
+        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition"
+      >
+        <FaCamera className="inline mr-2" /> Capture Pilot
+      </button>
+    </div>
+  </div>
+
+  {/* Boat Photo Preview & Error */}
+  <div className="mt-4">
+    {boatPhotoName && (
+      <p className="text-sm text-green-700">
+        Boat Photo: {boatPhotoName}
+      </p>
+    )}
+    {errors.boat_image && (
+      <p className="text-sm text-red-500 mt-1">
+        {errors.boat_image[0]}
+      </p>
+    )}
+  </div>
+
+  {/* Pilot Photo Preview & Error */}
+  <div className="mt-4">
+    {pilotPhotoName && (
+      <p className="text-sm text-blue-700">
+        Pilot Photo: {pilotPhotoName}
+      </p>
+    )}
+    {errors.pilot_image && (
+      <p className="text-sm text-red-500 mt-1">
+        {errors.pilot_image[0]}
+      </p>
+    )}
+  </div>
+</div>
+
 
           {/* Location Info */}
           {(coords.lat || coords.lon) && (
