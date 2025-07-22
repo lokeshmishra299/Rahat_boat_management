@@ -156,7 +156,7 @@ class BoatManagement extends Controller
     // }
 
 
- public function store(Request $request, $id) 
+public function store(Request $request, $id) 
 {
     $boatOwner = BoatOwner::find($id);
     if (!$boatOwner) {
@@ -170,17 +170,25 @@ class BoatManagement extends Controller
         'pilot_image'            => 'required|image|mimes:jpeg,png,jpg|max:5120',
         'boat_type'              => 'required',
         'pilot_name'             => 'required',
-        'pilot_license_no'       => 'required',
+        'pilot_license_no'      => 'required',
         'support_staff'          => 'required|integer',
-        'engine_details'         => 'nullable|string',
-        'passenger_capacity'     => 'required|integer',
-        'year_of_manufacture'    => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
-        'ghaat_id'               => 'required',
+        'engine_details'        => 'nullable|string',
+        'passenger_capacity'    => 'required|integer',
+        'year_of_manufacture'   => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
+        'ghaat_id'              => 'required',
         'registration_authority' => 'required',
-        'location'               => 'nullable|string',
+        'boat_location'          => 'nullable|string',
+        'pilot_location'         => 'nullable|string',
         'remarks'                => 'nullable|string',
         'adhar_no'               => 'required|string|max:12',
         'contact_no'             => 'required|string|max:20',
+        // Add validation for new geolocation fields
+        'boat_latitude'          => 'nullable|numeric',
+        'boat_longitude'         => 'nullable|numeric',
+        'boat_pincode'          => 'nullable|string',
+        'pilot_latitude'         => 'nullable|numeric',
+        'pilot_longitude'        => 'nullable|numeric',
+        'pilot_pincode'          => 'nullable|string',
     ]);
 
     if ($validator->fails()) {
@@ -202,29 +210,36 @@ class BoatManagement extends Controller
     $districtNameShort = strtoupper(substr($ghaat->district_record->district_name ?? 'XXX', 0, 3));
     $ghaatUid = $ghaat->ghat_uid ?? 'GH-000-0000';
 
-    // Step 1: First create the boat record (without boat_uid)
+    // Create the boat record with separate geolocation data
     $boat = RegisterBoat::create([
         'registration_no'        => $request->registration_no,
         'district_id'            => $request->district_id,
         'boat_image'             => 'storage/' . $boatImagePath,  
-        'pilot_image'            => 'storage/' . $pilotImagePath, 
-        'latitude'               => $request->latitude,
-        'longitude'              => $request->longitude,
-        'pincode'                => $request->pincode,
-        'location'               => $request->location,
+        'pilot_image'            => 'storage/' . $pilotImagePath,
+        // Boat geolocation data
+        'boat_latitude'          => $request->boat_latitude,
+        'boat_longitude'         => $request->boat_longitude,
+        'boat_pincode'           => $request->boat_pincode,
+        'boat_location'          => $request->boat_location,
+        // Pilot geolocation data
+        'pilot_latitude'         => $request->pilot_latitude,
+        'pilot_longitude'        => $request->pilot_longitude,
+        'pilot_pincode'          => $request->pilot_pincode,
+        'pilot_location'         => $request->pilot_location,
+        // Other boat details
         'boat_type'              => $request->boat_type,
         'pilot_name'             => $request->pilot_name,
-        'pilot_license_no'       => $request->pilot_license_no,
+        'pilot_license_no'      => $request->pilot_license_no,
         'support_staff'          => $request->support_staff,
-        'engine_details'         => $request->engine_details,
-        'passenger_capacity'     => $request->passenger_capacity,
-        'year_of_manufacture'    => $request->year_of_manufacture,
-        'ghaat_id'               => $request->ghaat_id,
+        'engine_details'        => $request->engine_details,
+        'passenger_capacity'    => $request->passenger_capacity,
+        'year_of_manufacture'   => $request->year_of_manufacture,
+        'ghaat_id'              => $request->ghaat_id,
         'registration_authority' => $request->registration_authority,
-        'remarks'                => $request->remarks,
-        'boat_owner_id'          => $id,
-        'pilot_adhar'            => $request->adhar_no,
-        'pilot_contact'          => $request->contact_no,
+        'remarks'               => $request->remarks,
+        'boat_owner_id'         => $id,
+        'pilot_adhar'           => $request->adhar_no,
+        'pilot_contact'         => $request->contact_no,
     ]);
 
     $boatId = str_pad($boat->id, 3, '0', STR_PAD_LEFT);
@@ -276,7 +291,7 @@ class BoatManagement extends Controller
     }
 
 
-    public function edit(Request $request, $id)
+   public function edit(Request $request, $id)
 {
     $boat = RegisterBoat::find($id);
 
@@ -296,34 +311,40 @@ class BoatManagement extends Controller
         'engine_details'         => 'nullable|string',
         'passenger_capacity'     => 'required|integer',
         'year_of_manufacture'    => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
-        'ghaat_id'               => 'required|exists:ghaats,id',
+        'ghaat_id'              => 'required|exists:ghaats,id',
         'registration_authority' => 'required|string',
-        'location'               => 'nullable|string',
-        'latitude'               => 'nullable|numeric',
-        'longitude'              => 'nullable|numeric',
-        'pincode'                => 'nullable|string|max:10',
-        'remarks'                => 'nullable|string',
-        'adhar_no'               => 'nullable|string|max:12',
-        'contact_no'             => 'nullable|string|max:20',
+        'remarks'               => 'nullable|string',
+        'pilot_adhar'              => 'nullable|string|max:12',
+        'pilot_contact'            => 'nullable|string|max:20',
+        'boat_latitude'         => 'nullable|numeric',
+        'boat_longitude'        => 'nullable|numeric',
+        'boat_pincode'          => 'nullable|string|max:10',
+        'boat_location'         => 'nullable|string',
+        'pilot_latitude'        => 'nullable|numeric',
+        'pilot_longitude'       => 'nullable|numeric',
+        'pilot_pincode'         => 'nullable|string|max:10',
+        'pilot_location'        => 'nullable|string',
     ]);
 
     if ($validator->fails()) {
         return ApiResponse::generateResponse('error', 'Validation failed.', $validator->errors(), 422);
     }
 
-    // Upload boat image
+    // Only update boat image if a new file uploaded
     if ($request->hasFile('boat_image')) {
         $boatImagePath = $request->file('boat_image')->store('boats', 'public');
         $boat->boat_image = 'storage/' . $boatImagePath;
     }
+    // else keep old boat_image unchanged
 
-    // Upload pilot image
+    // Only update pilot image if a new file uploaded
     if ($request->hasFile('pilot_image')) {
         $pilotImagePath = $request->file('pilot_image')->store('pilots', 'public');
         $boat->pilot_image = 'storage/' . $pilotImagePath;
     }
+    // else keep old pilot_image unchanged
 
-    // Fill basic fields
+    // Update other fields
     $boat->fill($request->only([
         'registration_no',
         'district_id',
@@ -336,18 +357,22 @@ class BoatManagement extends Controller
         'year_of_manufacture',
         'ghaat_id',
         'registration_authority',
-        'location',
-        'latitude',
-        'longitude',
-        'pincode',
         'remarks',
+        'boat_latitude',
+        'boat_longitude',
+        'boat_pincode',
+        'boat_location',
+        'pilot_latitude',
+        'pilot_longitude',
+        'pilot_pincode',
+        'pilot_location',
     ]));
 
-    // Map manual fields
-    $boat->pilot_adhar = $request->adhar_no;
-    $boat->pilot_contact = $request->contact_no;
+    
+    $boat->pilot_adhar = $request->pilot_adhar;
+    $boat->pilot_contact = $request->pilot_contact;
 
-    // Regenerate UID only if ghat or district changed
+  
     if (
         $request->ghaat_id != $boat->getOriginal('ghaat_id') ||
         $request->district_id != $boat->getOriginal('district_id')
@@ -355,9 +380,9 @@ class BoatManagement extends Controller
         $ghaat = Ghaat::with('district_record')->find($request->ghaat_id);
 
         if ($ghaat && $ghaat->district_record) {
-            $districtNameShort = strtoupper(substr($ghaat->district_record->district_name, 0, 3)); // e.g. BAH
-            $ghaatUid = $ghaat->ghat_uid ?? 'GH-000-0000'; // e.g. GH-180-0003
-            $boatId = str_pad($boat->id, 3, '0', STR_PAD_LEFT); // e.g. 021
+            $districtNameShort = strtoupper(substr($ghaat->district_record->district_name, 0, 3));
+            $ghaatUid = $ghaat->ghat_uid ?? 'GH-000-0000';
+            $boatId = str_pad($boat->id, 3, '0', STR_PAD_LEFT);
 
             $boat->boat_uid = "UP-$districtNameShort-$ghaatUid-$boatId";
         }
