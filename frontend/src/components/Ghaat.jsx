@@ -122,11 +122,10 @@ export default function Ghaat() {
   // Helper functions for geolocation
   async function getPincode(lat, lon) {
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
-      );
-      const data = await res.json();
-      return data.address.postcode || "";
+     const res = await fetch(`${BASE_URL}/reverse-geocode?lat=${lat}&lon=${lon}`);
+const data = await res.json();
+return data.address?.postcode || "";
+
     } catch {
       return "";
     }

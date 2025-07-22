@@ -68,7 +68,7 @@ export default function BoatDetailone() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           <Info label="Registration Number" value={boat.registration_no} />
           <Info label="Boat Type" value={boat.boat_type} />
-          
+
           {(boat.boat_type === "Hybrid" || boat.boat_type === "Engine Driven") && (
             <Info label="Engine Details" value={boat.engine_details} />
           )}
@@ -79,8 +79,8 @@ export default function BoatDetailone() {
           <Info label="Support Staff Count" value={boat.support_staff} />
           <Info label="Passenger Capacity" value={boat.passenger_capacity} />
           <Info label="Year of Manufacture" value={boat.year_of_manufacture} />
-          <Info label="Status" value={boat.status || "Active"} />
-          <Info label="Additional Remarks" value={boat.remarks} span="sm:col-span-2" />
+          {/* <Info label="Status" value={boat.status || "Active"} /> */}
+          <Info label="Additional Remarks" value={boat.remarks} />
         </div>
       </div>
 
@@ -90,13 +90,13 @@ export default function BoatDetailone() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           <Info label="Pilot Name" value={boat.pilot_name} />
           <Info label="License Number" value={boat.pilot_license_no} />
-          <Info label="Aadhaar Number" value={boat.adhar_no} />
-          <Info label="Contact Number" value={boat.contact_no} />
+          <Info label="Aadhaar Number" value={boat.pilot_adhar} />
+          <Info label="Contact Number" value={boat.pilot_contact} />
         </div>
       </div>
 
       {/* Location Information */}
-      <div>
+      {/* <div>
         <h2 className="text-xl font-semibold mb-4">Location Information</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           <Info label="Latitude" value={boat.latitude} />
@@ -104,7 +104,7 @@ export default function BoatDetailone() {
           <Info label="Pincode" value={boat.pincode} />
           <Info label="Location Name" value={boat.location} span="sm:col-span-2" />
         </div>
-      </div>
+      </div> */}
 
       {/* Family Members */}
       {familyMembers.length > 0 && (
@@ -122,58 +122,61 @@ export default function BoatDetailone() {
 
       {/* Images Section */}
       <div className="flex flex-col lg:flex-row items-start justify-center gap-8">
-  {/* Boat Image */}
-  <div className="space-y-4 w-full lg:w-auto">
-    <h2 className="text-xl font-semibold mb-2 text-center lg:text-left">Boat Image</h2>
-    <div className="flex justify-center lg:justify-start">
-      <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
-        {boat.image ? (
-          <div className="text-center mb-4">
-            <img
-              src={`${API_BASE}/storage/${boat.image}?nocache=1`}
-              alt="Boat"
-              className="w-full max-w-md mx-auto rounded shadow"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "/no-image.png";
-              }}
-            />
-          </div>
-        ) : (
-          <div className="w-full h-64 flex items-center justify-center bg-gray-100 text-gray-400">
-            No Boat Image Available
-          </div>
-        )}
-      </div>
+        {/* Boat Image */}
+{/* Boat Image */}
+<div className="space-y-4 w-full lg:w-auto">
+  <h2 className="text-xl font-semibold mb-2 text-center lg:text-left">Boat Image</h2>
+  <div className="flex flex-col items-center lg:items-start">
+    <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
+      {boat?.boat_image?.length > 5 ? (
+        <img
+          src={`${API_BASE}/${boat.boat_image}`}
+          alt="Boat"
+          className="w-full h-64 object-cover rounded"
+        />
+      ) : (
+        <div className="w-full h-64 flex items-center justify-center bg-gray-100 text-gray-400">
+          No Boat Image Available
+        </div>
+      )}
     </div>
-  </div>
 
-  {/* Pilot Image */}
-  <div className="space-y-4 w-full lg:w-auto">
-    <h2 className="text-xl font-semibold mb-2 text-center lg:text-left">Pilot Image</h2>
-    <div className="flex justify-center lg:justify-start">
-      <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
-        {boat.pilot_image ? (
-          <div className="text-center mb-4">
-            <img
-              src={`${API_BASE}/storage/${boat.pilot_image}?nocache=1`}
-              alt="Pilot"
-              className="w-full max-w-md mx-auto rounded shadow"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "/no-image.png";
-              }}
-            />
-          </div>
-        ) : (
-          <div className="w-full h-64 flex items-center justify-center bg-gray-100 text-gray-400">
-            No Pilot Image Available
-          </div>
-        )}
-      </div>
+    {/* Boat pincode and location below image */}
+    <div className="mt-2 w-full sm:w-80 bg-gray-50 border rounded px-3 py-2 text-sm text-gray-700">
+      <p><strong>Pincode:</strong> {boat.boat_pincode || "—"}</p>
+      <p><strong>Location:</strong> {boat.boat_location || "—"}</p>
     </div>
   </div>
 </div>
+
+{/* Pilot Image */}
+<div className="space-y-4 w-full lg:w-auto">
+  <h2 className="text-xl font-semibold mb-2 text-center lg:text-left">Pilot Image</h2>
+  <div className="flex flex-col items-center lg:items-start">
+    <div className="w-full sm:w-80 rounded-lg shadow overflow-hidden">
+      {boat?.pilot_image?.length > 5 ? (
+        <img
+          src={`${API_BASE}/${boat.pilot_image}`}
+          alt="Pilot"
+          className="w-full h-64 object-cover rounded"
+        />
+      ) : (
+        <div className="w-full h-64 flex items-center justify-center bg-gray-100 text-gray-400">
+          No Pilot Image Available
+        </div>
+      )}
+    </div>
+
+    {/* Pilot pincode and location below image */}
+    <div className="mt-2 w-full sm:w-80 bg-gray-50 border rounded px-3 py-2 text-sm text-gray-700">
+      <p><strong>Pincode:</strong> {boat.pilot_pincode || "—"}</p>
+      <p><strong>Location:</strong> {boat.pilot_location || "—"}</p>
+    </div>
+  </div>
+</div>
+
+      </div>
+
 
 
       {/* Back Button */}

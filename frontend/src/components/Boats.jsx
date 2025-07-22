@@ -39,9 +39,16 @@ const Boats = () => {
   // Webcam and geolocation states
   const webcamRef = useRef(null);
   const [showCamera, setShowCamera] = useState(false);
-  const [coords, setCoords] = useState({ lat: "", lon: "" });
-  const [pincode, setPincode] = useState("");
-  const [locationName, setLocationName] = useState("");
+  // const [coords, setCoords] = useState({ lat: "", lon: "" });
+  // const [pincode, setPincode] = useState("");
+  // const [locationName, setLocationName] = useState("");
+  const [boatCoords, setBoatCoords] = useState({ lat: "", lon: "" });
+  const [boatPincode, setBoatPincode] = useState("");
+  const [boatLocationName, setBoatLocationName] = useState("");
+
+  const [pilotCoords, setPilotCoords] = useState({ lat: "", lon: "" });
+  const [pilotPincode, setPilotPincode] = useState("");
+  const [pilotLocationName, setPilotLocationName] = useState("");
 
   // Districts
   const [districts, setDistricts] = useState([]);
@@ -115,42 +122,68 @@ const Boats = () => {
       ia[i] = byteString.charCodeAt(i);
     }
     const blob = new Blob([ab], { type: mimeString });
-    const file = new File([blob], "captured.jpg", { type: mimeString });
 
     if (cameraPurpose === "boat") {
       const file = new File([blob], "boat_captured.jpg", { type: mimeString });
       setBoatPhotoFile(file);
       setBoatPhotoName("boat_captured.jpg");
+
+      // Get and store boat-specific geolocation
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lon = pos.coords.longitude.toFixed(6);
+          setBoatCoords({ lat, lon });
+
+          const pin = await getPincode(lat, lon);
+          setBoatPincode(pin);
+
+          if (pin) {
+            const loc = await getLocationFromPincode(pin);
+            setBoatLocationName(loc);
+          }
+        },
+        (err) => {
+          console.error("Location error", err);
+          if (err.code === 1) {
+            toast.error("Location permission denied.", { id: "location-error" });
+          } else {
+            toast.error("Failed to get location. Please check GPS access.");
+          }
+        }
+      );
     } else {
       const file = new File([blob], "pilot_captured.jpg", { type: mimeString });
       setPilotPhotoFile(file);
       setPilotPhotoName("pilot_captured.jpg");
+
+      // Get and store pilot-specific geolocation
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lon = pos.coords.longitude.toFixed(6);
+          setPilotCoords({ lat, lon });
+
+          const pin = await getPincode(lat, lon);
+          setPilotPincode(pin);
+
+          if (pin) {
+            const loc = await getLocationFromPincode(pin);
+            setPilotLocationName(loc);
+          }
+        },
+        (err) => {
+          console.error("Location error", err);
+          if (err.code === 1) {
+            toast.error("Location permission denied.", { id: "location-error" });
+          } else {
+            toast.error("Failed to get location. Please check GPS access.");
+          }
+        }
+      );
     }
+
     setShowCamera(false);
-
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude.toFixed(6);
-        const lon = pos.coords.longitude.toFixed(6);
-        setCoords({ lat, lon });
-
-        const pin = await getPincode(lat, lon);
-        setPincode(pin);
-
-        if (pin) {
-          const loc = await getLocationFromPincode(pin);
-          setLocationName(loc);
-        }
-      },
-      (err) => {
-        console.error("Location error", err);
-        if (err.code === 1) {
-          toast.error("Location permission denied.", { id: "location-error" });
-        } else {
-          toast.error("Failed to get location. Please check GPS access.");
-        }
-      }
-    );
   };
 
   // Helper functions for geolocation
@@ -248,10 +281,21 @@ const Boats = () => {
     fd.append("ghaat_id", form.ghat || "");
     fd.append("registration_authority", form.authority || "");
     fd.append("remarks", form.additionalInfo || "");
-    fd.append("latitude", coords.lat || "");
-    fd.append("longitude", coords.lon || "");
-    fd.append("pincode", pincode || "");
-    fd.append("location", locationName || "");
+    if (boatPhotoFile) {
+      fd.append("boat_image", boatPhotoFile);
+      fd.append("boat_latitude", boatCoords.lat || "");
+      fd.append("boat_longitude", boatCoords.lon || "");
+      fd.append("boat_pincode", boatPincode || "");
+      fd.append("boat_location", boatLocationName || "");
+    }
+
+    if (pilotPhotoFile) {
+      fd.append("pilot_image", pilotPhotoFile);
+      fd.append("pilot_latitude", pilotCoords.lat || "");
+      fd.append("pilot_longitude", pilotCoords.lon || "");
+      fd.append("pilot_pincode", pilotPincode || "");
+      fd.append("pilot_location", pilotLocationName || "");
+    }
     if (boatPhotoFile) fd.append("boat_image", boatPhotoFile);
     if (pilotPhotoFile) fd.append("pilot_image", pilotPhotoFile);
 
@@ -373,8 +417,8 @@ const Boats = () => {
             }}
             onClick={() => setView("register")}
             className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "register"
-                ? "bg-green-600 text-white"
-                : "bg-white text-green-700 hover:bg-green-50 shadow"
+              ? "bg-green-600 text-white"
+              : "bg-white text-green-700 hover:bg-green-50 shadow"
               }`}
           >
             <FaPlusCircle /> Register New Boat
@@ -388,8 +432,8 @@ const Boats = () => {
             loadBoats(); // Ensure this is defined and fetching properly
           }}
           className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${view === "directory"
-              ? "bg-sky-600 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
+            ? "bg-sky-600 text-white"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow"
             }`}
         >
           <FaListAlt /> Boat Directory
@@ -439,80 +483,90 @@ const Boats = () => {
       {view === "register" && user?.role_id !== 1 ? (
         <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border">
           {/* Photo Upload Section */}
-<div className="bg-green-50 border border-dashed border-green-300 rounded-lg p-6 text-center mb-8">
-  <div className="flex justify-center mb-4">
-    <div className="bg-white rounded-full p-3 shadow inline-flex">
-      <FaCamera className="text-green-500 text-xl" />
-    </div>
-  </div>
+          <div className="bg-green-50 border border-dashed border-green-300 rounded-lg p-6 text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <div className="bg-white rounded-full p-3 shadow inline-flex">
+                <FaCamera className="text-green-500 text-xl" />
+              </div>
+            </div>
 
-  <p className="text-green-800 font-semibold mb-1">
-    Upload Boat Photo (Geo-Tag)
-  </p>
-  <p className="text-gray-600 text-sm mb-4">
-    Capture or upload a photo with GPS coordinates
-  </p>
+            <p className="text-green-800 font-semibold mb-1">
+              Upload Boat Photo (Geo-Tag)
+            </p>
+            <p className="text-gray-600 text-sm mb-4">
+              Capture or upload a photo with GPS coordinates
+            </p>
 
-  {/* Capture Buttons */}
-  <div className="flex items-center justify-center gap-2">
-    <div className="flex flex-col sm:flex-row justify-center gap-4">
-      <button
-        onClick={() => {
-          setCameraPurpose("boat");
-          setShowCamera(true);
-        }}
-        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition"
-      >
-        <FaCamera className="inline mr-2" /> Capture Boat
-      </button>
-      <button
-        onClick={() => {
-          setCameraPurpose("pilot");
-          setShowCamera(true);
-        }}
-        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition"
-      >
-        <FaCamera className="inline mr-2" /> Capture Pilot
-      </button>
-    </div>
-  </div>
+            {/* Capture Buttons */}
+            <div className="flex items-center justify-center gap-2">
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <button
+                  onClick={() => {
+                    setCameraPurpose("boat");
+                    setShowCamera(true);
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition"
+                >
+                  <FaCamera className="inline mr-2" /> Capture Boat
+                </button>
+                <button
+                  onClick={() => {
+                    setCameraPurpose("pilot");
+                    setShowCamera(true);
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition"
+                >
+                  <FaCamera className="inline mr-2" /> Capture Pilot
+                </button>
+              </div>
+            </div>
 
-  {/* Boat Photo Preview & Error */}
-  <div className="mt-4">
-    {boatPhotoName && (
-      <p className="text-sm text-green-700">
-        Boat Photo: {boatPhotoName}
-      </p>
-    )}
-    {errors.boat_image && (
-      <p className="text-sm text-red-500 mt-1">
-        {errors.boat_image[0]}
-      </p>
-    )}
-  </div>
+            {/* Boat Photo Preview & Error */}
+            <div className="mt-4">
+              {boatPhotoName && (
+                <p className="text-sm text-green-700">
+                  Boat Photo: {boatPhotoName}
+                </p>
+              )}
+              {errors.boat_image && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.boat_image[0]}
+                </p>
+              )}
+            </div>
 
-  {/* Pilot Photo Preview & Error */}
-  <div className="mt-4">
-    {pilotPhotoName && (
-      <p className="text-sm text-blue-700">
-        Pilot Photo: {pilotPhotoName}
-      </p>
-    )}
-    {errors.pilot_image && (
-      <p className="text-sm text-red-500 mt-1">
-        {errors.pilot_image[0]}
-      </p>
-    )}
-  </div>
-</div>
+            {/* Pilot Photo Preview & Error */}
+            <div className="mt-4">
+              {pilotPhotoName && (
+                <p className="text-sm text-blue-700">
+                  Pilot Photo: {pilotPhotoName}
+                </p>
+              )}
+              {errors.pilot_image && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.pilot_image[0]}
+                </p>
+              )}
+            </div>
+          </div>
 
 
           {/* Location Info */}
-          {(coords.lat || coords.lon) && (
+          {/* In your JSX, update the location info display */}
+          {(boatCoords.lat || boatCoords.lon) && cameraPurpose === "boat" && (
             <div className="mb-6 p-3 bg-blue-50 rounded-lg text-center">
               <p className="font-medium text-blue-800">
-                {/* Location: {coords.lat}, {coords.lon} | Pincode: {pincode} | {locationName} */}
-                Pincode: {pincode} | {locationName}
+                {/* Boat Location: {boatCoords.lat}, {boatCoords.lon} |  */}
+                Pincode: {boatPincode} | {boatLocationName}
+              </p>
+            </div>
+          )}
+
+          {(pilotCoords.lat || pilotCoords.lon) && cameraPurpose === "pilot" && (
+            <div className="mb-6 p-3 bg-green-50 rounded-lg text-center">
+              <p className="font-medium text-green-800">
+                {/* Pilot Location: {pilotCoords.lat}, {pilotCoords.lon} |  */}
+                Pincode: {pilotPincode} | {pilotLocationName}
               </p>
             </div>
           )}
@@ -697,7 +751,7 @@ const Boats = () => {
               </div>
 
               <Input
-                label="Pilot Name *"
+                label="Name *"
                 name="pilotName"
                 value={form.pilotName}
                 onChange={field("pilotName")}
@@ -867,8 +921,8 @@ const Boats = () => {
                       <td className="px-4 py-2">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${boat.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
                             }`}
                         >
                           {boat.status || "Active"}

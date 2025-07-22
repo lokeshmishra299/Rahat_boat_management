@@ -7,6 +7,9 @@ import { Toaster, toast } from 'react-hot-toast';
 
 
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
+const API_BASE = BASE_URL.replace("/api", "");
+
+
 const token = localStorage.getItem("access_token");
 const user = JSON.parse(localStorage.getItem("user"));
 
@@ -467,11 +470,24 @@ return (
         className="w-[320px] h-64 object-cover rounded shadow border mb-3"
       />
     ) : draft.photo_path ? (
-      <img
-        src={`http://localhost:8000/storage/${draft.photo_path}`}
-        alt="Ghaat"
-        className="w-[320px] h-64 object-cover rounded shadow border mb-3"
-      />
+      // <img
+      //   src={`http://localhost:8000/storage/${draft.photo_path}`}
+      //   alt="Ghaat"
+      //   className="w-[320px] h-64 object-cover rounded shadow border mb-3"
+      // />
+
+      //  <img
+      //     src={`${API_BASE}/${draft.photo_path}`}
+      //     alt="Ghaat"
+      //     className="w-[320px] h-64 object-cover rounded shadow border mb-3"
+      //   />
+
+        <img
+  src={`${API_BASE}/storage/${draft.photo_path}`}
+  alt="Ghaat"
+  className="w-[320px] h-64 object-cover rounded shadow border mb-3"
+/>
+
     ) : (
       <p className="italic text-gray-400 mb-2">No image available</p>
     )}

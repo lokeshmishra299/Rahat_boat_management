@@ -212,55 +212,74 @@ export default function BoatDetail() {
 
   /* ─── save (text fields + optional image) ─── */
 
-  const handleSaveAll = () => {
-    setSaving(true);
-    setErrors({}); // Clear previous errors
+const handleSaveAll = () => {
+  setSaving(true);
+  setErrors({});
 
-    const fd = new FormData();
-    Object.entries(draft).forEach(([k, v]) => fd.append(k, v ?? ""));
-    if (imgDraft) fd.set("boat_image", imgDraft);
+  const fd = new FormData();
+  
+  // Append all non-image fields
+  Object.entries(draft).forEach(([k, v]) => {
+    // Skip image fields - we'll handle them separately
+    if (k !== 'boat_image' && k !== 'pilot_image' && v !== null && v !== undefined) {
+      fd.append(k, v);
+    }
+  });
 
-    if (pilotImgDraft) fd.set("pilot_image", pilotImgDraft);
+  // Handle boat location data
+  if (coords.lat) fd.append('boat_latitude', coords.lat);
+  if (coords.lon) fd.append('boat_longitude', coords.lon);
+  if (pincode) fd.append('boat_pincode', pincode);
+  if (locationName) fd.append('boat_location', locationName);
 
-    // Add location data
-    if (coords.lat) fd.append("latitude", coords.lat);
-    if (coords.lon) fd.append("longitude", coords.lon);
-    if (pincode) fd.append("pincode", pincode);
-    if (locationName) fd.append("location", locationName);
+  // Handle pilot location data
+  if (coords.lat) fd.append('pilot_latitude', coords.lat);
+  if (coords.lon) fd.append('pilot_longitude', coords.lon);
+  if (pincode) fd.append('pilot_pincode', pincode);
+  if (locationName) fd.append('pilot_location', locationName);
 
-    api.post(`/edit-boat-details/${boat.id}`, fd, {
-      headers: { "Content-Type": "multipart/form-data" },
-    })
-      .then((response) => {
-        if (response.data?.status === "success") {
-          setBoat(response.data.data);
-          setDraft(response.data.data);
-          toast.success("Boat updated successfully");
-          navigate("/dashboard/addboatowner");
-        } else if (response.data?.status === "error") {
-          // Handle error response with validation errors
-          setErrors(response.data.data); // This matches your backend format
-          toast.error(response.data.message); // Show the general error message
-        }
-      })
-      .catch((error) => {
-        console.log("API Error:", error.response); // For debugging
+  // Only append boat_image if it's a new File object
+  if (imgDraft instanceof File) {
+    fd.append('boat_image', imgDraft);
+  }
 
-        if (error.response?.data?.status === "error") {
-          // Your specific error format
-          setErrors(error.response.data.data);
-          toast.error(error.response.data.message);
-        } else if (error.response?.data?.errors) {
-          // Alternative error format
-          setErrors(error.response.data.errors);
-        } else if (error.message) {
-          toast.error(error.message);
-        } else {
-          toast.error("An unknown error occurred");
-        }
-      })
-      .finally(() => setSaving(false));
-  };
+  // Only append pilot_image if it's a new File object
+  if (pilotImgDraft instanceof File) {
+    fd.append('pilot_image', pilotImgDraft);
+  }
+
+  // Debug: Log FormData contents
+  for (let [key, value] of fd.entries()) {
+    console.log(key, value);
+  }
+
+  api.post(`/edit-boat-details/${boat.id}`, fd, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+  .then((response) => {
+    if (response.data?.status === 'success') {
+      setBoat(response.data.data);
+      setDraft(response.data.data);
+      toast.success('Boat updated successfully');
+      navigate('/dashboard/addboatowner');
+    } else if (response.data?.status === 'error') {
+      setErrors(response.data.data);
+      toast.error(response.data.message);
+    }
+  })
+  .catch((error) => {
+    console.error('API Error:', error.response);
+    if (error.response?.data?.status === 'error') {
+      setErrors(error.response.data.data);
+    } else if (error.response?.data?.errors) {
+      setErrors(error.response.data.errors);
+    }
+  })
+  .finally(() => setSaving(false));
+};
+
 
   /* ─── static field helper ─── */
   const Info = ({ label, value }) => (
@@ -335,7 +354,7 @@ export default function BoatDetail() {
           />
 
           <div className="space-y-1">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Boat Type</p>
+            <p className="tracking-wide">Boat Type</p>
             <select
               value={draft.boat_type ?? ""}
               onChange={(e) =>
@@ -367,7 +386,7 @@ export default function BoatDetail() {
 
           {!user?.role_id && (
             <div className="space-y-1">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">District</p>
+              <p className=" tracking-wide">District</p>
               <select
                 value={draft.district_id ?? ""}
                 onChange={(e) =>
@@ -389,7 +408,7 @@ export default function BoatDetail() {
           )}
 
           <div className="space-y-1">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Assigned Ghat</p>
+            <p className=" tracking-wide">Assigned Ghat</p>
             <select
               value={draft.ghaat_id ?? ""}
               onChange={(e) =>
@@ -449,13 +468,13 @@ export default function BoatDetail() {
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
 
-          <Editable
+          {/* <Editable
             label="Status"
             field="status"
             value={draft.status}
             error={errors.status}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
-          />
+          /> */}
         </div>
       </div>
 
@@ -464,7 +483,7 @@ export default function BoatDetail() {
         <h2 className="text-xl font-semibold mb-4">Pilot Information</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           <Editable
-            label="Pilot Name"
+            label="Name"
             field="pilot_name"
             value={draft.pilot_name}
             error={errors.pilot_name}
@@ -472,7 +491,7 @@ export default function BoatDetail() {
           />
 
           <Editable
-            label="Pilot License No."
+            label="License No."
             field="pilot_license_no"
             value={draft.pilot_license_no}
             error={errors.pilot_license_no}
@@ -482,16 +501,16 @@ export default function BoatDetail() {
           <Editable
             label="Aadhaar Number"
             field="adhar_no"
-            value={draft.adhar_no}
-            error={errors.adhar_no}
+            value={draft.pilot_adhar}
+            error={errors.pilot_adhar}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
 
           <Editable
             label="Contact Number"
             field="contact_no"
-            value={draft.contact_no}
-            error={errors.contact_no}
+            value={draft.pilot_contact}
+            error={errors.pilot_contact}
             onChange={(field, value) => setDraft((prev) => ({ ...prev, [field]: value }))}
           />
         </div>
@@ -535,12 +554,12 @@ export default function BoatDetail() {
             ) : (
               <>
                 <div className="sm:w-80 w-full rounded-lg shadow overflow-hidden">
-                  {boat.image ? (
+                  {boat.boat_image ? (
                     <img
                       src={
-                        boat.image?.startsWith("blob:")
-                          ? boat.image
-                          : `${API_BASE}/storage/${boat.image}`
+                        boat.boat_image?.startsWith("blob:")
+                          ? boat.boat_image
+                          : `${API_BASE}/${boat.boat_image}`
                       }
                       alt="Boat"
                       className="w-full h-64 object-cover border rounded"
@@ -563,8 +582,8 @@ export default function BoatDetail() {
 
             {/* Location + Pincode always shown below the image */}
             <div className="mt-4 text-sm text-gray-700 space-y-1 text-center">
-              <p><strong>Location:</strong> {boat.location || "N/A"}</p>
-              <p><strong>Pincode:</strong> {boat.pincode || "N/A"}</p>
+              <p><strong>Location:</strong> {boat.boat_location || "N/A"}</p>
+              <p><strong>Pincode:</strong> {boat.boat_pincode || "N/A"}</p>
             </div>
           </div>
         </div>
@@ -604,7 +623,7 @@ export default function BoatDetail() {
               src={
                 boat.pilot_image?.startsWith("blob:")
                   ? boat.pilot_image
-                  : `${API_BASE}/storage/${boat.pilot_image}`
+                  : `${API_BASE}/${boat.pilot_image}`
               }
               alt="Pilot"
               className="w-full h-64 object-cover border rounded"
