@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\RegisterBoat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -11,9 +12,10 @@ use App\Models\User;
 class AuthController extends Controller
 {
     public function showLoginForm()
-    {
-        return view('auth.login');
-    }
+{
+    $boats = RegisterBoat::get();
+    return view('welcome', compact('boats'));
+}
 
     public function login(Request $request)
     {

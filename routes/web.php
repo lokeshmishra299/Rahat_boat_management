@@ -6,7 +6,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoleController;
 
-Route::get('/', [AuthController::class, 'showLoginForm'])->name('login');
+Route::get('/logina', [AuthController::class, 'showLoginForm'])->name('login');
 // Route::post('/login', [AuthController::class, 'login'])->name('login.store');;
 // Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
