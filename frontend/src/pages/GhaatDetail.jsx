@@ -55,15 +55,15 @@ export default function GhaatDetail() {
   const [showCamera, setShowCamera] = useState(false);
   const webcamRef = useRef(null);
 
- const getPincode = async (lat, lon) => {
-  try {
-    const res = await fetch(`${BASE_URL}/reverse-geocode?lat=${lat}&lon=${lon}`);
-    const data = await res.json();
-    return data.address?.postcode || "";
-  } catch {
-    return "";
-  }
-};
+  const getPincode = async (lat, lon) => {
+    try {
+      const res = await fetch(`${BASE_URL}/reverse-geocode?lat=${lat}&lon=${lon}`);
+      const data = await res.json();
+      return data.address?.postcode || "";
+    } catch {
+      return "";
+    }
+  };
 
 
   const getLocationFromPincode = async (pin) => {
@@ -172,12 +172,12 @@ export default function GhaatDetail() {
     setEditing(k);
     setTemp(draft[k] ?? "");
 
-  setErrors((prev) => {
-    const newErrors = { ...prev };
-    delete newErrors[k];
-    return newErrors;
-  });
-};
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[k];
+      return newErrors;
+    });
+  };
 
   const commit = (k) => {
     setDraft({ ...draft, [k]: temp });
@@ -205,9 +205,9 @@ export default function GhaatDetail() {
       ["available_facilities", draft.available_facilities],
       ["additional_info", draft.additional_info],
       ["status", draft.status || "0"],
-        ["police_station_name", draft.police_station_name],         // ✅ Add this
-  ["police_mobile", draft.police_mobile],                     // ✅ Add this
-  ["station_address", draft.station_address],  
+      ["police_station_name", draft.police_station_name],         // ✅ Add this
+      ["police_mobile", draft.police_mobile],                     // ✅ Add this
+      ["station_address", draft.station_address],
     ].forEach(([k, v]) => formData.append(k, v || ""));
 
     if (imgDraft) formData.append("photo_path", imgDraft);
@@ -217,21 +217,21 @@ export default function GhaatDetail() {
         headers: { "Content-Type": "multipart/form-data" },
       })
       .then((r) => {
-          console.log("API Response:", r.data);
+        console.log("API Response:", r.data);
 
         if (r.data?.status === "success") {
           setGhaat(r.data.data);
-                toast.success("Ghaat details updated successfully!");
+          toast.success("Ghaat details updated successfully!");
           navigate("/dashboard/ghats");
         } else if (r.data?.errors) {
-              console.log("Validation errors:", r.data.errors);
+          console.log("Validation errors:", r.data.errors);
 
           setErrors(r.data.errors);
         }
       }).catch((err) => {
-  console.log("API error:", err.response?.data);
-  if (err.response?.data?.errors) setErrors(err.response.data.errors);
-})
+        console.log("API error:", err.response?.data);
+        if (err.response?.data?.errors) setErrors(err.response.data.errors);
+      })
       .finally(() => setSaving(false));
   };
 
@@ -307,56 +307,54 @@ export default function GhaatDetail() {
       );
     }
 
-// Existing input for other fields
-return (
-  <div>
-    <p className="text-xs  text-gray-500 font-semibold mb-1">{label}</p>
-    {editing === k && !isReadOnly ? (
-      <input
-        type={isNumberOnly ? "number" : "text"}
-        value={temp}
-        onChange={(e) => {
-          const val = e.target.value;
-          if (isNumberOnly) {
-            if (val === "" || /^[0-9\b]+$/.test(val)) {
-              setTemp(val);
-            }
-          } else if (isStringOnly) {
-            if (val === "" || /^[a-zA-Z\s\b]+$/.test(val)) {
-              setTemp(val);
-            }
-          } else if (k === "ghaat_name") {
-    if (val === "" || /^[a-zA-Z\s]+$/.test(val)) {
-      setTemp(val);
-    }
-  }else {
-            setTemp(val);
-          }
-        }}
-        onBlur={() => commit(k)}
-        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commit(k))}
-        className={`w-full bg-white rounded px-3 py-2 text-sm border ${
-          errors[k] ? "border-red-500" : "border-indigo-400"
-        }`}
-        autoFocus
-      />
-    ) : (
-<div
-  onClick={() => !isReadOnly && startEdit(k)}
-  className={`bg-gray-100 rounded-md px-3 py-2 text-sm border ${
-    isReadOnly ? "cursor-default" : "cursor-pointer"
-  } ${!value ? "text-gray-400 " : "text-gray-800"}`}
-  style={{ minHeight: "2.5rem" }}
->
-   {value === null || value === undefined || value === "" ? "N/A" : value}
-</div>
+    // Existing input for other fields
+    return (
+      <div>
+        <p className="text-xs  text-gray-500 font-semibold mb-1">{label}</p>
+        {editing === k && !isReadOnly ? (
+          <input
+            type={isNumberOnly ? "number" : "text"}
+            value={temp}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (isNumberOnly) {
+                if (val === "" || /^[0-9\b]+$/.test(val)) {
+                  setTemp(val);
+                }
+              } else if (isStringOnly) {
+                if (val === "" || /^[a-zA-Z\s\b]+$/.test(val)) {
+                  setTemp(val);
+                }
+              } else if (k === "ghaat_name") {
+                if (val === "" || /^[a-zA-Z\s]+$/.test(val)) {
+                  setTemp(val);
+                }
+              } else {
+                setTemp(val);
+              }
+            }}
+            onBlur={() => commit(k)}
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commit(k))}
+            className={`w-full bg-white rounded px-3 py-2 text-sm border ${errors[k] ? "border-red-500" : "border-indigo-400"
+              }`}
+            autoFocus
+          />
+        ) : (
+          <div
+            onClick={() => !isReadOnly && startEdit(k)}
+            className={`bg-gray-100 rounded-md px-3 py-2 text-sm border ${isReadOnly ? "cursor-default" : "cursor-pointer"
+              } ${!value ? "text-gray-400 " : "text-gray-800"}`}
+            style={{ minHeight: "2.5rem" }}
+          >
+            {value === null || value === undefined || value === "" ? "N/A" : value}
+          </div>
 
 
-    )}
-    {/* Error message always shown if exists */}
-    {errors[k] && <p className="text-xs text-red-500 mt-1">{errors[k][0]}</p>}
-  </div>
-);
+        )}
+        {/* Error message always shown if exists */}
+        {errors[k] && <p className="text-xs text-red-500 mt-1">{errors[k][0]}</p>}
+      </div>
+    );
 
   };
 
@@ -368,16 +366,16 @@ return (
         </h1>
         {/* <p className="text-sm text-gray-500">Unique ID: {draft.id}</p> */}
       </div>
-<div>
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
-  <EditableCell k="ghaat_name" label="Ghaat Name" value={draft.ghaat_name} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-  {/* <EditableCell k="location" label="Location" value={draft.location} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
-  {/* <EditableCell k="pincode" label="Pincode" value={draft.pincode} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
-  {/* <EditableCell k="boat_capacity" label="Boat Capacity" value={draft.boat_capacity} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
-  <EditableCell k="road_accessibility" label="Road Accessibility" value={draft.road_accessibility} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-  {/* <EditableCell k="contact_person" label="Contact Person" value={draft.contact_person} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
-{/* <EditableCell
+          <EditableCell k="ghaat_name" label="Ghaat Name" value={draft.ghaat_name} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+          {/* <EditableCell k="location" label="Location" value={draft.location} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
+          {/* <EditableCell k="pincode" label="Pincode" value={draft.pincode} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
+          {/* <EditableCell k="boat_capacity" label="Boat Capacity" value={draft.boat_capacity} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
+          <EditableCell k="road_accessibility" label="Road Accessibility" value={draft.road_accessibility} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+          {/* <EditableCell k="contact_person" label="Contact Person" value={draft.contact_person} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
+          {/* <EditableCell
   k="contact_number"
   label="Contact Number"
   value={draft.contact_number}
@@ -395,130 +393,140 @@ return (
   errors={errors}
 /> */}
 
-  <EditableCell k="nearest_hospital" label="Nearest Hospital" value={draft.nearest_hospital} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-  <EditableCell k="available_facilities" label="Available Facilities" value={draft.available_facilities} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-  <EditableCell k="additional_info" label="Additional Info" value={draft.additional_info} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-  {/* <EditableCell k="registered_boats_count" label="Registered Boats" value={draft.registered_boats_count} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
-  {user?.role_id !== 2 && (
-  <EditableCell k="district_id" label="District" value={draft.district_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-  )}
-  <EditableCell k="river_id" label="River/Pond/Lake/Dam" value={draft.river_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
-</div>
+          <EditableCell k="nearest_hospital" label="Nearest Hospital" value={draft.nearest_hospital} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+          <EditableCell k="available_facilities" label="Available Facilities" value={draft.available_facilities} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+          <EditableCell k="additional_info" label="Additional Info" value={draft.additional_info} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+          {/* <EditableCell k="registered_boats_count" label="Registered Boats" value={draft.registered_boats_count} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} /> */}
+          {user?.role_id !== 2 && (
+            <EditableCell k="district_id" label="District" value={draft.district_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+          )}
+          <EditableCell k="river_id" label="River/Pond/Lake/Dam" value={draft.river_id} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+        </div>
 
- <h2 className="col-span-full text-xl font-semibold text-gray-700 sm:py-8 py-5  mt-2">
+        <h2 className="col-span-full text-xl font-semibold text-gray-700 sm:py-8 py-5  mt-2">
           🚨 Nearest Police Station
         </h2>
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
-    <EditableCell k="police_station_name" label="Police Station Name" value={draft.police_station_name} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
- <EditableCell
-  k="police_mobile"
-  label="Police Mobile"
-  value={draft.police_mobile}
-  districts={districts}
-  rivers={rivers}
-  editing={editing}
-  temp={temp}
-  setTemp={(val) => {
-    if (/^\d{0,10}$/.test(val)) {
-      setTemp(val);
-    }
-  }}
-  startEdit={startEdit}
-  commit={commit}
-  errors={errors}
-/>
+          <EditableCell k="police_station_name" label="Police Station Name" value={draft.police_station_name} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+          <EditableCell
+            k="police_mobile"
+            label="Police Mobile"
+            value={draft.police_mobile}
+            districts={districts}
+            rivers={rivers}
+            editing={editing}
+            temp={temp}
+            setTemp={(val) => {
+              if (/^\d{0,10}$/.test(val)) {
+                setTemp(val);
+              }
+            }}
+            startEdit={startEdit}
+            commit={commit}
+            errors={errors}
+          />
 
-  <EditableCell k="station_address" label="Station Address" value={draft.station_address} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
+          <EditableCell k="station_address" label="Station Address" value={draft.station_address} districts={districts} rivers={rivers} editing={editing} temp={temp} setTemp={setTemp} startEdit={startEdit} commit={commit} errors={errors} />
 
-  </div>
-</div>
+        </div>
+      </div>
 
       <div className="mt-8">
-  <h2 className="text-xl font-semibold text-center text-gray-700 mb-3">
-    Ghat Photo
-  </h2>
+        <h2 className="text-xl font-semibold text-center text-gray-700 mb-3">
+          Ghat Photo
+        </h2>
 
-  {showCamera && (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 p-4">
-      <ReactWebcam
-        ref={webcamRef}
-        screenshotFormat="image/jpeg"
-        className="rounded-lg shadow-lg max-w-full w-96"
-        videoConstraints={{ facingMode: "environment" }}
-      />
-      <button
-        onClick={captureFromWebcam}
-        className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
-      >
-        Capture
-      </button>
-      <button
-        onClick={() => setShowCamera(false)}
-        className="mt-2 text-sm text-white underline"
-      >
-        Cancel
-      </button>
-    </div>
-  )}
+        {showCamera && (
+          <div className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 p-4">
+            <ReactWebcam
+              ref={webcamRef}
+              screenshotFormat="image/jpeg"
+              className="rounded-lg shadow-lg max-w-full w-96"
+              videoConstraints={{ facingMode: "environment" }}
+            />
+            <button
+              onClick={captureFromWebcam}
+              className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
+            >
+              Capture
+            </button>
+            <button
+              onClick={() => setShowCamera(false)}
+              className="mt-2 text-sm text-white underline"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
 
-  <div className="flex justify-center">
-    {imgDraft ? (
-      <img
-        src={URL.createObjectURL(imgDraft)}
-        alt="Preview"
-        className="w-[320px] h-64 object-cover rounded shadow border mb-3"
-      />
-    ) : draft.photo_path ? (
-      // <img
-      //   src={`http://localhost:8000/storage/${draft.photo_path}`}
-      //   alt="Ghaat"
-      //   className="w-[320px] h-64 object-cover rounded shadow border mb-3"
-      // />
+        <div className="flex justify-center">
+          {imgDraft ? (
+            <img
+              src={URL.createObjectURL(imgDraft)}
+              alt="Preview"
+              className="w-[320px] h-64 object-cover rounded shadow border mb-3"
+            />
+          ) : draft.photo_path ? (
+            // <img
+            //   src={`http://localhost:8000/storage/${draft.photo_path}`}
+            //   alt="Ghaat"
+            //   className="w-[320px] h-64 object-cover rounded shadow border mb-3"
+            // />
 
-      //  <img
-      //     src={`${API_BASE}/${draft.photo_path}`}
-      //     alt="Ghaat"
-      //     className="w-[320px] h-64 object-cover rounded shadow border mb-3"
-      //   />
+            //  <img
+            //     src={`${API_BASE}/${draft.photo_path}`}
+            //     alt="Ghaat"
+            //     className="w-[320px] h-64 object-cover rounded shadow border mb-3"
+            //   />
 
-        <img
-  src={`${API_BASE}/storage/${draft.photo_path}`}
-  alt="Ghaat"
-  className="w-[320px] h-64 object-cover rounded shadow border mb-3"
-/>
+            <img
+              src={`${API_BASE}/storage/${draft.photo_path}`}
+              alt="Ghaat"
+              className="w-[320px] h-64 object-cover rounded shadow border mb-3"
+            />
 
-    ) : (
-      <p className="italic text-gray-400 mb-2">No image available</p>
-    )}
-  </div>
+          ) : (
+            <p className="italic text-gray-400 mb-2">No image available</p>
+          )}
+        </div>
 
-  <div className="flex justify-center">
-    <button
-      onClick={() => setShowCamera(true)}
-      className="mt-2 inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
-    >
-      <FaCamera className="text-base" />Update Image
-    </button>
-  </div>
+        <div className="flex justify-center">
+          <button
+            onClick={() => setShowCamera(true)}
+            className="mt-2 inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            <FaCamera className="text-base" />Update Image
+          </button>
+        </div>
 
-  <div className="mt-3 text-sm text-gray-600 text-center">
-    {/* <p>Latitude: <span className="font-medium">{coords.lat}</span></p>
+        <div className="mt-3 text-sm text-gray-600 text-center">
+          {/* <p>Latitude: <span className="font-medium">{coords.lat}</span></p>
     <p>Longitude: <span className="font-medium">{coords.lon}</span></p> */}
-    <p>Pincode: <span className="font-medium">{pincode}</span></p>
-    <p>Location: <span className="font-medium">{locationName}</span></p>
-  </div>
-</div>
+          <p>Pincode: <span className="font-medium">{pincode}</span></p>
+          <p>Location: <span className="font-medium">{locationName}</span></p>
+        </div>
+      </div>
 
 
       <div className="pt-4 border-t flex justify-center">
         <button
           onClick={handleSaveAll}
-          disabled={saving}
-          className="px-6 py-3 bg-indigo-600 text-white rounded font-medium disabled:opacity-50"
+          disabled={
+            saving ||
+            !coords.lat ||
+            !coords.lon ||
+            !pincode ||
+            !locationName
+          }
+          className={`px-6 py-3 rounded font-medium text-white ${saving || !coords.lat || !coords.lon || !pincode || !locationName
+              ? "bg-indigo-600 opacity-50 cursor-not-allowed"
+              : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
         >
           {saving ? "Saving…" : "Save Changes"}
         </button>
+
       </div>
     </div>
   );

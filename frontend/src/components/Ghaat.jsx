@@ -629,14 +629,25 @@ return data.address?.postcode || "";
             </div>
 
             <div className="md:col-span-3 text-center mt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-2 rounded-full ${loading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-              >
-                {loading ? "Saving..." : "Register Ghat"}
-              </button>
+<button
+  type="submit"
+  disabled={
+    loading ||
+    !coords.lat ||
+    !coords.lon ||
+    !pincode ||
+    !locationName
+  }
+  className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-2 rounded-full ${
+    loading || !coords.lat || !coords.lon || !pincode || !locationName
+      ? "opacity-50 cursor-not-allowed"
+      : ""
+  }`}
+>
+  {loading ? "Saving..." : "Register Ghat"}
+</button>
+
+
             </div>
           </form>
         </div>
