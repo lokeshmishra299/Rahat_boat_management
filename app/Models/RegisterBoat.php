@@ -80,5 +80,10 @@ class RegisterBoat extends Model
 // {
 //     return $this->hasMany(BoatFamilyMember::class, 'register_boat_id');
 // }
+public function owner()
+{
+    return $this->belongsTo(BoatOwner::class, 'boat_owner_id');
+}
+
 
 }

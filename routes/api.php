@@ -115,4 +115,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/pilot-list', [PilotController::class, 'pilot_directory']);
     Route::get('/pilot-list/{id}', [PilotController::class, 'pilot_detail']);
     Route::post('/pilot-edit/{id}', [PilotController::class, 'pilot_edit']);
+
+
+    //All boat and ghat details
+
+    Route::get('/all-boat-ghat',[LocationController::class,'boat_ghat']);
+
+
+
 });

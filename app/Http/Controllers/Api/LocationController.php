@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Models\Ghaat;
+use App\Models\RegisterBoat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -28,4 +31,21 @@ class LocationController extends Controller
 
         return $response->json();
     }
+
+    public function boat_ghat()
+{
+    $boats = RegisterBoat::with('owner')->get();
+    $ghats = Ghaat::get();
+
+    return ApiResponse::generateResponse(
+        'success',
+        'Location fetch successfully',
+        [
+            'boats' => $boats,
+            'ghats' => $ghats
+        ]
+    );
 }
+
+}
+
