@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Header from "./Header";
+import { FaMapMarkerAlt } from "react-icons/fa";
 
 // icons
 import { MdSpaceDashboard } from "react-icons/md";
@@ -18,7 +19,6 @@ import {
 import { FaClipboardCheck } from "react-icons/fa6";
 import Footer from "./Footer";
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
-
 
 /* ───── Axios with token ───── */
 const token = localStorage.getItem("access_token");
@@ -58,8 +58,8 @@ const Dashboard = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
-const token = localStorage.getItem("access_token");
-const user = JSON.parse(localStorage.getItem("user"));
+  const token = localStorage.getItem("access_token");
+  const user = JSON.parse(localStorage.getItem("user"));
 
   /* fetch stats once */
   useEffect(() => {
@@ -80,7 +80,8 @@ const user = JSON.parse(localStorage.getItem("user"));
       : pathname.startsWith(`/dashboard/${seg}`);
 
   const linkCls = (seg, bg) =>
-    `px-4 py-1 rounded-full font-medium ${isActive(seg) ? `text-white ${bg}` : "text-gray-600 hover:text-blue-600"
+    `px-4 py-1 rounded-full font-medium ${
+      isActive(seg) ? `text-white ${bg}` : "text-gray-600 hover:text-blue-600"
     }`;
 
   const statusCls = {
@@ -91,7 +92,6 @@ const user = JSON.parse(localStorage.getItem("user"));
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-
       <Header />
 
       {/* nav bar */}
@@ -102,32 +102,45 @@ const user = JSON.parse(localStorage.getItem("user"));
               <MdSpaceDashboard className="inline-block mr-2 text-xl" />
               Dashboard
             </Link>
-{user && (
-  (user.role_id === 1 || user.role_id === 3) ? (
-    <Link to="boats" className={linkCls("boats", "bg-indigo-600")}>
-      <FaShip className="inline-block mr-2 text-lg" />
-      Boats
-    </Link>
-  ) : (
-    <Link to="addboatowner" className={linkCls("addboatowner", "bg-green-500")}>
-      <FaShip className="inline-block mr-2 text-lg" />
-      Boats
-    </Link>
-  )
-)}
+            {user &&
+              (user.role_id === 1 || user.role_id === 3 ? (
+                <Link to="boats" className={linkCls("boats", "bg-indigo-600")}>
+                  <FaShip className="inline-block mr-2 text-lg" />
+                  Boats
+                </Link>
+              ) : (
+                <Link
+                  to="addboatowner"
+                  className={linkCls("addboatowner", "bg-green-500")}
+                >
+                  <FaShip className="inline-block mr-2 text-lg" />
+                  Boats
+                </Link>
+              ))}
 
             <Link to="ghats" className={linkCls("ghats", "bg-sky-500")}>
               <FaWater className="inline-block mr-2 text-lg" />
               Ghats
             </Link>
-             
-             {user && user.role_id !== 2 && (
-            <Link to="districts" className={linkCls("districts", "bg-red-500")}>
-              <FaMapMarkedAlt className="inline-block mr-2 text-lg" />
-              Districts
+
+            <Link to="map" className={linkCls("map", "bg-lime-500")}>
+              <FaMapMarkerAlt className="inline-block mr-2 text-lg" />
+              Map
             </Link>
-             )}
-            <Link to="life-jackets" className={linkCls("life-jackets", "bg-orange-400")}>
+
+            {user && user.role_id !== 2 && (
+              <Link
+                to="districts"
+                className={linkCls("districts", "bg-red-500")}
+              >
+                <FaMapMarkedAlt className="inline-block mr-2 text-lg" />
+                Districts
+              </Link>
+            )}
+            <Link
+              to="life-jackets"
+              className={linkCls("life-jackets", "bg-orange-400")}
+            >
               <FaShieldAlt className="inline-block mr-2 text-lg" />
               Life Jackets
             </Link>
@@ -140,13 +153,15 @@ const user = JSON.parse(localStorage.getItem("user"));
               User Management
             </Link> */}
 
-            {user && user.role_id !== 2 &&  user.role_id!==3 &&(
-              <Link to="usermanagment" className={linkCls("usermanagment", "bg-yellow-400")}>
+            {user && user.role_id !== 2 && user.role_id !== 3 && (
+              <Link
+                to="usermanagment"
+                className={linkCls("usermanagment", "bg-yellow-400")}
+              >
                 <FaUsersCog className="inline-block mr-2 text-lg" />
                 User Management
               </Link>
             )}
-
 
             {/* <Link to="boatowner" className={linkCls("boatowner", "bg-rose-500")}>
               <FaUserTie className="inline-block mr-2 text-lg" />
@@ -164,100 +179,175 @@ const user = JSON.parse(localStorage.getItem("user"));
           .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         `}</style>
       </div>
-<div className="flex-1">
-      {isActive(".") ? (
-        <main className="p-6">
-          {/* page heading */}
-          <h2 className="flex items-center justify-center gap-2 text-3xl font-bold text-blue-700 mb-1">
-            <div className="bg-blue-400 p-2 rounded-xl shadow-md">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />
-              </svg>
-            </div>
-            Operations Dashboard
-          </h2>
-          <p className="text-center text-gray-500 font-semibold text-sm  mb-6">
-            Real‑time monitoring and management of rescue operations across Uttar&nbsp;Pradesh
-          </p>
+      <div className="flex-1">
+        {isActive(".") ? (
+          <main className="p-6">
+            {/* page heading */}
+            <h2 className="flex items-center justify-center gap-2 text-3xl font-bold text-blue-700 mb-1">
+              <div className="bg-blue-400 p-2 rounded-xl shadow-md">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />
+                </svg>
+              </div>
+              Operations Dashboard
+            </h2>
+            <p className="text-center text-gray-500 font-semibold text-sm  mb-6">
+              Real‑time monitoring and management of rescue operations across
+              Uttar&nbsp;Pradesh
+            </p>
 
-          {/* top stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-semibold">
-            <div
-              className="transform transition-transform duration-200 hover:scale-[1.03] hover:shadow-lg cursor-pointer"
-              onClick={() => navigate("/dashboard/boats?tab=directory")}
-            >
-              <StatCard
-                icon="🚤"
-                title="Total Boats"
-                value={<span className="font-extrabold">{stats?.total_boats.count ?? "—"}</span>}
-                change={stats ? `+${stats.total_boats.difference} from last month` : "—"}
-              />
+            {/* top stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 font-semibold">
+              <div
+                className="transform transition-transform duration-200 hover:scale-[1.03] hover:shadow-lg cursor-pointer"
+                onClick={() => navigate("/dashboard/ghats?tab=directory")}
+              >
+                <StatCard
+                  icon="🌊"
+                  title="Active Ghaats"
+                  value={
+                    <span className="font-extrabold">
+                      {stats?.active_ghaats.count ?? "—"}
+                    </span>
+                  }
+                  change={
+                    stats
+                      ? `+${stats.active_ghaats.difference} from last month`
+                      : "—"
+                  }
+                />
+              </div>
+
+              <div
+                className="transform transition-transform duration-200 hover:scale-[1.03] hover:shadow-lg cursor-pointer"
+                onClick={() => navigate("/dashboard/addboatowner")}
+              >
+                <StatCard
+                  icon="⛵"
+                  title="Boat Owners"
+                  value={
+                    <span className="font-extrabold">
+                      {stats?.boat_owners?.count ?? "—"}
+                    </span>
+                  }
+                  change={
+                    stats
+                      ? `+${stats.boat_owners?.difference ?? 0} from last month`
+                      : "—"
+                  }
+                />
+              </div>
+
+              <div
+                className="transform transition-transform duration-200 hover:scale-[1.03] hover:shadow-lg cursor-pointer"
+                onClick={() => navigate("/dashboard/boats?tab=directory")}
+              >
+                <StatCard
+                  icon="🚤"
+                  title="Total Boats"
+                  value={
+                    <span className="font-extrabold">
+                      {stats?.total_boats.count ?? "—"}
+                    </span>
+                  }
+                  change={
+                    stats
+                      ? `+${stats.total_boats.difference} from last month`
+                      : "—"
+                  }
+                />
+              </div>
+
+              <div
+                className="transform transition-transform duration-200 hover:scale-[1.03] hover:shadow-lg cursor-pointer"
+                onClick={() => navigate("/dashboard/districts")}
+              >
+                <StatCard
+                  icon="📍"
+                  title="Districts Covered"
+                  value={
+                    <span className="font-extrabold">
+                      {stats?.districts_covered.count ?? "—"}
+                    </span>
+                  }
+                  change={
+                    stats
+                      ? `+${stats.districts_covered.difference} from last month`
+                      : "—"
+                  }
+                />
+              </div>
+
+              <div
+                className="transform transition-transform duration-200 hover:scale-[1.03] hover:shadow-lg cursor-pointer"
+                onClick={() =>
+                  navigate("/dashboard/life-jackets?tab=directory")
+                }
+              >
+                <StatCard
+                  icon="🦺"
+                  title="Life Jackets"
+                  value={
+                    <span className="font-extrabold">
+                      {stats?.life_jackets.count ?? "—"}
+                    </span>
+                  }
+                  change={
+                    stats
+                      ? `+${stats.life_jackets.difference} from last month`
+                      : "—"
+                  }
+                />
+              </div>
             </div>
 
-            <div
-              className="transform transition-transform duration-200 hover:scale-[1.03] hover:shadow-lg cursor-pointer"
-              onClick={() => navigate("/dashboard/ghats?tab=directory")}
-            >
-              <StatCard
-                icon="🌊"
-                title="Active Ghaats"
-                value={<span className="font-extrabold">{stats?.active_ghaats.count ?? "—"}</span>}
-                change={stats ? `+${stats.active_ghaats.difference} from last month` : "—"}
-              />
-            </div>
-
-            <div
-              className="transform transition-transform duration-200 hover:scale-[1.03] hover:shadow-lg cursor-pointer"
-              onClick={() => navigate("/dashboard/districts")}
-            >
-              <StatCard
-                icon="📍"
-                title="Districts Covered"
-                value={<span className="font-extrabold">{stats?.districts_covered.count ?? "—"}</span>}
-                change={stats ? `+${stats.districts_covered.difference} from last month` : "—"}
-              />
-            </div>
-
-            <div
-              className="transform transition-transform duration-200 hover:scale-[1.03] hover:shadow-lg cursor-pointer"
-              onClick={() => navigate("/dashboard/life-jackets?tab=directory")}
-            >
-              <StatCard
-                icon="🦺"
-                title="Life Jackets"
-                value={<span className="font-extrabold">{stats?.life_jackets.count ?? "—"}</span>}
-                change={stats ? `+${stats.life_jackets.difference} from last month` : "—"}
-              />
-            </div>
-          </div>
-
-          {/* activity & districts */}
-          <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mt-10">
-            {/* recent activity */}
-            <div className="bg-white p-5 rounded-lg shadow border">
-              <h3 className="text-xl font-bold text-blue-700 mb-1">Recent Activity</h3>
-              <p className="text-sm text-gray-500 mb-4">Latest updates from across the state</p>
-              {(stats?.recent_activities || []).map((a, i) => (
-                <div key={i} className="flex justify-between items-center bg-gray-50 hover:bg-gray-100 p-3 rounded-md mb-3">
-                  <div className="flex items-start space-x-3">
-                    <div className="text-2xl">{activityIcon(a.title)}</div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-800">{a.title}</h4>
-                      <p className="text-sm text-gray-500">{a.location}</p>
+            {/* activity & districts */}
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mt-10">
+              {/* recent activity */}
+              <div className="bg-white p-5 rounded-lg shadow border">
+                <h3 className="text-xl font-bold text-blue-700 mb-1">
+                  Recent Activity
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Latest updates from across the state
+                </p>
+                {(stats?.recent_activities || []).map((a, i) => (
+                  <div
+                    key={i}
+                    className="flex justify-between items-center bg-gray-50 hover:bg-gray-100 p-3 rounded-md mb-3"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="text-2xl">{activityIcon(a.title)}</div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-800">
+                          {a.title}
+                        </h4>
+                        <p className="text-sm text-gray-500">{a.location}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          statusCls[a.status] || "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {a.status}
+                      </span>
+                      <p className="text-xs text-gray-400">{a.time_ago}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className={`text-xs px-2 py-1 rounded-full ${statusCls[a.status] || "bg-gray-100 text-gray-700"}`}>
-                      {a.status}
-                    </span>
-                    <p className="text-xs text-gray-400">{a.time_ago}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* top districts */}
-            {/* <div className="bg-white p-5 rounded-lg shadow border">
+              {/* top districts */}
+              {/* <div className="bg-white p-5 rounded-lg shadow border">
               <h3 className="text-xl font-bold text-purple-700 mb-1">Top Districts by Completion</h3>
               <p className="text-sm text-gray-500 mb-4">Data entry and registration progress</p>
               {[
@@ -282,14 +372,13 @@ const user = JSON.parse(localStorage.getItem("user"));
                 </div>
               ))}
             </div> */}
-          </div>
-        </main>
-      ) : (
-        <Outlet />
-      )}
+            </div>
+          </main>
+        ) : (
+          <Outlet />
+        )}
       </div>
       <Footer />
-      
     </div>
   );
 };

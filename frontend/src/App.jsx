@@ -1,5 +1,7 @@
 // src/App.jsx
 import React from "react";
+import "leaflet/dist/leaflet.css"; 
+
 import { Routes, Route } from "react-router-dom";
 
 import Dashboard from "./components/Dashboard";
@@ -32,6 +34,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AddBoatOwner from "./components/AddBoatOwner";
 import BoatOwners from "./components/BoatOwners";
 import BoatsDirectory from "./components/BoatsDirectory";
+import Map from "./components/Map";
 
 const App = () => (
   <Routes>
@@ -91,6 +94,7 @@ const App = () => (
       <Route index element={<></>} />
       <Route path="boats/boatdetails/:id" element={<BoatDetail />} />
       <Route path="boats/boatdetailsone/:id" element={<BoatDetailone/>} />
+      <Route path="/dashboard/map" element={<Map/>} />
 
 
       {/* <Route path="addboatowner/boats" element={<Boats />} /> */}
