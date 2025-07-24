@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\BoatInspection;
+use App\Models\BoatOwner;
 use App\Models\District;
 use App\Models\Ghaat;
 use App\Models\LifeJacket;
@@ -117,6 +118,10 @@ class DashboardController extends Controller
             ->latest('updated_at')
             ->first();
 
+            $boatOwnerCount = BoatOwner::count();
+    $boatOwnersLast30Days = BoatOwner::where('created_at', '>=', $thirtyDaysAgo)->count();
+
+
         // if ($latestMaintainedBoat) {
         //     $activities[] = [
         //         'title' => 'Boat maintenance',
@@ -146,6 +151,10 @@ class DashboardController extends Controller
                     'count' => $totalLifeJackets,
                     'difference' => $jacketsLast30Days,
                 ],
+               'boat_owners' => [
+                'count' => $boatOwnerCount,
+                'difference' => $boatOwnersLast30Days,
+            ],
                 'recent_activities' => $activities,
             ]
         ]);

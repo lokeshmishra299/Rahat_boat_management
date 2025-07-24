@@ -32,10 +32,16 @@ class LocationController extends Controller
         return $response->json();
     }
 
-    public function boat_ghat()
+public function boat_ghat()
 {
-    $boats = RegisterBoat::with('owner')->get();
-    $ghats = Ghaat::get();
+    $boats = RegisterBoat::with('owner')
+        ->whereNotNull('boat_latitude')
+        ->whereNotNull('boat_longitude')
+        ->get();
+
+    $ghats = Ghaat::whereNotNull('latitude')
+        ->whereNotNull('longitude')
+        ->get();
 
     return ApiResponse::generateResponse(
         'success',
@@ -46,6 +52,7 @@ class LocationController extends Controller
         ]
     );
 }
+
 
 }
 
