@@ -685,58 +685,90 @@ const [view, setView] = useState("directory");
           </form>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border relative">
+<div className="bg-white rounded-xl shadow-md p-6 sm:p-8 max-w-6xl mx-auto border relative">
+          {/* Header + Filter + Export */}
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
             <h3 className="text-xl sm:text-2xl font-bold text-sky-700 text-center sm:text-left">
               Registered Boats
             </h3>
-            <button
-              className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-md transition-colors w-full sm:w-auto justify-center"
-              onClick={() => {
-                // CSV Export Functionality
-                const headers = [
-                  "Sr.No",
-                  "Registration No",
-                  "Pilot",
-                  "Boat Type",
-                  "District",
-                  "Status",
-                ];
 
-                const rows = boats.map((boat, index) => [
-                  index + 1,
-                  `"${boat.registration_no}"`,
-                  `"${boat.pilot_name}"`,
-                  `"${boat.boat_type}"`,
-                  `"${boat.district?.district_name || "N/A"}"`,
-                  `"${boat.status || "Active"}"`,
-                ]);
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+              <select
+                name="district"
+                value={form.district}
+                onChange={(e) => setForm({ ...form, district: e.target.value })}
+                className="w-full sm:w-52 border border-blue-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              >
+                { (
+                  <>
+                    <option value="">Select District</option>
+                    {districts.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.district_name}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
+              {errors.district_id && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.district_id}
+                </p>
+              )}
 
-                const csvContent = [
-                  headers.join(","),
-                  ...rows.map((row) => row.join(",")),
-                ].join("\n");
+              <button
+                onClick={() => {
+                  const headers = [
+                    "Sr.No",
+                    "Registration No",
+                    "Pilot",
+                    "Boat Type",
+                    "District",
+                    "Status",
+                  ];
+                  const filteredBoats = form.district
+                    ? boats.filter(
+                        (b) => String(b.district_id) === form.district
+                      )
+                    : boats;
 
-                const blob = new Blob([csvContent], {
-                  type: "text/csv;charset=utf-8;",
-                });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.setAttribute("href", url);
-                link.setAttribute(
-                  "download",
-                  `boat_report_${new Date().toISOString().slice(0, 10)}.csv`
-                );
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }}
-            >
-              <FaDownload className="text-sm sm:text-base" />
-              <span className="text-sm sm:text-base">Export Report</span>
-            </button>
+                  const rows = filteredBoats.map((boat, index) => [
+                    index + 1,
+                    `"${boat.boat_uid}"`,
+                    `"${boat.pilot_name}"`,
+                    `"${boat.boat_type}"`,
+                    `"${boat.district?.district_name || "N/A"}"`,
+                    `"${boat.status || "Active"}"`,
+                  ]);
+
+                  const csvContent = [
+                    headers.join(","),
+                    ...rows.map((row) => row.join(",")),
+                  ].join("\n");
+
+                  const blob = new Blob([csvContent], {
+                    type: "text/csv;charset=utf-8;",
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.setAttribute("href", url);
+                  link.setAttribute(
+                    "download",
+                    `boat_report_${new Date().toISOString().slice(0, 10)}.csv`
+                  );
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md transition w-full sm:w-auto justify-center"
+              >
+                <FaDownload className="text-base" />
+                <span className="text-sm">Export Report</span>
+              </button>
+            </div>
           </div>
 
+          {/* Table / Status */}
           {loadingBoats ? (
             <p className="text-center text-gray-500">Loading...</p>
           ) : boatsError ? (
@@ -749,73 +781,78 @@ const [view, setView] = useState("directory");
                 <thead className="bg-gray-50">
                   <tr className="text-left font-semibold text-gray-700">
                     <th className="px-4 py-3">Sr.No</th>
-                    <th className="px-4 py-3">Reg. No.</th>
+                    <th className="px-4 py-3">Reg. No</th>
                     <th className="px-4 py-3">Pilot</th>
                     <th className="px-4 py-3">Type</th>
                     <th className="px-4 py-3">District</th>
                     <th className="px-4 py-3">Status</th>
-
                     <th className="px-4 py-3">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {boats.map((boat, idx) => (
-                    <tr key={boat.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-2">{idx + 1}</td>
-                      <td className="px-4 py-2 font-semibold">
-                        {boat.boat_uid || "N/A"}
-                      </td>
-                      <td className="px-4 py-2">{boat.pilot_name}</td>
-                      <td className="px-4 py-2">{boat.boat_type}</td>
-                      <td className="px-4 py-2">
-                        {boat.district?.district_name || "—"}
-                      </td>
-                      <td className="px-4 py-2">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            boat.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {boat.status || "Active"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2 flex gap-3">
-                        {/* View button (always visible) */}
-                        <button
-                          onClick={() =>
-                            navigate(
-                              `/dashboard/boats/boatdetailsone/${boat.id}`,
-                              {
-                                state: { ...boat, readOnly: true },
-                              }
-                            )
-                          }
-                          className="text-sky-600 hover:text-sky-800 ml-1"
-                          title="View"
-                        >
-                          <FaEye className="text-lg" />
-                        </button>
-                        {user?.role_id !== 1 && user?.role_id!==3 && (
+                  {boats
+                    .filter((boat) =>
+                      form.district
+                        ? String(boat.district_id) === form.district
+                        : true
+                    )
+                    .sort((a, b) => a.boat_uid?.localeCompare(b.boat_uid)) // Optional sorting
+                    .map((boat, idx) => (
+                      <tr key={boat.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2">{idx + 1}</td>
+                        <td className="px-4 py-2 font-semibold">
+                          {boat.boat_uid || "N/A"}
+                        </td>
+                        <td className="px-4 py-2">{boat.pilot_name}</td>
+                        <td className="px-4 py-2">{boat.boat_type}</td>
+                        <td className="px-4 py-2">
+                          {boat.district?.district_name || "—"}
+                        </td>
+                        <td className="px-4 py-2">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              boat.status === "Active"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {boat.status || "Active"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 flex gap-3">
                           <button
                             onClick={() =>
                               navigate(
-                                `/dashboard/boats/boatdetails/${boat.id}`,
+                                `/dashboard/boats/boatdetailsone/${boat.id}`,
                                 {
-                                  state: boat,
+                                  state: { ...boat, readOnly: true },
                                 }
                               )
                             }
-                            className="text-green-600 hover:text-green-800"
-                            title="Edit"
+                            className="text-sky-600 hover:text-sky-800"
+                            title="View"
                           >
-                            <FaEdit className="text-lg" />
+                            <FaEye className="text-lg" />
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                          {user?.role_id !== 1 && (
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/dashboard/boats/boatdetails/${boat.id}`,
+                                  {
+                                    state: boat,
+                                  }
+                                )
+                              }
+                              className="text-green-600 hover:text-green-800"
+                              title="Edit"
+                            >
+                              <FaEdit className="text-lg" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>

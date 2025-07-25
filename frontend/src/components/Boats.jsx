@@ -39,6 +39,16 @@ const Boats = () => {
   // Webcam and geolocation states
   const webcamRef = useRef(null);
   const [showCamera, setShowCamera] = useState(false);
+const [boatLocationStatus, setBoatLocationStatus] = useState({
+  loaded: false,
+  loading: false,
+  error: null
+});
+const [pilotLocationStatus, setPilotLocationStatus] = useState({
+  loaded: false,
+  loading: false,
+  error: null
+});
   // const [coords, setCoords] = useState({ lat: "", lon: "" });
   // const [pincode, setPincode] = useState("");
   // const [locationName, setLocationName] = useState("");
@@ -64,6 +74,18 @@ const Boats = () => {
   const [boats, setBoats] = useState([]);
   const [loadingBoats, setLoadingBoats] = useState(true);
   const [boatsError, setBoatsError] = useState("");
+
+
+  const locationLoading =
+    !boatCoords.lat ||
+    !boatCoords.lon ||
+    !pilotCoords.lat ||
+    !pilotCoords.lon ||
+    !boatPincode ||
+    !pilotPincode ||
+    !boatLocationName ||
+    !pilotLocationName;
+
 
   // Form
   const emptyForm = {
@@ -111,81 +133,88 @@ const Boats = () => {
 
   // Webcam capture function
   const captureFromWebcam = () => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (!imageSrc) return;
+  const imageSrc = webcamRef.current.getScreenshot();
+  if (!imageSrc) return;
 
-    const byteString = atob(imageSrc.split(",")[1]);
-    const mimeString = imageSrc.split(",")[0].split(":")[1].split(";")[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
-    }
-    const blob = new Blob([ab], { type: mimeString });
+  const byteString = atob(imageSrc.split(",")[1]);
+  const mimeString = imageSrc.split(",")[0].split(":")[1].split(";")[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  const blob = new Blob([ab], { type: mimeString });
 
-    if (cameraPurpose === "boat") {
-      const file = new File([blob], "boat_captured.jpg", { type: mimeString });
-      setBoatPhotoFile(file);
-      setBoatPhotoName("boat_captured.jpg");
+  if (cameraPurpose === "boat") {
+    const file = new File([blob], "boat_captured.jpg", { type: mimeString });
+    setBoatPhotoFile(file);
+    setBoatPhotoName("boat_captured.jpg");
+    setBoatLocationStatus({ loaded: false, loading: true, error: null });
 
-      // Get and store boat-specific geolocation
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = pos.coords.latitude.toFixed(6);
-          const lon = pos.coords.longitude.toFixed(6);
-          setBoatCoords({ lat, lon });
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lon = pos.coords.longitude.toFixed(6);
+        setBoatCoords({ lat, lon });
 
+        try {
           const pin = await getPincode(lat, lon);
           setBoatPincode(pin);
 
-          if (pin) {
-            const loc = await getLocationFromPincode(pin);
-            setBoatLocationName(loc);
-          }
-        },
-        (err) => {
-          console.error("Location error", err);
-          if (err.code === 1) {
-            toast.error("Location permission denied.", { id: "location-error" });
-          } else {
-            toast.error("Failed to get location. Please check GPS access.");
-          }
+          const loc = pin ? await getLocationFromPincode(pin) : "N/A";
+          setBoatLocationName(loc);
+          
+          setBoatLocationStatus({ loaded: true, loading: false, error: null });
+        } catch (err) {
+          setBoatLocationStatus({ loaded: false, loading: false, error: err.message });
         }
-      );
-    } else {
-      const file = new File([blob], "pilot_captured.jpg", { type: mimeString });
-      setPilotPhotoFile(file);
-      setPilotPhotoName("pilot_captured.jpg");
+      },
+      (err) => {
+        console.error("Location error", err);
+        const errorMsg = err.code === 1 
+          ? "Location permission denied" 
+          : "Failed to get location. Please check GPS access.";
+        setBoatLocationStatus({ loaded: false, loading: false, error: errorMsg });
+        toast.error(errorMsg, { id: "location-error" });
+      }
+    );
+  } else {
+    const file = new File([blob], "pilot_captured.jpg", { type: mimeString });
+    setPilotPhotoFile(file);
+    setPilotPhotoName("pilot_captured.jpg");
+    setPilotLocationStatus({ loaded: false, loading: true, error: null });
 
-      // Get and store pilot-specific geolocation
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = pos.coords.latitude.toFixed(6);
-          const lon = pos.coords.longitude.toFixed(6);
-          setPilotCoords({ lat, lon });
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lon = pos.coords.longitude.toFixed(6);
+        setPilotCoords({ lat, lon });
 
+        try {
           const pin = await getPincode(lat, lon);
           setPilotPincode(pin);
 
-          if (pin) {
-            const loc = await getLocationFromPincode(pin);
-            setPilotLocationName(loc);
-          }
-        },
-        (err) => {
-          console.error("Location error", err);
-          if (err.code === 1) {
-            toast.error("Location permission denied.", { id: "location-error" });
-          } else {
-            toast.error("Failed to get location. Please check GPS access.");
-          }
+          const loc = pin ? await getLocationFromPincode(pin) : "N/A";
+          setPilotLocationName(loc);
+          
+          setPilotLocationStatus({ loaded: true, loading: false, error: null });
+        } catch (err) {
+          setPilotLocationStatus({ loaded: false, loading: false, error: err.message });
         }
-      );
-    }
+      },
+      (err) => {
+        console.error("Location error", err);
+        const errorMsg = err.code === 1 
+          ? "Location permission denied" 
+          : "Failed to get location. Please check GPS access.";
+        setPilotLocationStatus({ loaded: false, loading: false, error: errorMsg });
+        toast.error(errorMsg, { id: "location-error" });
+      }
+    );
+  }
 
-    setShowCamera(false);
-  };
-
+  setShowCamera(false);
+};
   // Helper functions for geolocation
   async function getPincode(lat, lon) {
     try {
@@ -263,6 +292,28 @@ const Boats = () => {
   // Form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+      const boatPhotoWithMissingLocation = boatPhotoFile && !boatLocationStatus.loaded;
+  const pilotPhotoWithMissingLocation = pilotPhotoFile && !pilotLocationStatus.loaded;
+  
+  if (boatPhotoWithMissingLocation || pilotPhotoWithMissingLocation) {
+    let errorMessage = "Please wait for location data to load:";
+    if (boatPhotoWithMissingLocation) {
+      errorMessage += "\n- Boat photo location is still loading";
+      if (boatLocationStatus.error) {
+        errorMessage += ` (Error: ${boatLocationStatus.error})`;
+      }
+    }
+    if (pilotPhotoWithMissingLocation) {
+      errorMessage += "\n- Pilot photo location is still loading";
+      if (pilotLocationStatus.error) {
+        errorMessage += ` (Error: ${pilotLocationStatus.error})`;
+      }
+    }
+    
+    toast.error(errorMessage, { duration: 5000 });
+    return;
+  }
+
     setErrors({});
     setSaving(true);
 
@@ -299,15 +350,6 @@ const Boats = () => {
     if (boatPhotoFile) fd.append("boat_image", boatPhotoFile);
     if (pilotPhotoFile) fd.append("pilot_image", pilotPhotoFile);
 
-    // Boat Owner details (with null fallback)
-    // fd.append("owner_name", form.name || "");
-    // fd.append("owner_email", form.email || "");
-    // fd.append("owner_adhar_no", form.adhar || "");
-    // fd.append("owner_number", form.contact || "");
-    // fd.append("owner_boat_owned", form.no_of_boats || "");
-    // fd.append("owner_dob", form.dob || "");
-    // fd.append("owner_pincode", form.pincode || "");
-
     const familyNames = members.map((m) => m.name).filter(Boolean);
     fd.append(
       "owner_family_name",
@@ -321,7 +363,6 @@ const Boats = () => {
 
       toast.success(response.data?.message || "Boat registered successfully!");
 
-      // Delay navigation slightly to show the toast
       setTimeout(() => {
         navigate("/dashboard/addboatowner");
       }, 1000);
@@ -332,11 +373,18 @@ const Boats = () => {
       setBoatPhotoFile(null);
       setPilotPhotoName("");
       setPilotPhotoFile(null);
-      setCoords({ lat: "", lon: "" });
-      setPincode("");
+      setBoatCoords({ lat: "", lon: "" });
+      setPilotCoords({ lat: "", lon: "" });
+      setBoatPincode("");
+      setPilotPincode("");
+      setBoatLocationName("");
+      setPilotLocationName("");
       setMembers([]);
       setTimeout(() => setView("directory"), 1000);
+
     } catch (err) {
+      console.error("Form submit failed", err);
+
       const v = err.response?.data;
       if (v?.data && typeof v.data === "object") {
         setErrors(v.data);
@@ -346,6 +394,7 @@ const Boats = () => {
     } finally {
       setSaving(false);
     }
+
   };
 
   const [searchParams] = useSearchParams();
@@ -571,6 +620,63 @@ const Boats = () => {
             </div>
           )}
 
+  
+{/* {boatPhotoFile && (
+  <div className="mb-4 p-3 rounded-lg text-center" style={{
+    backgroundColor: boatLocationStatus.loaded 
+      ? '#f0fdf4' 
+      : boatLocationStatus.error 
+        ? '#fef2f2' 
+        : '#fffbeb'
+  }}>
+    <p className={`font-medium ${
+      boatLocationStatus.loaded 
+        ? 'text-green-800' 
+        : boatLocationStatus.error 
+          ? 'text-red-800' 
+          : 'text-yellow-800'
+    }`}>
+      {boatLocationStatus.loaded ? (
+        `Boat Location: ${boatLocationName} | Pincode: ${boatPincode}`
+      ) : boatLocationStatus.error ? (
+        `Error: ${boatLocationStatus.error}`
+      ) : boatLocationStatus.loading ? (
+        'Loading boat location data...'
+      ) : (
+        'Boat location data pending...'
+      )}
+    </p>
+  </div>
+)}
+
+
+{pilotPhotoFile && (
+  <div className="mb-4 p-3 rounded-lg text-center" style={{
+    backgroundColor: pilotLocationStatus.loaded 
+      ? '#f0fdf4' 
+      : pilotLocationStatus.error 
+        ? '#fef2f2' 
+        : '#fffbeb'
+  }}>
+    <p className={`font-medium ${
+      pilotLocationStatus.loaded 
+        ? 'text-green-800' 
+        : pilotLocationStatus.error 
+          ? 'text-red-800' 
+          : 'text-yellow-800'
+    }`}>
+      {pilotLocationStatus.loaded ? (
+        `Pilot Location: ${pilotLocationName} | Pincode: ${pilotPincode}`
+      ) : pilotLocationStatus.error ? (
+        `Error: ${pilotLocationStatus.error}`
+      ) : pilotLocationStatus.loading ? (
+        'Loading pilot location data...'
+      ) : (
+        'Pilot location data pending...'
+      )}
+    </p>
+  </div>
+)} */}
           {(boatPhotoFile || pilotPhotoFile) && (
             <div className="mb-6 flex flex-col sm:flex-row justify-center gap-4">
               {boatPhotoFile && (
@@ -821,70 +927,113 @@ const Boats = () => {
             </div>
 
             <div className="md:col-span-2 text-center mt-4">
-              <button
-                type="submit"
-                disabled={saving}
-                className={`bg-green-600 hover:bg-green-700 text-white font-semibold px-10 py-2 rounded-full transition ${saving ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-              >
-                {saving ? "Saving..." : "Register Boat"}
-              </button>
+   <button
+  type="submit"
+  disabled={
+    saving || 
+    (boatPhotoFile && !boatLocationStatus.loaded) || 
+    (pilotPhotoFile && !pilotLocationStatus.loaded)
+  }
+  className={`bg-green-600 hover:bg-green-700 text-white font-semibold px-10 py-2 rounded-full transition ${
+    saving || 
+    (boatPhotoFile && !boatLocationStatus.loaded) || 
+    (pilotPhotoFile && !pilotLocationStatus.loaded) 
+      ? "opacity-50 cursor-not-allowed" 
+      : ""
+  }`}
+>
+  {saving ? "Saving..." : "Register Boat"}
+</button>
             </div>
+
+
           </form>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-md p-8 max-w-6xl mx-auto border relative">
+<div className="bg-white rounded-xl shadow-md p-6 sm:p-8 max-w-6xl mx-auto border relative">
+          {/* Header + Filter + Export */}
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
             <h3 className="text-xl sm:text-2xl font-bold text-sky-700 text-center sm:text-left">
               Registered Boats
             </h3>
-            <button
-              className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-md transition-colors w-full sm:w-auto justify-center"
-              onClick={() => {
-                // CSV Export Functionality
-                const headers = [
-                  "Sr.No",
-                  "Registration No",
-                  "Pilot",
-                  "Boat Type",
-                  "District",
-                  "Status",
-                ];
 
-                const rows = boats.map((boat, index) => [
-                  index + 1,
-                  `"${boat.boat_uid}"`,
-                  `"${boat.pilot_name}"`,
-                  `"${boat.boat_type}"`,
-                  `"${boat.district?.district_name || "N/A"}"`,
-                  `"${boat.status || "Active"}"`,
-                ]);
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+              <select
+                name="district"
+                value={form.district}
+                onChange={(e) => setForm({ ...form, district: e.target.value })}
+                className="w-full sm:w-52 border border-blue-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              >
+                { (
+                  <>
+                    <option value="">Select District</option>
+                    {districts.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.district_name}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
+              {errors.district_id && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.district_id}
+                </p>
+              )}
 
-                const csvContent = [
-                  headers.join(","),
-                  ...rows.map((row) => row.join(",")),
-                ].join("\n");
+              <button
+                onClick={() => {
+                  const headers = [
+                    "Sr.No",
+                    "Registration No",
+                    "Pilot",
+                    "Boat Type",
+                    "District",
+                    "Status",
+                  ];
+                  const filteredBoats = form.district
+                    ? boats.filter(
+                        (b) => String(b.district_id) === form.district
+                      )
+                    : boats;
 
-                const blob = new Blob([csvContent], {
-                  type: "text/csv;charset=utf-8;",
-                });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.setAttribute("href", url);
-                link.setAttribute(
-                  "download",
-                  `boat_report_${new Date().toISOString().slice(0, 10)}.csv`
-                );
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }}
-            >
-              <FaDownload className="text-sm sm:text-base" />
-              <span className="text-sm sm:text-base">Export Report</span>
-            </button>
+                  const rows = filteredBoats.map((boat, index) => [
+                    index + 1,
+                    `"${boat.boat_uid}"`,
+                    `"${boat.pilot_name}"`,
+                    `"${boat.boat_type}"`,
+                    `"${boat.district?.district_name || "N/A"}"`,
+                    `"${boat.status || "Active"}"`,
+                  ]);
+
+                  const csvContent = [
+                    headers.join(","),
+                    ...rows.map((row) => row.join(",")),
+                  ].join("\n");
+
+                  const blob = new Blob([csvContent], {
+                    type: "text/csv;charset=utf-8;",
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.setAttribute("href", url);
+                  link.setAttribute(
+                    "download",
+                    `boat_report_${new Date().toISOString().slice(0, 10)}.csv`
+                  );
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md transition w-full sm:w-auto justify-center"
+              >
+                <FaDownload className="text-base" />
+                <span className="text-sm">Export Report</span>
+              </button>
+            </div>
           </div>
 
+          {/* Table / Status */}
           {loadingBoats ? (
             <p className="text-center text-gray-500">Loading...</p>
           ) : boatsError ? (
@@ -902,67 +1051,73 @@ const Boats = () => {
                     <th className="px-4 py-3">Type</th>
                     <th className="px-4 py-3">District</th>
                     <th className="px-4 py-3">Status</th>
-
                     <th className="px-4 py-3">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {boats.map((boat, idx) => (
-                    <tr key={boat.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-2">{idx + 1}</td>
-                      <td className="px-4 py-2 font-semibold">
-                        {boat.boat_uid || "N/A"}
-                      </td>
-                      <td className="px-4 py-2">{boat.pilot_name}</td>
-                      <td className="px-4 py-2">{boat.boat_type}</td>
-                      <td className="px-4 py-2">
-                        {boat.district?.district_name || "—"}
-                      </td>
-                      <td className="px-4 py-2">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${boat.status === "Active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
+                  {boats
+                    .filter((boat) =>
+                      form.district
+                        ? String(boat.district_id) === form.district
+                        : true
+                    )
+                    .sort((a, b) => a.boat_uid?.localeCompare(b.boat_uid)) // Optional sorting
+                    .map((boat, idx) => (
+                      <tr key={boat.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2">{idx + 1}</td>
+                        <td className="px-4 py-2 font-semibold">
+                          {boat.boat_uid || "N/A"}
+                        </td>
+                        <td className="px-4 py-2">{boat.pilot_name}</td>
+                        <td className="px-4 py-2">{boat.boat_type}</td>
+                        <td className="px-4 py-2">
+                          {boat.district?.district_name || "—"}
+                        </td>
+                        <td className="px-4 py-2">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              boat.status === "Active"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
                             }`}
-                        >
-                          {boat.status || "Active"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2 flex gap-3">
-                        {/* View button (always visible) */}
-                        <button
-                          onClick={() =>
-                            navigate(
-                              `/dashboard/boats/boatdetailsone/${boat.id}`,
-                              {
-                                state: { ...boat, readOnly: true },
-                              }
-                            )
-                          }
-                          className="text-sky-600 hover:text-sky-800 ml-1"
-                          title="View"
-                        >
-                          <FaEye className="text-lg" />
-                        </button>
-                        {user?.role_id !== 1 && (
+                          >
+                            {boat.status || "Active"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 flex gap-3">
                           <button
                             onClick={() =>
                               navigate(
-                                `/dashboard/boats/boatdetails/${boat.id}`,
+                                `/dashboard/boats/boatdetailsone/${boat.id}`,
                                 {
-                                  state: boat,
+                                  state: { ...boat, readOnly: true },
                                 }
                               )
                             }
-                            className="text-green-600 hover:text-green-800"
-                            title="Edit"
+                            className="text-sky-600 hover:text-sky-800"
+                            title="View"
                           >
-                            <FaEdit className="text-lg" />
+                            <FaEye className="text-lg" />
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                          {user?.role_id !== 1 && (
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/dashboard/boats/boatdetails/${boat.id}`,
+                                  {
+                                    state: boat,
+                                  }
+                                )
+                              }
+                              className="text-green-600 hover:text-green-800"
+                              title="Edit"
+                            >
+                              <FaEdit className="text-lg" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
