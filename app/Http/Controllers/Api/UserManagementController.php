@@ -143,7 +143,7 @@ public function user_list()
         'email'          => 'required|email|unique:users,email,' . $id,
        
         'role_id'        => 'required|exists:roles,id',
-        'district_id'    => 'required|exists:districts,id',
+        'district_id'    => 'required|exists:district_master,district_code',
         'designation_id' => 'required|exists:designations,id',
         'number'         => 'required|numeric|digits:10|unique:boat_owner,number,' . $id,
     ], [
