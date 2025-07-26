@@ -8,6 +8,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
 
 const token = localStorage.getItem("access_token");
 
+
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -81,23 +82,29 @@ const UserListEdit = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get(`/user-list/${id}`).then((res) => {
-      const data = res.data.data;
-      setFormData({
-        name: data.name || "",
-        email: data.email || "",
-        number: data.number || "",
-        role_id: data.role?.id || "",
-        district_id: data.district?.id || "",
-        designation_id: data.designation?.id || "",
-      });
-      setDisplayName(data.name || "");
+  api.get(`/user-list/${id}`).then((res) => {
+    const data = res.data.data;
+
+    setFormData({
+      name: data.name || "",
+      email: data.email || "",
+      number: data.number || "",
+      role_id: data.role?.id || "",
+      district_id:
+        user?.role_id === 1
+          ? user.district_id 
+          : data.district?.id || "",
+      designation_id: data.designation?.id || "",
     });
 
-    api.get("/roles").then((res) => setRoles(res.data.data || []));
-    api.get("/district-list").then((res) => setDistricts(res.data.data || []));
-    api.get("/designation").then((res) => setDesignations(res.data.data || []));
-  }, [id]);
+    setDisplayName(data.name || "");
+  });
+
+  api.get("/roles").then((res) => setRoles(res.data.data || []));
+  api.get("/district-list").then((res) => setDistricts(res.data.data || []));
+  api.get("/designation").then((res) => setDesignations(res.data.data || []));
+}, [id]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -108,6 +115,12 @@ const UserListEdit = () => {
     e.preventDefault();
     setError({});
     setSaving(true);
+
+     const payload = {
+    ...formData,
+    district_id:
+      user?.role_id === 1 ? user.district_id : formData.district_id, // 👈 again force here
+  };
 
     try {
       const res = await api.post(`/user-edit/${id}`, formData);
