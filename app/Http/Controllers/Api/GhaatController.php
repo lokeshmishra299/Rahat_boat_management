@@ -88,17 +88,23 @@ class GhaatController extends Controller
 
 public function index()
 {
+    // Get the logged-in user's ID
+    $userId = auth()->user()->id;
+
+    // Fetch Ghaat records that match the user's ID
     $ghaats = Ghaat::with([
         'district_record:id,district_code,district_name',
         'river:id,name'
-    ])->get();
+    ])
+    // ->where('user_id', $userId) // Assuming Ghaat has a user_id field
+    ->get();
 
     return ApiResponse::generateResponse(
         'success',
         'Ghaat list fetched successfully',
         $ghaats,
         200
- );
+    );
 }
 
     public function view_list_individual(Request $request, $id)

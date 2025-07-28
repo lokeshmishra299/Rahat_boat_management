@@ -182,6 +182,7 @@ public function store(Request $request, $id)
         'remarks'                => 'nullable|string',
         'adhar_no'               => 'required|string|max:12',
         'contact_no'             => 'required|string|max:20',
+        
         // Add validation for new geolocation fields
         'boat_latitude'          => 'nullable|numeric',
         'boat_longitude'         => 'nullable|numeric',
@@ -189,6 +190,7 @@ public function store(Request $request, $id)
         'pilot_latitude'         => 'nullable|numeric',
         'pilot_longitude'        => 'nullable|numeric',
         'pilot_pincode'          => 'nullable|string',
+        
     ]);
 
     if ($validator->fails()) {
@@ -240,6 +242,7 @@ public function store(Request $request, $id)
         'boat_owner_id'         => $id,
         'pilot_adhar'           => $request->adhar_no,
         'pilot_contact'         => $request->contact_no,
+        'user_id' => auth()->id(),
     ]);
 
     $boatId = str_pad($boat->id, 3, '0', STR_PAD_LEFT);

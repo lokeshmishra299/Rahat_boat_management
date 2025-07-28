@@ -26,6 +26,7 @@ class BoatOwnerController extends Controller
         'latitude'     => 'nullable|numeric',
         'longitude'    => 'nullable|numeric',
         'location'     => 'nullable|string',
+        // 'user_id' => 'required|exists:users,id',
 
         'owner_family_name'     => 'nullable|array',
         'owner_family_name.*'   => 'nullable|string',
@@ -50,6 +51,7 @@ class BoatOwnerController extends Controller
         'longitude.numeric'       => 'Longitude must be numeric.',
         'location.string'         => 'Location must be a string.',
         'owner_family_name'       => 'Please enter family member name',
+        
     ]);
 
     if ($validator->fails()) {
@@ -93,6 +95,7 @@ class BoatOwnerController extends Controller
         'owner_family_name' => $request->owner_family_name,
         'pincode'           => $request->pincode,
         'image'             => $photoPath,
+        'user_id' => auth()->id(),
     ]);
 
     return ApiResponse::generateResponse(
@@ -236,6 +239,7 @@ public function list($id)
     $user = auth()->user(); // Get logged-in user
 
     $boatOwnerQuery = BoatOwner::with('district')->withCount('boats');
+    //  $boatOwnerQuery->where('user_id', $user->id);
 
     // If user is District Nodal Officer (role_id == 2), filter by their district_id
     if ($user->role_id == 2) {

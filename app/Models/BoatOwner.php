@@ -26,6 +26,7 @@ class BoatOwner extends Model
         'longitude',
         'location',
         'image',
+        'user_id',
     ];
 
     protected static function booted()

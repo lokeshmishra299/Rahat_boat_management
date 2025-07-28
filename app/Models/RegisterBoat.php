@@ -15,6 +15,7 @@ class RegisterBoat extends Model
     protected $fillable = [
         'registration_no',
         'district_id',
+        'user_id',
         'boat_image',
         'pilot_image',
         'boat_latitude',
