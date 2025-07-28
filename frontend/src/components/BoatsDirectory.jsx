@@ -784,7 +784,9 @@ const [view, setView] = useState("directory");
                     <th className="px-4 py-3">Reg. No</th>
                     <th className="px-4 py-3">Pilot</th>
                     <th className="px-4 py-3">Type</th>
+                    {user.role_id!==1 && user?.role_id!==2 &&(
                     <th className="px-4 py-3">District</th>
+                     )}
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">Action</th>
                   </tr>
@@ -805,9 +807,11 @@ const [view, setView] = useState("directory");
                         </td>
                         <td className="px-4 py-2">{boat.pilot_name}</td>
                         <td className="px-4 py-2">{boat.boat_type}</td>
+                        {user.role_id!==1 && user?.role_id!==2 &&(
                         <td className="px-4 py-2">
                           {boat.district?.district_name || "—"}
                         </td>
+                         )}
                         <td className="px-4 py-2">
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium ${

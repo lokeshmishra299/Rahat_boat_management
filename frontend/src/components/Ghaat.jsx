@@ -826,7 +826,9 @@ const [locationStatus, setLocationStatus] = useState({
             <tr>
               <th className="px-6 py-3 font-bold text-center">Sr.No</th>
               <th className="px-6 py-3 font-bold text-center">Ghat Name</th>
+              {user.role_id!==1 && user?.role_id!==2 &&(
               <th className="px-6 py-3 font-bold text-center">District</th>
+               )}
               <th className="px-6 py-3 font-bold text-center">River/Pond/Lake/Dam</th>
               <th className="px-6 py-3 font-bold text-center">Status</th>
               <th className="px-6 py-3 font-bold text-center">Actions</th>
@@ -847,7 +849,9 @@ const [locationStatus, setLocationStatus] = useState({
                   <td className="px-6 py-4 font-semibold text-center">
                     {g.name}
                   </td>
+                  {user.role_id!==1 && user?.role_id!==2 &&(
                   <td className="px-6 py-4 text-center">{g.district}</td>
+                  )}
                   <td className="px-6 py-4 text-center">{g.river || g.riverName}</td>
                   <td className="px-6 py-4 text-center">
                     <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-green-700 text-center">
