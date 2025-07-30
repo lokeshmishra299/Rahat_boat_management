@@ -8,6 +8,7 @@ use App\Models\BoatOwner;
 use App\Models\District;
 use App\Models\Ghaat;
 use App\Models\RegisterBoat;
+use App\Models\Tehsil;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -46,6 +47,20 @@ class BoatManagement extends Controller
 
         return ApiResponse::generateResponse('success', 'District list fetched successfully', $districts);
     }
+
+public function tehsil_list_by_district(Request $request)
+{
+    $request->validate([
+        'district_code' => 'required|integer',
+    ]);
+
+    $tehsils = Tehsil::where('district_code', $request->district_code)
+                ->select('tehsil_code', 'tehsil_name')  
+                ->orderBy('tehsil_name', 'asc')
+                ->get();
+
+    return ApiResponse::generateResponse('success', 'Tehsil list fetched successfully', $tehsils);
+}
 
 
 

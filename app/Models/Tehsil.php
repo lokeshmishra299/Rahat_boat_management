@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tehsil extends Model
 {
-      protected $table = 'tehsils_master'; 
+      protected $table = 'tehsil_master'; 
 
-    protected $fillable = ['district_id', 'tehsil_name'];
+    protected $fillable = ['district_code', 'tehsil_name','tehsil_code'];
 }

@@ -25,7 +25,8 @@ class User extends Authenticatable
      */
     
     protected $fillable = [
-        'name', 'email', 'district_id', 'designation_id', 'role_id','password1','password','otp','number','user_name','deleted_at',
+        'name', 'email', 'district_id','tehsil_id', 'designation_id',
+        'role_id','password1','password','otp','number','user_name','deleted_at',
     ];
 
     /**
@@ -62,6 +63,10 @@ class User extends Authenticatable
 }
 
 
+    public function tehsil()
+{
+    return $this->belongsTo(Tehsil::class, 'tehsil_id', 'tehsil_code');
+}
     
 
       public function designation()

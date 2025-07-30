@@ -27,6 +27,7 @@ class UserManagementController extends Controller
         ],
         'role_id'        => 'required|exists:roles,id',
         'district_id'    => 'required|exists:district_master,district_code',
+        'tehsil_id'    => 'required|exists:tehsil_master,tehsil_code',
         'designation_id' => 'required|exists:designations,id',
         'number'         => 'required|numeric|digits:10|unique:boat_owner,number',
     ], [
@@ -42,6 +43,9 @@ class UserManagementController extends Controller
         'role_id.exists'          => 'Selected role is invalid.',
         'district_id.required'    => 'Please select a district.',
         'district_id.exists'      => 'Selected district is invalid.',
+
+         'tehsil_id.required'    => 'Please select a tehsil.',
+        'tehsil_id.exists'      => 'Selected tehsil is invalid.',
         'designation_id.required' => 'Please select a designation.',
         'designation_id.exists'   => 'Selected designation is invalid.',
         'number.required'         => 'Please enter the mobile number.',
@@ -73,7 +77,8 @@ class UserManagementController extends Controller
         'role_id'        => $request->role_id,
         'district_id'    => $request->district_id,
         'designation_id' => $request->designation_id,
-        'number'         => $request->number
+        'number'         => $request->number,
+        'tehsil_id'      => $request->tehsil_id   
     ]);
 
     return response()->json([
@@ -118,11 +123,11 @@ public function user_list()
     
      public function user_list_id($id){
 
-        $user = User::with('district', 'designation', 'role')
+        $user = User::with('tehsil','district', 'designation', 'role')
         ->orderBy('id','desc')
         ->where('id', $id)->first();
 
-        // dd($user);
+        // dd($user->toArray());
         return ApiResponse::generateResponse('success','User list fetch successfully',$user,200);
 
     }
@@ -144,6 +149,7 @@ public function user_list()
        
         'role_id'        => 'required|exists:roles,id',
         'district_id'    => 'required|exists:district_master,district_code',
+        'tehsil_id'    => 'required|exists:tehsil_master,tehsil_code',
         'designation_id' => 'required|exists:designations,id',
         'number'         => 'required|numeric|digits:10|unique:boat_owner,number,' . $id,
     ], [
@@ -158,6 +164,8 @@ public function user_list()
         'role_id.exists'          => 'Selected role is invalid.',
         'district_id.required'    => 'Please select a district.',
         'district_id.exists'      => 'Selected district is invalid.',
+         'tehsil_id.required'    => 'Please select a tehsil.',
+        'tehsil_id.exists'      => 'Selected tehsil is invalid.',
         'designation_id.required' => 'Please select a designation.',
         'designation_id.exists'   => 'Selected designation is invalid.',
 
@@ -182,6 +190,7 @@ public function user_list()
     $user->district_id    = $request->district_id;
     $user->designation_id = $request->designation_id;
     $user->number         = $request->number;
+    $user->tehsil_id      = $request->tehsil_id;
 
    
 

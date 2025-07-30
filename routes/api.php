@@ -32,6 +32,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout']);
 
     Route::get('/district-list', [BoatManagement::class, 'district_list']);
+    Route::get('/get-tehsils', [BoatManagement::class, 'tehsil_list_by_district']);
+
     Route::get('/river-list', [GhaatController::class, 'river_list']);
 
 
