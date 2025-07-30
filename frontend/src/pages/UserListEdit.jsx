@@ -29,9 +29,8 @@ const InputField = ({ label, value, onChange, type = "text", name, error }) => (
       name={name}
       value={value}
       onChange={onChange}
-      className={`w-full border px-3 py-2 rounded-md text-sm bg-gray-100 text-gray-800 ${
-        error ? "border-red-500" : "border-gray-300"
-      }`}
+      className={`w-full border px-3 py-2 rounded-md text-sm bg-gray-100 text-gray-800 ${error ? "border-red-500" : "border-gray-300"
+        }`}
     />
     {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
@@ -50,16 +49,25 @@ const SelectField = ({ label, name, value, onChange, options, error }) => (
         error ? "border-red-500" : "border-gray-300"
       }`}
     >
-      <option value="">Select {label}</option>
+       <option value="">Select {label}</option>
       {options.map((opt) => (
-        <option key={opt.id} value={opt.id}>
-          {opt.name || opt.district_name}
+        <option
+          key={
+            opt.id || opt.tehsil_code || opt.district_code || opt.designation_id
+          }
+          value={
+            opt.id || opt.tehsil_code || opt.district_code || opt.designation_id
+          }
+        >
+          {opt.name || opt.tehsil_name || opt.district_name}
         </option>
+
       ))}
     </select>
     {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
+
 
 const UserListEdit = () => {
   const { id } = useParams();
@@ -72,6 +80,7 @@ const UserListEdit = () => {
     role_id: "",
     district_id: "",
     designation_id: "",
+    tehsil_id: "",
   });
 
   const [roles, setRoles] = useState([]);
@@ -80,50 +89,82 @@ const UserListEdit = () => {
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState({});
   const [saving, setSaving] = useState(false);
+  const [tehsils, setTehsils] = useState([]);
+
+ useEffect(() => {
+  if (formData.district_id) {
+    api
+      .get("/get-tehsils", {
+        params: { district_code: Number(formData.district_id) },
+      })
+      .then((res) => {
+        setTehsils(Array.isArray(res.data.data) ? res.data.data : []);
+      })
+      .catch(() => {
+        setTehsils([]);
+        toast.error("Could not load tehsils.");
+      });
+  }
+}, [formData.district_id]);
+
 
   useEffect(() => {
-  api.get(`/user-list/${id}`).then((res) => {
-    const data = res.data.data;
+    api.get(`/user-list/${id}`).then((res) => {
+      const data = res.data.data;
+      console.log("mayank",data);
 
-    setFormData({
-      name: data.name || "",
-      email: data.email || "",
-      number: data.number || "",
-      role_id: data.role?.id || "",
-      district_id:
-        user?.role_id === 1
-          ? user.district_id 
-          : data.district?.id || "",
-      designation_id: data.designation?.id || "",
+      setFormData({
+        name: data.name || "",
+        email: data.email || "",
+        number: data.number || "",
+        role_id: data.role?.id || "",
+        district_id:
+          user?.role_id === 1
+            ? user.district_id
+             : data.district?.district_code || "",
+        tehsil_id: data.tehsil?.tehsil_code || data.tehsil_id || "",
+
+        designation_id: data.designation?.id || "",
+      });
+
+      setDisplayName(data.name || "");
     });
 
-    setDisplayName(data.name || "");
-  });
-
-  api.get("/roles").then((res) => setRoles(res.data.data || []));
-  api.get("/district-list").then((res) => setDistricts(res.data.data || []));
-  api.get("/designation").then((res) => setDesignations(res.data.data || []));
-}, [id]);
+    api.get("/roles").then((res) => setRoles(res.data.data || []));
+    api.get("/district-list").then((res) => setDistricts(res.data.data || []));
+    api.get("/designation").then((res) => setDesignations(res.data.data || []));
+  }, [id]);
 
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  if (name === "district_id") {
+    setFormData((prev) => ({
+      ...prev,
+      district_id: value,
+      tehsil_id: "", // reset tehsil when district changes
+    }));
+  } else {
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  }
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError({});
     setSaving(true);
 
-     const payload = {
-    ...formData,
-    district_id:
-      user?.role_id === 1 ? user.district_id : formData.district_id, // 👈 again force here
-  };
+   const payload = {
+  ...formData,
+  district_id:
+    user?.role_id === 1 ? user.district_id : formData.district_id,
+};
+
 
     try {
-      const res = await api.post(`/user-edit/${id}`, formData);
+      const res = await api.post(`/user-edit/${id}`, payload);
       if (res.data.status === "success") {
         setDisplayName(formData.name);
         toast.success("User updated successfully.");
@@ -184,59 +225,70 @@ const UserListEdit = () => {
             }}
             error={error.number?.[0]}
           />
-{user && user.role_id !== 1 && (
-         <div>
-          
-  <label className="text-xs font-semibold text-gray-600 block mb-1">
-    Role
-  </label>
-  <select
-    name="role_id"
-    value={formData.role_id}
-    onChange={handleChange}
-    className={`w-full border px-3 py-2 rounded-md text-sm bg-gray-100 text-gray-800 ${
-      error.role_id?.[0] ? "border-red-500" : "border-gray-300"
-    }`}
-  >
-    <option value="">Select Role</option>
-    {roles.map((role) => {
-      let roleLabel = role.name;
-      if (roleLabel === "district_nodal") roleLabel = "District Nodal";
-      else if (roleLabel === "ghaat_nodal") roleLabel = "Ghat Incharge";
+          {user && user.role_id !== 1 && (
+            <div>
 
-      return (
-        <option key={role.id} value={role.id}>
-          {roleLabel}
-        </option>
-      );
-    })}
-  </select>
-  {error.role_id?.[0] && (
-    <p className="text-red-500 text-xs mt-1">{error.role_id[0]}</p>
-  )}
-</div>
-)}
-        {user && user.role_id !== 1 && (
-          <SelectField
-            label="District"
-            name="district_id"
-            value={formData.district_id}
-            onChange={handleChange}
-            options={districts}
-            error={error.district_id?.[0]}
-          />
-           )}
+              <label className="text-xs font-semibold text-gray-600 block mb-1">
+                Role
+              </label>
+              <select
+                name="role_id"
+                value={formData.role_id}
+                onChange={handleChange}
+                className={`w-full border px-3 py-2 rounded-md text-sm bg-gray-100 text-gray-800 ${error.role_id?.[0] ? "border-red-500" : "border-gray-300"
+                  }`}
+              >
+                <option value="">Select Role</option>
+                {roles.map((role) => {
+                  let roleLabel = role.name;
+                  if (roleLabel === "district_nodal") roleLabel = "District Nodal";
+                  else if (roleLabel === "ghaat_nodal") roleLabel = "Ghat Incharge";
 
-           {user && user.role_id !== 1 && (
-          <SelectField
-            label="Designation"
-            name="designation_id"
-            value={formData.designation_id}
-            onChange={handleChange}
-            options={designations}
-            error={error.designation_id?.[0]}
-          />
-           )}
+                  return (
+                    <option key={role.id} value={role.id}>
+                      {roleLabel}
+                    </option>
+                  );
+                })}
+              </select>
+              {error.role_id?.[0] && (
+                <p className="text-red-500 text-xs mt-1">{error.role_id[0]}</p>
+              )}
+            </div>
+          )}
+          {user && user.role_id !== 1 && (
+            <SelectField
+              label="District"
+              name="district_id"
+              value={formData.district_id}
+              onChange={handleChange}
+              options={districts}
+              error={error.district_id?.[0]}
+            />
+          )}
+
+          {user && user.role_id !== 1 && (
+            <SelectField
+              label="Designation"
+              name="designation_id"
+              value={formData.designation_id}
+              onChange={handleChange}
+              options={designations}
+              error={error.designation_id?.[0]}
+            />
+          )}
+
+   <SelectField
+  label="Tehsil"
+  name="tehsil_id"
+  value={formData.tehsil_id ? String(formData.tehsil_id) : ""}
+  onChange={handleChange}
+  options={tehsils}
+  error={error.tehsil_id?.[0]}
+/>
+
+
+
         </div>
 
         <div className="pt-4 border-t flex justify-center">

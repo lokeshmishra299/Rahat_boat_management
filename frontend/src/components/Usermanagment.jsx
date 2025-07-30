@@ -18,7 +18,8 @@ import { useNavigate } from "react-router-dom";
 
 const BASE_URL = import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api";
 
-const user=JSON.parse(localStorage.getItem('user'));
+const user = JSON.parse(localStorage.getItem('user'));
+
 
 const token = localStorage.getItem("access_token");
 
@@ -33,10 +34,9 @@ const api = axios.create({
 /* ---------- shared styles ---------- */
 const input = "w-full p-2 border rounded";
 const pill = (active) =>
-  `flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${
-    active
-      ? "bg-yellow-500 text-white" // ← changed only this line
-      : "bg-white text-green-700 hover:bg-green-50 shadow"
+  `flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition ${active
+    ? "bg-yellow-500 text-white" // ← changed only this line
+    : "bg-white text-green-700 hover:bg-green-50 shadow"
   }`;
 const IconWrap = ({ children }) => (
   <span className="p-2 rounded-full bg-green-100 text-green-700">
@@ -56,6 +56,7 @@ const Td = ({ children, ...rest }) => (
   </td>
 );
 
+
 export default function Usermanagment() {
   const location = useLocation();
 
@@ -70,6 +71,7 @@ export default function Usermanagment() {
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState("create"); // default tab
   const [errors, setErrors] = useState({});
+  const [tehsils, setTehsils] = useState([]);
 
   /* ---------- role state ---------- */
   const [form, setForm] = useState({ roleName: "" });
@@ -84,6 +86,10 @@ export default function Usermanagment() {
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState(null);
+
+
+  const [selectedDistrict, setSelectedDistrict] = useState(null);
+  const [loadingTehsils, setLoadingTehsils] = useState(false);
 
   /* ---------- user state ---------- */
   const [userForm, setUserForm] = useState({
@@ -101,10 +107,21 @@ export default function Usermanagment() {
 
   const [authUser, setAuthUser] = useState(null);
 
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user")); // assume login pe yeh save hota h
-    setAuthUser(user);
-  }, []);
+ useEffect(() => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  setAuthUser(user);
+
+  // If role_id is 1 (district_nodal), auto-set district
+  if (user?.role_id === 1 && user?.district_id) {
+    setUserForm((prev) => ({
+      ...prev,
+      district_code: user.district_id,
+    }));
+
+    fetchTehsils(user.district_id); // 👈 fetch tehsils directly
+  }
+}, []);
+
 
   useEffect(() => {
     const fetchDistricts = async () => {
@@ -123,6 +140,8 @@ export default function Usermanagment() {
 
     if (authUser) fetchDistricts();
   }, [authUser]);
+
+
 
   useEffect(() => {
     const fetchDesignation = async () => {
@@ -215,19 +234,69 @@ export default function Usermanagment() {
   };
 
   /* ---------- user helpers ---------- */
-  const onUserChange = (e) =>
-    setUserForm({ ...userForm, [e.target.name]: e.target.value });
+  const onUserChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "district" && value) {
+      const selected = districts.find((d) => d.district_name === value);
+
+      if (selected) {
+        console.log("district code selected", selected);
+        setSelectedDistrict(selected);
+        setLoadingTehsils(true); // Show loading state for tehsils
+
+        setUserForm((prevState) => ({
+          ...prevState,
+          district_code: selected.id,
+          district: value,
+          tehsil: "" // Reset tehsil when district changes
+        }));
+
+        // Fetch tehsils for the selected district
+        fetchTehsils(selected.id);
+      }
+    } else {
+      setUserForm((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    }
+  };
+
+  const fetchTehsils = async (districtCode) => {
+    try {
+      const res = await api.get(`/get-tehsils`, {
+        params: { district_code: Number(districtCode) },
+      });
+      setTehsils(Array.isArray(res.data.data) ? res.data.data : []);
+    } catch (error) {
+      console.error("Failed to fetch tehsils:", error);
+      setTehsils([]);
+      toast.error("Could not load tehsils.");
+    } finally {
+      setLoadingTehsils(false);
+    }
+  };
+
+
+
+
 
   const addUser = () => {
     const vals = Object.values(userForm).map((v) => v.trim());
     if (vals.some((v) => !v)) return alert("Fill all fields");
     if (userForm.password !== userForm.confirmPassword)
       return alert("Passwords do not match");
+    if (!userForm.district_code) return alert("Please select a district");
+
+    // Add user with the district_code instead of district_name
     setUsers([...users, userForm]);
     setUserForm({
       fullName: "",
       email: "",
-      district: "",
+      district: "",  // Reset to empty
+      district_code: "",  // Reset district_code
+      tehsil: "", // Reset tehsil
       designation: "",
       role: "",
       password: "",
@@ -236,20 +305,23 @@ export default function Usermanagment() {
     setView("manage");
   };
 
+
+
+
   const [userLoading, setUserLoading] = useState(false);
   const [userList, setUserList] = useState([]);
-  
+
   const fetchUserList = async () => {
-  try {
-    setUserLoading(true); // Optional: show loading state
-    const res = await api.get("/user-list"); // Replace with actual API if needed
-    setUserList(res.data?.data || []);
-  } catch (err) {
-    console.error("Failed to fetch users", err);
-  } finally {
-    setUserLoading(false); // Turn off loading indicator
-  }
-};
+    try {
+      setUserLoading(true); // Optional: show loading state
+      const res = await api.get("/user-list"); // Replace with actual API if needed
+      setUserList(res.data?.data || []);
+    } catch (err) {
+      console.error("Failed to fetch users", err);
+    } finally {
+      setUserLoading(false); // Turn off loading indicator
+    }
+  };
 
 
   useEffect(() => {
@@ -280,34 +352,34 @@ export default function Usermanagment() {
   //for popup
   const [showPopup, setShowPopup] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
-  
+
 
   const closePopup = () => {
     setSelectedUserId(null);
     setShowPopup(false);
   };
 
-const handleConfirmDelete = async () => {
-  try {
-    const res = await api.delete(`/user-delete/${selectedUserId}`);
-    console.log("User deleted:", res.data);
+  const handleConfirmDelete = async () => {
+    try {
+      const res = await api.delete(`/user-delete/${selectedUserId}`);
+      console.log("User deleted:", res.data);
 
-   
-    setUserList((prevList) => prevList.filter((user) => user.id !== selectedUserId));
 
-    if (user?.role_id === 1) {
-      toast.success("Ghat Incharge deleted successfully!");
-    } else {
-      toast.success("User deleted successfully!");
+      setUserList((prevList) => prevList.filter((user) => user.id !== selectedUserId));
+
+      if (user?.role_id === 1) {
+        toast.success("Ghat Incharge deleted successfully!");
+      } else {
+        toast.success("User deleted successfully!");
+      }
+
+      setShowPopup(false); // Close the popup
+
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Failed to delete user!");
     }
-
-    setShowPopup(false); // Close the popup
-
-  } catch (error) {
-    console.error("Error deleting user:", error);
-    toast.error("Failed to delete user!");
-  }
-};
+  };
 
   /* ====================================== JSX ====================================== */
   return (
@@ -342,66 +414,6 @@ const handleConfirmDelete = async () => {
           {authUser?.role_id === 1 ? "Ghat Incharge List" : "User List"}
         </button>
       </div>
-
-      {/* ================= ROLE TAB ================= */}
-      {/* {view === "role" && (
-       <div className="border rounded p-6 shadow-md bg-white mt-28">
-  <button onClick={() => setView(null)} className="flex items-center gap-1 text-sm mb-4 text-green-700 hover:text-green-900">
-    <IconWrap><FaArrowLeft /></IconWrap> Back
-  </button>
-
-
-   <div className="flex flex-col sm:flex-row items-center justify-between">
-        <div className="w-full sm:w-1/2">
-          <label className="text-sm font-semibold block mb-1">Role Name</label>
-          <input
-            value={form.roleName}
-            onChange={onRoleChange}
-            placeholder="Enter role name"
-            className={input}
-          />
-        </div>
-        <button onClick={addRole} className="px-6 py-2 bg-green-600 text-white rounded mt-2 sm:mt-6">
-          Register Role
-        </button>
-      </div> 
-=
- <div className="overflow-x-auto mt-6">
-  <table className="min-w-full text-sm border border-gray-200 shadow-sm rounded overflow-hidden">
-    <thead className="bg-green-100 text-green-800 font-semibold">
-      <tr>
-        <Th className="text-center py-3">Sr.No</Th>
-        <Th className="text-center py-3">Role</Th>
-      </tr>
-    </thead>
-    <tbody>
-      {roles.length === 0 ? (
-        <tr>
-          <Td colSpan={2} className="text-center py-4 text-gray-500">
-            No roles available
-          </Td>
-        </tr>
-      ) : (
-        roles.map((r, i) => (
-          <tr key={i} className="border-b hover:bg-gray-50 transition">
-            <Td className="text-center py-3">{i + 1}</Td>
-            <Td className="text-center py-3">
-              {r.name === "district_nodal"
-                ? "District Nodal"
-                : r.name === "ghaat_nodal"
-                ? "Ghaat Nodal"
-                : r.name?.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) || "N/A"}
-            </Td>
-          </tr>
-        ))
-      )}
-    </tbody>
-  </table>
-</div>
-
-</div>
-
-      )} */}
 
       {editModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -537,6 +549,39 @@ const handleConfirmDelete = async () => {
                   )}
                 </div>
               )}
+
+              <div>
+                <label className="text-sm font-semibold block mb-1">
+                  Tehsil *
+                </label>
+                <select
+                  name="tehsil"
+                  value={userForm.tehsil}
+                  onChange={onUserChange}
+                  className={input}
+                  disabled={!userForm.district_code || loadingTehsils}
+                >
+                  <option value="">Select tehsil</option>
+                  {loadingTehsils ? (
+                    <option>Loading tehsils...</option>
+                  ) : tehsils.length > 0 ? (
+                    tehsils.map((tehsil) => (
+                      <option key={tehsil.tehsil_code} value={tehsil.tehsil_code}>
+                        {tehsil.tehsil_name}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>No tehsils available for this district</option>
+                  )}
+                </select>
+                {errors.tehsil_id && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.tehsil_id[0]}
+                  </p>
+                )}
+              </div>
+
+
 
               {authUser?.role_id !== 1 && (
                 <div>
@@ -704,13 +749,13 @@ const handleConfirmDelete = async () => {
                     const districtId = isDistrictNodal
                       ? authUser?.district_id
                       : districts.find(
-                          (d) => d.district_name === userForm.district
-                        )?.id;
+                        (d) => d.district_name === userForm.district
+                      )?.id;
 
                     const designationId = isDistrictNodal
                       ? 2 // ✅ Force designation ID to 2 for ghat nodal
                       : designation.find((d) => d.name === userForm.designation)
-                          ?.id;
+                        ?.id;
 
                     const payload = {
                       name: userForm.fullName,
@@ -718,6 +763,7 @@ const handleConfirmDelete = async () => {
                       password: userForm.password,
                       password_confirmation: userForm.confirmPassword,
                       role_id: roleId,
+                      tehsil_id: parseInt(userForm.tehsil),
                       district_id: districtId,
                       designation_id: designationId,
                       number: userForm.contact,
@@ -749,9 +795,8 @@ const handleConfirmDelete = async () => {
                     setLoading(false);
                   }
                 }}
-                className={`mt-6 px-8 py-2 font-semibold text-white rounded ${
-                  loading ? "bg-gray-400" : "bg-yellow-400"
-                }`}
+                className={`mt-6 px-8 py-2 font-semibold text-white rounded ${loading ? "bg-gray-400" : "bg-yellow-400"
+                  }`}
               >
                 {loading ? "Creating..." : "Create User"}
               </button>
@@ -799,10 +844,9 @@ const handleConfirmDelete = async () => {
                   `"${u.email}"`,
                   `"${u.district?.district_name || "N/A"}"`,
                   `"${u.designation?.name || "N/A"}"`,
-                  `"${
-                    u.role?.name === "ghaat_nodal"
-                      ? "Ghaat Incharge"
-                      : u.role?.name === "district_nodal"
+                  `"${u.role?.name === "ghaat_nodal"
+                    ? "Ghaat Incharge"
+                    : u.role?.name === "district_nodal"
                       ? "Ghat Incharge"
                       : u.role?.name || "N/A"
                   }"`,
@@ -983,11 +1027,10 @@ const handleConfirmDelete = async () => {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className={`px-3 py-1 rounded border ${
-                  currentPage === 1
-                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                    : "bg-white text-green-700"
-                }`}
+                className={`px-3 py-1 rounded border ${currentPage === 1
+                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  : "bg-white text-green-700"
+                  }`}
               >
                 Prev
               </button>
@@ -999,11 +1042,10 @@ const handleConfirmDelete = async () => {
                 <button
                   key={idx}
                   onClick={() => setCurrentPage(idx + 1)}
-                  className={`px-3 py-1 rounded border ${
-                    currentPage === idx + 1
-                      ? "bg-green-600 text-white"
-                      : "bg-white text-green-700"
-                  }`}
+                  className={`px-3 py-1 rounded border ${currentPage === idx + 1
+                    ? "bg-green-600 text-white"
+                    : "bg-white text-green-700"
+                    }`}
                 >
                   {idx + 1}
                 </button>
@@ -1022,11 +1064,10 @@ const handleConfirmDelete = async () => {
                 disabled={
                   currentPage === Math.ceil(userList.length / itemsPerPage)
                 }
-                className={`px-3 py-1 rounded border ${
-                  currentPage === Math.ceil(userList.length / itemsPerPage)
-                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                    : "bg-white text-green-700"
-                }`}
+                className={`px-3 py-1 rounded border ${currentPage === Math.ceil(userList.length / itemsPerPage)
+                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  : "bg-white text-green-700"
+                  }`}
               >
                 Next
               </button>

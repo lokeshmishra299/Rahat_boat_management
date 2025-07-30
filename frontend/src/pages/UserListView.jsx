@@ -66,6 +66,7 @@ export default function UserListView() {
         <Field label="District" value={user.district?.district_name} />
         <Field label="Designation" value={user.designation?.name ?? "—"} />
         <Field label="Assign Role" value={user.role?.name} />
+        <Field label="Tehsil" value={user.tehsil?.tehsil_name} />
         {/* <Field label="Password" value={user.password1} /> */}
       </div>
 
