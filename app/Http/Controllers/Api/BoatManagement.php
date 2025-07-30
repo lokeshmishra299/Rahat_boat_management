@@ -45,7 +45,7 @@ class BoatManagement extends Controller
                 ->get();
         }
 
-        return ApiResponse::generateResponse('success', 'District list fetched successfully', $districts);
+        return ApiResponse::generateResponse('successs', 'District list fetched successfully', $districts);
     }
 
 public function tehsil_list_by_district(Request $request)
