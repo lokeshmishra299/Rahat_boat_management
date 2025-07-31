@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BoatInspection;
 use App\Models\BoatOwner;
 use App\Models\District;
+use App\Models\Tehsil;
 use App\Models\Ghaat;
 use App\Models\LifeJacket;
 use App\Models\RegisterBoat;
@@ -254,7 +255,13 @@ public function district_summary(){
 
     $district_id=$user->district_id;
     // dd($district_id);
-    // $tehsil=Tehsil
+
+    if($district_id){
+    $tehsil=Tehsil::where('district_code',$district_id)->select('tehsil_name')->get();
+    dd($tehsil->toArray());
+    }else{
+        $tehsil=Tehsil::select('tehsil_name')->get();
+    }
 } 
 
 
