@@ -126,6 +126,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tehsil-list',[LocationController::class,'tehsil_list']);
     Route::get('/ghat-incharge-name',[LocationController::class,'ghat_incharge']);
 
+    Route::get('/district-summary',[DashboardController::class,'district_summary']);
+
 
 
 });

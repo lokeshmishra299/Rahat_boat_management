@@ -241,7 +241,7 @@ public function list($id)
 
     // Get the filter inputs from the request
     $filterTehsilCode = $request->input('tehsil_code');
-    $filterUserName = $request->input('user_name'); // Filtering by user name
+    $filterUserName = $request->input('name'); // Filtering by user name
 
     $boatOwnerQuery = BoatOwner::with(['district', 'user']) // Load related models
                                ->withCount('boats');

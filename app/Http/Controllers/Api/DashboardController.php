@@ -248,5 +248,15 @@ class DashboardController extends Controller
     ]);
 }
 
+public function district_summary(){
+
+    $user=auth()->user();
+
+    $district_id=$user->district_id;
+    // dd($district_id);
+    // $tehsil=Tehsil
+} 
+
+
 
 }
