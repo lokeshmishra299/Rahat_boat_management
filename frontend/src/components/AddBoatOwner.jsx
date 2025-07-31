@@ -76,6 +76,8 @@ const AddBoatOwner = () => {
                 <th className="px-4 py-3">Aadhar No</th>
                 <th className="px-4 py-3">No of Boats Owned</th>
                 <th className="px-4 py-3">Pincode</th>
+                <th className="px-4 py-3">Tehsil</th>
+                <th className="px-4 py-3"> Ghat In-charge</th>
                 <th className="px-4 py-3">Add</th>
               </tr>
             </thead>
@@ -103,6 +105,12 @@ const AddBoatOwner = () => {
                     </div>
                     <td className="px-4 py-2">{owner.pincode ?? "NA"}</td>
                     <td className="px-4 py-2">
+                     <h2>{owner.tehsil_name || "NA"}</h2>
+                    </td>
+                    <td className="px-4 py-2">
+                      <h3>{owner.user?.name || "NA"}</h3>
+                    </td>
+                    <td className="px-4 py-2">
                       <button
                         onClick={() => navigate(`/dashboard/addboatowner/${owner.id}/boats`)}
                         className="text-sky-600 hover:text-sky-800"
@@ -110,6 +118,7 @@ const AddBoatOwner = () => {
                         + Add Boats
                       </button>
                     </td>
+                    
                   </tr>
                 ))
               ) : (
