@@ -101,7 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::post('/resister-user',[])
 
     Route::post('/boat-owner', [BoatOwnerController::class, 'store']);
-    Route::get('/boat-owner-list', [BoatOwnerController::class, 'directory']);
+    Route::post('/boat-owner-list', [BoatOwnerController::class, 'directory']);
 
     Route::get('/boat-owner/{id}/boats', [BoatOwnerController::class, 'boatsByOwner']);
 
@@ -122,6 +122,9 @@ Route::middleware('auth:sanctum')->group(function () {
     //All boat and ghat details
 
     Route::get('/all-boat-ghat',[LocationController::class,'boat_ghat']);
+
+    Route::get('/tehsil-list',[LocationController::class,'tehsil_list']);
+    Route::get('/ghat-incharge-name',[LocationController::class,'ghat_incharge']);
 
 
 

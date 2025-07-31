@@ -235,24 +235,43 @@ public function list($id)
 
 
 
- public function directory()
+ public function directory(Request $request)
 {
     $user = auth()->user();
 
-    // Build query with district and boats count
-    $boatOwnerQuery = BoatOwner::with(['district', 'user'])  // Load user for tehsil_id
+    // Get the filter inputs from the request
+    $filterTehsilCode = $request->input('tehsil_code');
+    $filterUserName = $request->input('user_name'); // Filtering by user name
+
+    $boatOwnerQuery = BoatOwner::with(['district', 'user']) // Load related models
                                ->withCount('boats');
 
+    // Filter for role_id 2 (e.g. if District Admin)
     if ($user->role_id == 2) {
         $boatOwnerQuery->where('user_id', $user->id)
                        ->where('district_id', $user->district_id);
     }
 
+    // If tehsil_code is passed, apply filter
+    if ($filterTehsilCode) {
+        $boatOwnerQuery->whereHas('user', function ($query) use ($filterTehsilCode) {
+            $query->where('tehsil_id', $filterTehsilCode);
+        });
+    }
+
+    // If user_name is passed, apply filter
+    if ($filterUserName) {
+        $boatOwnerQuery->whereHas('user', function ($query) use ($filterUserName) {
+            $query->where('name', 'LIKE', "%$filterUserName%");
+        });
+    }
+
     $boatOwners = $boatOwnerQuery->get();
 
-    // Append tehsil_name from Tehsil model
+    // Map tehsil name and user name
     $boatOwners->map(function ($owner) {
         $tehsilName = null;
+        $userName = $owner->user?->name ?? 'Unknown User';
 
         if ($owner->user && $owner->user->tehsil_id) {
             $tehsil = Tehsil::where('tehsil_code', $owner->user->tehsil_id)->first();
@@ -260,16 +279,19 @@ public function list($id)
         }
 
         $owner->tehsil_name = $tehsilName;
+        $owner->user_name = $userName;
+
         return $owner;
     });
 
     return ApiResponse::generateResponse(
         'success',
-        'Boat Owner fetched successfully',
+        'Boat Owners fetched successfully',
         $boatOwners,
         200
     );
 }
+
 
 public function boatsByOwner($boatOwnerId)
 {

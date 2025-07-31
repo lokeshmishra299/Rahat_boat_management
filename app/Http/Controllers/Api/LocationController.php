@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Ghaat;
+use App\Models\Tehsil;
+use App\Models\User;
 use App\Models\RegisterBoat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -52,6 +54,40 @@ public function boat_ghat()
         ]
     );
 }
+
+public function tehsil_list()
+{
+    $user = auth()->user(); 
+
+    $district_id = $user->district_id;
+
+    if ($district_id) {
+        $tehsils = Tehsil::where('district_code', $district_id)->get(['tehsil_code', 'tehsil_name']);
+    } else {
+        $tehsils = Tehsil::all(['tehsil_code', 'tehsil_name']);
+    }
+
+    return ApiResponse::generateResponse('success', 'Tehsil list fetched successfully', $tehsils, 200);
+}
+
+public function ghat_incharge(){
+
+        $user = auth()->user(); 
+
+    $district_id = $user->district_id;
+    // dd($district_id);
+
+    if ($district_id) {
+        $ghat_list= User::where('district_id',$district_id)->select('name')->get();
+    } else {
+        $ghat_list = User::select('name')->all();
+    }
+
+    return ApiResponse::generateResponse('success', 'Ghat name fetched successfully', $ghat_list, 200);
+
+
+}
+
 
 
 }
