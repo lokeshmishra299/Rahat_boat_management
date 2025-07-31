@@ -88,16 +88,20 @@ class GhaatController extends Controller
 
 public function index()
 {
-    // Get the logged-in user's ID
-    $userId = auth()->user()->id;
+    $user = auth()->user(); // Get the logged-in user
+    $userId = $user->id;
 
-    // Fetch Ghaat records that match the user's ID
-    $ghaats = Ghaat::with([
+    $ghaatQuery = Ghaat::with([
         'district_record:id,district_code,district_name',
         'river:id,name'
-    ])
-    // ->where('user_id', $userId) // Assuming Ghaat has a user_id field
-    ->get();
+    ]);
+
+    // Apply condition only if user is District Nodal Officer (role_id == 2)
+    if ($user->role_id == 2) {
+        $ghaatQuery->where('user_id', $userId);
+    }
+
+    $ghaats = $ghaatQuery->get();
 
     return ApiResponse::generateResponse(
         'success',
@@ -106,6 +110,7 @@ public function index()
         200
     );
 }
+    
 
     public function view_list_individual(Request $request, $id)
     {

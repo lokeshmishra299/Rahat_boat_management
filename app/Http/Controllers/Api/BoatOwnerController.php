@@ -6,6 +6,7 @@ use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\BoatFamilyMember;
 use App\Models\BoatOwner;
+use App\Models\Tehsil;
 use App\Models\RegisterBoat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -234,23 +235,41 @@ public function list($id)
 
 
 
-  public function directory()
+ public function directory()
 {
-    $user = auth()->user(); // Get logged-in user
+    $user = auth()->user();
 
-    $boatOwnerQuery = BoatOwner::with('district')->withCount('boats');
-    //  $boatOwnerQuery->where('user_id', $user->id);
+    // Build query with district and boats count
+    $boatOwnerQuery = BoatOwner::with(['district', 'user'])  // Load user for tehsil_id
+                               ->withCount('boats');
 
-    // If user is District Nodal Officer (role_id == 2), filter by their district_id
     if ($user->role_id == 2) {
-        $boatOwnerQuery->where('district_id', $user->district_id);
+        $boatOwnerQuery->where('user_id', $user->id)
+                       ->where('district_id', $user->district_id);
     }
 
     $boatOwners = $boatOwnerQuery->get();
 
-    return ApiResponse::generateResponse('success', 'Boat Owner fetch successfully', $boatOwners, 200);
-}
+    // Append tehsil_name from Tehsil model
+    $boatOwners->map(function ($owner) {
+        $tehsilName = null;
 
+        if ($owner->user && $owner->user->tehsil_id) {
+            $tehsil = Tehsil::where('tehsil_code', $owner->user->tehsil_id)->first();
+            $tehsilName = $tehsil?->tehsil_name ?? 'Unknown Tehsil';
+        }
+
+        $owner->tehsil_name = $tehsilName;
+        return $owner;
+    });
+
+    return ApiResponse::generateResponse(
+        'success',
+        'Boat Owner fetched successfully',
+        $boatOwners,
+        200
+    );
+}
 
 public function boatsByOwner($boatOwnerId)
 {
@@ -270,6 +289,7 @@ public function boatsByOwner($boatOwnerId)
 
     return ApiResponse::generateResponse('success', 'Boats fetched successfully', $boats, 200);
 }
+
 
 
     public function owner_detail($id)

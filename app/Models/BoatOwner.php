@@ -56,4 +56,13 @@ class BoatOwner extends Model
     return $this->hasMany(RegisterBoat::class, 'boat_owner_id');
 }
 
+public function tehsil()
+{
+    return $this->belongsTo(Tehsil::class, 'tehsil_id');
+}
+public function user()
+{
+    return $this->belongsTo(User::class, 'user_id');
+}
+
 }

@@ -272,14 +272,24 @@ public function store(Request $request, $id)
 
 
 
-    public function index()
-    {
-        $boats = RegisterBoat::with(['district', 'ghaat'])
-            ->orderBy('id', 'desc')
-            ->get();
+public function index()
+{
+    $user = auth()->user(); // Get the logged-in user
 
-        return ApiResponse::generateResponse('success', 'Boat list fetched successfully.', $boats);
+    // Start the query
+    $boatQuery = RegisterBoat::with(['district', 'ghaat'])->orderBy('id', 'desc');
+
+    // If user is District Nodal Officer (role_id == 2), filter by user_id
+    if ($user->role_id == 2) {
+        $boatQuery->where('user_id', $user->id);
     }
+
+    // Execute the query
+    $boats = $boatQuery->get();
+
+    return ApiResponse::generateResponse('success', 'Boat list fetched successfully.', $boats);
+}
+
 
 
     public function  total_list()
