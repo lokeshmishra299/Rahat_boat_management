@@ -250,51 +250,58 @@ class DashboardController extends Controller
     ]);
 }
 
-    public function district_summary()
-    {
-        $user = auth()->user();
-        $district_id = $user->district_id;
-        $result = [];
+   public function district_summary()
+{
+    $user = auth()->user();
+    $district_id = $user->district_id;
+    $result = [];
 
-        if ($district_id) {
-            $tehsils = Tehsil::where('district_code', $district_id)->get()->keyBy('tehsil_code');
+    if ($district_id) {
+        $tehsils = Tehsil::where('district_code', $district_id)->get()->keyBy('tehsil_code');
 
-            $users = User::where('district_id', $district_id)
-                        ->where('role_id', 2)
-                        ->whereNotNull('tehsil_id')
-                        ->get(['id', 'tehsil_id']);
+        $users = User::where('district_id', $district_id)
+                    ->where('role_id', 2)
+                    ->whereNotNull('tehsil_id')
+                    ->get(['id', 'tehsil_id']);
 
-            $users->transform(function ($user) {
-                $user->tehsil_id = (int) $user->tehsil_id;
-                return $user;
-            });
+        $users->transform(function ($user) {
+            $user->tehsil_id = (int) $user->tehsil_id;
+            return $user;
+        });
 
-            $usersByTehsil = collect($users)->groupBy('tehsil_id');
+        $usersByTehsil = $users->groupBy('tehsil_id');
 
-            foreach ($usersByTehsil as $tehsil_id => $usersGroup) {
-                if (!isset($tehsils[$tehsil_id])) {
-                    continue;
-                }
+        foreach ($usersByTehsil as $tehsil_id => $usersGroup) {
+            if (!isset($tehsils[$tehsil_id])) continue;
 
-                $user_ids = $usersGroup->pluck('id');
-                $ghat_ids = Ghaat::whereIn('user_id', $user_ids)->pluck('id');
+            $user_ids = $usersGroup->pluck('id');
+            $ghaats = Ghaat::whereIn('user_id', $user_ids)->get(['id', 'ghaat_name']);
 
-                $boats = RegisterBoat::whereIn('ghaat_id', $ghat_ids)
-                                    ->whereNotNull('boat_owner_id')
-                                    ->get(['boat_owner_id']);
+            $ghatData = [];
 
-                $result[] = [
-                    'tehsil_name'       => $tehsils[$tehsil_id]->tehsil_name,
-                    'total_boat_owners' => $boats->pluck('boat_owner_id')->unique()->count(),
-                    'total_boats'       => $boats->count()
+            foreach ($ghaats as $ghaat) {
+                $boats = RegisterBoat::where('ghaat_id', $ghaat->id)
+                                     ->whereNotNull('boat_owner_id')
+                                     ->get(['boat_owner_id']);
+
+                $ghatData[] = [
+                    'ghaat_name'         => $ghaat->ghaat_name,
+                    'total_boat_owners'  => $boats->pluck('boat_owner_id')->unique()->count(),
+                    'total_boats'        => $boats->count()
                 ];
             }
 
-            return response()->json($result);
-        } else {
-            return response()->json(['error' => 'User has no district ID'], 400);
+            $result[] = [
+                'tehsil_name' => $tehsils[$tehsil_id]->tehsil_name,
+                'ghaats'      => $ghatData
+            ];
         }
+
+        return response()->json($result);
     }
+
+    return response()->json(['error' => 'User has no district ID'], 400);
+}
 
 
 
