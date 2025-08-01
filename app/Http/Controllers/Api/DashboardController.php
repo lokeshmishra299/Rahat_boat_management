@@ -7,6 +7,7 @@ use App\Models\BoatInspection;
 use App\Models\BoatOwner;
 use App\Models\District;
 use App\Models\Tehsil;
+use App\Models\User;
 use App\Models\Ghaat;
 use App\Models\LifeJacket;
 use App\Models\RegisterBoat;
@@ -249,20 +250,54 @@ class DashboardController extends Controller
     ]);
 }
 
-public function district_summary(){
+    public function district_summary()
+    {
+        $user = auth()->user();
+        $district_id = $user->district_id;
+        $result = [];
 
-    $user=auth()->user();
+        if ($district_id) {
+            $tehsils = Tehsil::where('district_code', $district_id)->get()->keyBy('tehsil_code');
 
-    $district_id=$user->district_id;
-    // dd($district_id);
+            $users = User::where('district_id', $district_id)
+                        ->where('role_id', 2)
+                        ->whereNotNull('tehsil_id')
+                        ->get(['id', 'tehsil_id']);
 
-    if($district_id){
-    $tehsil=Tehsil::where('district_code',$district_id)->select('tehsil_name')->get();
-    dd($tehsil->toArray());
-    }else{
-        $tehsil=Tehsil::select('tehsil_name')->get();
+            $users->transform(function ($user) {
+                $user->tehsil_id = (int) $user->tehsil_id;
+                return $user;
+            });
+
+            $usersByTehsil = collect($users)->groupBy('tehsil_id');
+
+            foreach ($usersByTehsil as $tehsil_id => $usersGroup) {
+                if (!isset($tehsils[$tehsil_id])) {
+                    continue;
+                }
+
+                $user_ids = $usersGroup->pluck('id');
+                $ghat_ids = Ghaat::whereIn('user_id', $user_ids)->pluck('id');
+
+                $boats = RegisterBoat::whereIn('ghaat_id', $ghat_ids)
+                                    ->whereNotNull('boat_owner_id')
+                                    ->get(['boat_owner_id']);
+
+                $result[] = [
+                    'tehsil_name'       => $tehsils[$tehsil_id]->tehsil_name,
+                    'total_boat_owners' => $boats->pluck('boat_owner_id')->unique()->count(),
+                    'total_boats'       => $boats->count()
+                ];
+            }
+
+            return response()->json($result);
+        } else {
+            return response()->json(['error' => 'User has no district ID'], 400);
+        }
     }
-} 
+
+
+
 
 
 
