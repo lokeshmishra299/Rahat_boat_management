@@ -80,7 +80,7 @@ public function ghat_incharge(){
     if ($district_id) {
         $ghat_list= User::where('district_id',$district_id)->select('name')->get();
     } else {
-        $ghat_list = User::select('name')->all();
+        $ghat_list = User::select('name')->get();
     }
 
     return ApiResponse::generateResponse('success', 'Ghat name fetched successfully', $ghat_list, 200);
