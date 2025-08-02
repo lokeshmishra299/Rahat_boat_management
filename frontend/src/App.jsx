@@ -33,6 +33,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 // import PublicRoute from "./components/PublicRoute";
 import AddBoatOwner from "./components/AddBoatOwner";
 import BoatOwners from "./components/BoatOwners";
+import ExportData from "./components/ExportData"
 import BoatsDirectory from "./components/BoatsDirectory";
 import Map from "./components/Map";
 
@@ -123,6 +124,8 @@ const App = () => (
       <Route path="districts" element={<District />} />
       <Route path="life-jackets" element={<LifeJacket />} />
       <Route path="inspection" element={<Inspection />} />
+
+      <Route path="export-data" element={<ExportData />} />
     
       <Route path="usermanagment" element={<Usermanagment />} />
 

@@ -7,6 +7,7 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 
 // icons
 import { MdSpaceDashboard } from "react-icons/md";
+import { MdDownloadForOffline } from "react-icons/md";
 import {
   FaShip,
   FaWater,
@@ -162,6 +163,16 @@ const Dashboard = () => {
                 User Management
               </Link>
             )}
+
+            {user && user.role_id !== 2 && user.role_id !== 3 && (
+            <Link
+              to="export-data"
+              className={linkCls("export-data", "bg-fuchsia-700 text-white")}
+            >
+              <MdDownloadForOffline className="inline-block mr-2 text-lg" />
+              Export Data
+            </Link>
+             )}
 
             {/* <Link to="boatowner" className={linkCls("boatowner", "bg-rose-500")}>
               <FaUserTie className="inline-block mr-2 text-lg" />
